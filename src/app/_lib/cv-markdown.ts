@@ -39,7 +39,6 @@ export type ResumePageSize = "letter" | "legal";
 export type ResumeStylePrefs = {
   bodyFont: ResumeFontChoice;
   displayFont: ResumeFontChoice;
-  baseSize: number;
   pageMargin: number;
   showHeaderDivider: boolean;
   showSectionDivider: boolean;
@@ -61,7 +60,6 @@ export type ResumeTypographyScale = {
 export const DEFAULT_RESUME_STYLE: ResumeStylePrefs = {
   bodyFont: "sans",
   displayFont: "serif",
-  baseSize: 0.985,
   pageMargin: 1,
   showHeaderDivider: false,
   showSectionDivider: true,
@@ -81,6 +79,8 @@ const TYPE_SCALE_RATIOS = {
 } satisfies Record<keyof ResumeTypographyScale, number>;
 
 const LEGACY_DEFAULT_PAGE_MARGIN = 0.62;
+const DEFAULT_TYPE_BASE = 0.985;
+const MOBILE_TYPE_BASE = 1.02;
 
 export const DEFAULT_CV_MARKDOWN = composeCvMarkdown({
   bodyMarkdown: `# Alex Morgan
@@ -239,7 +239,6 @@ export function composeCvMarkdown(parts: CvMarkdownParts) {
 export function composeCvFrontmatter(style: ResumeStylePrefs) {
   return `displayFont: ${style.displayFont}
 bodyFont: ${style.bodyFont}
-baseSize: ${style.baseSize}
 pageMargin: ${style.pageMargin}
 showHeaderDivider: ${style.showHeaderDivider}
 showSectionDivider: ${style.showSectionDivider}
@@ -276,25 +275,40 @@ export function normalizeCvMarkdown(markdown: string) {
   });
 }
 
-export function resolveResumeTypography(style: ResumeStylePrefs): ResumeTypographyScale {
-  const baseSize = style.baseSize;
+export function resolveResumeTypography(_style: ResumeStylePrefs): ResumeTypographyScale {
+  void _style;
 
   return {
-    body: baseSize * TYPE_SCALE_RATIOS.body,
-    contact: baseSize * TYPE_SCALE_RATIOS.contact,
-    date: baseSize * TYPE_SCALE_RATIOS.date,
-    entryMeta: baseSize * TYPE_SCALE_RATIOS.entryMeta,
-    entryTitle: baseSize * TYPE_SCALE_RATIOS.entryTitle,
-    headline: baseSize * TYPE_SCALE_RATIOS.headline,
-    name: baseSize * TYPE_SCALE_RATIOS.name,
-    sectionLabel: baseSize * TYPE_SCALE_RATIOS.sectionLabel,
-    skills: baseSize * TYPE_SCALE_RATIOS.skills,
+    body: DEFAULT_TYPE_BASE * TYPE_SCALE_RATIOS.body,
+    contact: DEFAULT_TYPE_BASE * TYPE_SCALE_RATIOS.contact,
+    date: DEFAULT_TYPE_BASE * TYPE_SCALE_RATIOS.date,
+    entryMeta: DEFAULT_TYPE_BASE * TYPE_SCALE_RATIOS.entryMeta,
+    entryTitle: DEFAULT_TYPE_BASE * TYPE_SCALE_RATIOS.entryTitle,
+    headline: DEFAULT_TYPE_BASE * TYPE_SCALE_RATIOS.headline,
+    name: DEFAULT_TYPE_BASE * TYPE_SCALE_RATIOS.name,
+    sectionLabel: DEFAULT_TYPE_BASE * TYPE_SCALE_RATIOS.sectionLabel,
+    skills: DEFAULT_TYPE_BASE * TYPE_SCALE_RATIOS.skills,
+  };
+}
+
+export function resolveMobileResumeTypography(_style: ResumeStylePrefs): ResumeTypographyScale {
+  void _style;
+
+  return {
+    body: MOBILE_TYPE_BASE * TYPE_SCALE_RATIOS.body,
+    contact: MOBILE_TYPE_BASE * TYPE_SCALE_RATIOS.contact,
+    date: MOBILE_TYPE_BASE * TYPE_SCALE_RATIOS.date,
+    entryMeta: MOBILE_TYPE_BASE * TYPE_SCALE_RATIOS.entryMeta,
+    entryTitle: MOBILE_TYPE_BASE * TYPE_SCALE_RATIOS.entryTitle,
+    headline: MOBILE_TYPE_BASE * TYPE_SCALE_RATIOS.headline,
+    name: MOBILE_TYPE_BASE * TYPE_SCALE_RATIOS.name,
+    sectionLabel: MOBILE_TYPE_BASE * TYPE_SCALE_RATIOS.sectionLabel,
+    skills: MOBILE_TYPE_BASE * TYPE_SCALE_RATIOS.skills,
   };
 }
 
 function parseResumeStyle(frontmatter: string): ResumeStylePrefs {
   const style = { ...DEFAULT_RESUME_STYLE };
-  let legacyBodySize: number | null = null;
   let pageMarginWasExplicit = false;
 
   if (!frontmatter.trim()) {
@@ -318,13 +332,7 @@ function parseResumeStyle(frontmatter: string): ResumeStylePrefs {
     const rawValue = line.slice(dividerIndex + 1).trim();
     const key = rawKey as keyof ResumeStylePrefs;
 
-    if (rawKey === "bodySize") {
-      const parsedLegacyBodySize = Number.parseFloat(rawValue);
-
-      if (Number.isFinite(parsedLegacyBodySize)) {
-        legacyBodySize = parsedLegacyBodySize;
-      }
-
+    if (rawKey === "bodySize" || rawKey === "baseSize") {
       continue;
     }
 
@@ -353,16 +361,12 @@ function parseResumeStyle(frontmatter: string): ResumeStylePrefs {
       continue;
     }
 
-    if (key === "baseSize" || key === "pageMargin") {
+    if (key === "pageMargin") {
       style[key] = parsedNumber as ResumeStylePrefs[typeof key];
       if (key === "pageMargin") {
         pageMarginWasExplicit = true;
       }
     }
-  }
-
-  if (legacyBodySize !== null) {
-    style.baseSize = legacyBodySize;
   }
 
   // Migrate the old hidden default margin to the new 1in baseline.

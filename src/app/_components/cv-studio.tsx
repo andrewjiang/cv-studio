@@ -16,6 +16,7 @@ import {
 import {
   ResumeDocumentContent,
   fontFamilyForChoice,
+  getPaperCompression,
 } from "@/app/_components/resume-content";
 import {
   attachHostedResume,
@@ -668,9 +669,7 @@ export function CvStudio({
                       <code className="font-mono text-[0.88em]">pageSize: legal</code>{" "}
                       and tune{" "}
                       <code className="font-mono text-[0.88em]">pageMargin</code>{" "}
-                      and{" "}
-                      <code className="font-mono text-[0.88em]">baseSize</code>{" "}
-                      in the frontmatter.
+                      and divider rules in the frontmatter. Text sizing is automatic.
                     </p>
                   ) : null}
                 </div>
@@ -707,7 +706,7 @@ export function CvStudio({
                 <div className="border-t border-black/8 px-5 py-4 text-[0.77rem] leading-6 text-slate-500">
                   {showStylePrefs
                     ? "Style preferences live in markdown frontmatter. Hide them when you want to focus on writing."
-                    : "Keep bullets sharp and measurable. Open styling preferences when you want to tune baseline type size, margins, or divider rules."}
+                    : "Keep bullets sharp and measurable. Open styling preferences when you want to tune margins or divider rules."}
                 </div>
               </div>
             </section>
@@ -846,13 +845,12 @@ const ResumePreview = forwardRef<HTMLDivElement, {
             width: `${pageMetrics.contentWidth}px`,
           } as CSSProperties}
         >
-          <div ref={ref}>
-            <ResumeDocumentContent
-              document={document}
-              fitScale={fitScale}
-              typeScale={typeScale}
-            />
-          </div>
+          <ResumeDocumentContent
+            document={document}
+            fitScale={fitScale}
+            ref={ref}
+            typeScale={typeScale}
+          />
         </div>
       </div>
     </article>
@@ -1050,12 +1048,16 @@ function refineScaleWithDom({
   let scale = clampScale(initialScale);
   let overflow = false;
 
-  const measureOverflow = () => (
-    content.scrollHeight > page.clientHeight + 1 ||
-    content.scrollWidth > page.clientWidth + 1
-  );
+  const measureOverflow = () => content.scrollHeight > page.clientHeight + 1;
+  const applyCandidateScale = (nextScale: number) => {
+    content.style.setProperty("--cv-scale", nextScale.toFixed(3));
+    content.style.setProperty(
+      "--cv-paper-compression",
+      getPaperCompression(nextScale).toFixed(3),
+    );
+  };
 
-  content.style.setProperty("--cv-scale", scale.toFixed(3));
+  applyCandidateScale(scale);
   overflow = measureOverflow();
 
   while (!overflow && scale < CV_SCALE_LIMITS.max) {
@@ -1065,11 +1067,11 @@ function refineScaleWithDom({
       break;
     }
 
-    content.style.setProperty("--cv-scale", nextScale.toFixed(3));
+    applyCandidateScale(nextScale);
     overflow = measureOverflow();
 
     if (overflow) {
-      content.style.setProperty("--cv-scale", scale.toFixed(3));
+      applyCandidateScale(scale);
       overflow = false;
       break;
     }
@@ -1079,12 +1081,12 @@ function refineScaleWithDom({
 
   while (overflow && scale > CV_SCALE_LIMITS.min) {
     scale = clampScale(scale - CV_SCALE_LIMITS.step);
-    content.style.setProperty("--cv-scale", scale.toFixed(3));
+    applyCandidateScale(scale);
     overflow = measureOverflow();
   }
 
   if (overflow) {
-    content.style.setProperty("--cv-scale", CV_SCALE_LIMITS.min.toFixed(3));
+    applyCandidateScale(CV_SCALE_LIMITS.min);
   }
 
   return {

@@ -7,7 +7,11 @@ import {
   getPublishedResumeBySlug,
   HostedResumeStoreUnavailableError,
 } from "@/app/_lib/hosted-resume-store";
-import { parseCvMarkdown, resolveResumeTypography } from "@/app/_lib/cv-markdown";
+import {
+  parseCvMarkdown,
+  resolveMobileResumeTypography,
+  resolveResumeTypography,
+} from "@/app/_lib/cv-markdown";
 
 export const dynamic = "force-dynamic";
 
@@ -70,10 +74,7 @@ export default async function PublicResumePage({
   const document = parseCvMarkdown(resume.markdown);
   const pageMetrics = getPageMetrics(document.style);
   const desktopTypeScale = resolveResumeTypography(document.style);
-  const mobileTypeScale = resolveResumeTypography({
-    ...document.style,
-    baseSize: Math.max(document.style.baseSize, 1.02),
-  });
+  const mobileTypeScale = resolveMobileResumeTypography(document.style);
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#faf7f1_0%,#f4efe8_100%)] text-slate-900">

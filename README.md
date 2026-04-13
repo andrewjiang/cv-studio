@@ -94,7 +94,6 @@ Optional style preferences live in frontmatter:
 ---
 displayFont: serif
 bodyFont: sans
-baseSize: 0.985
 pageMargin: 1
 pageSize: letter
 showHeaderDivider: false
