@@ -99,6 +99,8 @@ async function isHealthyDevServer(lock) {
 function cleanDevState() {
   rmSync(path.join(repoRoot, ".next", "dev"), {
     force: true,
+    maxRetries: 10,
     recursive: true,
+    retryDelay: 100,
   });
 }

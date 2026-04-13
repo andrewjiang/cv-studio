@@ -1,13 +1,20 @@
 import { DEFAULT_CV_MARKDOWN, normalizeCvMarkdown } from "@/app/_lib/cv-markdown";
+import type { HostedResumeEditorRecord } from "@/app/_lib/hosted-resume-types";
 
 export const DRAFTS_STORAGE_KEY = "cv-studio:drafts";
 export const LEGACY_MARKDOWN_STORAGE_KEY = "cv-studio:markdown";
-export const DRAFTS_STORAGE_VERSION = 1;
+export const DRAFTS_STORAGE_VERSION = 2;
 
 export type ResumeDraft = {
+  editorToken?: string;
   id: string;
+  isPublished?: boolean;
   markdown: string;
   name: string;
+  publishedAt?: string | null;
+  remoteFitScale?: number;
+  remoteResumeId?: string;
+  remoteSlug?: string;
   updatedAt: string;
 };
 
@@ -153,6 +160,65 @@ export function formatSavedAt(timestamp: string | null) {
   })}`;
 }
 
+export function attachHostedResume(
+  store: ResumeDraftStore,
+  draftId: string,
+  resume: HostedResumeEditorRecord,
+): ResumeDraftStore {
+  return {
+    ...store,
+    drafts: store.drafts.map((draft) =>
+      draft.id === draftId
+        ? {
+            ...draft,
+            editorToken: resume.editorToken,
+            isPublished: resume.isPublished,
+            markdown: normalizeCvMarkdown(resume.markdown),
+            name: resume.title,
+            publishedAt: resume.publishedAt,
+            remoteFitScale: resume.fitScale,
+            remoteResumeId: resume.id,
+            remoteSlug: resume.slug,
+            updatedAt: resume.updatedAt,
+          }
+        : draft,
+    ),
+  };
+}
+
+export function upsertHostedDraft(
+  store: ResumeDraftStore,
+  resume: HostedResumeEditorRecord,
+): ResumeDraftStore {
+  const existingDraft = store.drafts.find((draft) => draft.remoteResumeId === resume.id);
+
+  if (existingDraft) {
+    return {
+      ...attachHostedResume(store, existingDraft.id, resume),
+      activeDraftId: existingDraft.id,
+    };
+  }
+
+  const newDraft: ResumeDraft = {
+    editorToken: resume.editorToken,
+    id: createDraftId(),
+    isPublished: resume.isPublished,
+    markdown: normalizeCvMarkdown(resume.markdown),
+    name: resume.title,
+    publishedAt: resume.publishedAt,
+    remoteFitScale: resume.fitScale,
+    remoteResumeId: resume.id,
+    remoteSlug: resume.slug,
+    updatedAt: resume.updatedAt,
+  };
+
+  return {
+    activeDraftId: newDraft.id,
+    drafts: [...store.drafts, newDraft],
+    version: DRAFTS_STORAGE_VERSION,
+  };
+}
+
 export function slugifyDraftName(name: string) {
   return name
     .toLowerCase()
@@ -171,9 +237,17 @@ function isValidDraft(value: unknown): value is ResumeDraft {
 
   const draft = value as Partial<ResumeDraft>;
   return (
+    (typeof draft.editorToken === "string" || draft.editorToken === undefined) &&
     typeof draft.id === "string" &&
+    (typeof draft.isPublished === "boolean" || draft.isPublished === undefined) &&
     typeof draft.markdown === "string" &&
     typeof draft.name === "string" &&
+    (typeof draft.publishedAt === "string" ||
+      draft.publishedAt === null ||
+      draft.publishedAt === undefined) &&
+    (typeof draft.remoteFitScale === "number" || draft.remoteFitScale === undefined) &&
+    (typeof draft.remoteResumeId === "string" || draft.remoteResumeId === undefined) &&
+    (typeof draft.remoteSlug === "string" || draft.remoteSlug === undefined) &&
     typeof draft.updatedAt === "string"
   );
 }

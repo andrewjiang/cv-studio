@@ -36,6 +36,8 @@ The goal is a resume tool that feels closer to working in code than fighting a t
 - One-page fit uses Pretext-assisted measurement plus DOM verification.
 - PDF export uses the browser print flow and targets the resume sheet directly.
 - Local-first draft management includes multiple drafts, rename, import, export, and autosave.
+- Hosted resumes can be saved online, published, and shared with a clean public URL.
+- Secret edit links let a resume owner reopen the hosted editor without a full auth system.
 - Optional styling preferences live in markdown frontmatter and stay hidden unless you want them.
 - Edit and publish modes let you switch between the writing surface and the clean resume view.
 
@@ -51,6 +53,17 @@ CV Studio separates three things that most resume builders blend together:
    The app estimates layout with Pretext, then verifies the result against the actual DOM before export.
 
 That split is what makes the preview, print output, and markdown source line up consistently.
+
+## Hosted resumes
+
+CV Studio now supports a simple hosted workflow:
+
+- `Create link` creates a hosted resume and gives the draft a stable edit URL.
+- `Publish` snapshots the current draft to a public slug route.
+- `/:slug` renders a clean public resume page.
+- `/studio/:id?token=...` reopens the hosted editor.
+
+For local development without a database, CV Studio falls back to a file-backed store in `.data/hosted-resumes.json`.
 
 ## Resume markdown format
 
@@ -114,6 +127,16 @@ pnpm build
 pnpm start
 ```
 
+## Production database
+
+To enable hosted save and publish in production, set:
+
+```bash
+DATABASE_URL=...
+```
+
+The app is written to use Postgres in production and a local file-backed store in development when `DATABASE_URL` is not set.
+
 ## PDF export
 
 Use `Download PDF` in the app. CV Studio prints only the resume sheet, not the surrounding editor UI, and preserves the fitted content scale for export.
@@ -128,4 +151,4 @@ Use `Download PDF` in the app. CV Studio prints only the resume sheet, not the s
 
 ## Status
 
-CV Studio is currently local-first. Drafts are stored in `localStorage`. A backend for persisted public CVs and slug-based sharing is the next major step.
+CV Studio is local-first by default, with hosted resume save/publish available when storage is configured. The next major step is adding full user accounts on top of the current secret-link editor model.

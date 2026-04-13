@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Fragment,
   forwardRef,
   type Dispatch,
   type CSSProperties,
@@ -14,9 +13,12 @@ import {
   useRef,
   useState,
 } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import {
+  ResumeDocumentContent,
+  fontFamilyForChoice,
+} from "@/app/_components/resume-content";
+import {
+  attachHostedResume,
   addDraft,
   createDefaultDraft,
   createNamedDraft,
@@ -26,6 +28,7 @@ import {
   renameDraft,
   saveDraftStore,
   slugifyDraftName,
+  upsertHostedDraft,
   updateDraftMarkdown,
   type ResumeDraft,
   type ResumeDraftStore,
@@ -46,26 +49,42 @@ import {
   resolveResumeTypography,
   splitCvMarkdown,
   type ResumeDocument,
-  type ResumeFontChoice,
-  type ResumeSection,
   type ResumeStylePrefs,
 } from "@/app/_lib/cv-markdown";
+import type {
+  HostedResumeEditorRecord,
+  HostedResumeResponse,
+} from "@/app/_lib/hosted-resume-types";
+import { useRouter } from "next/navigation";
 
 type StudioMode = "edit" | "publish";
 
-export function CvStudio() {
+type RemoteSyncState =
+  | { kind: "idle" }
+  | { kind: "error"; message: string }
+  | { kind: "publishing" }
+  | { kind: "saved" }
+  | { kind: "saving" };
+
+export function CvStudio({
+  initialHostedResume,
+}: {
+  initialHostedResume?: HostedResumeEditorRecord | null;
+}) {
+  const router = useRouter();
   const [mode, setMode] = useState<StudioMode>("edit");
   const [markdown, setMarkdown] = useState(DEFAULT_CV_MARKDOWN);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [fontsReady, setFontsReady] = useState(false);
   const [showStylePrefs, setShowStylePrefs] = useState(false);
   const [showPageGuides, setShowPageGuides] = useState(false);
+  const [remoteSyncState, setRemoteSyncState] = useState<RemoteSyncState>({ kind: "idle" });
   const [draftStore, setDraftStore] = useState<ResumeDraftStore>(() => {
     const draft = createDefaultDraft(DEFAULT_CV_MARKDOWN);
     return {
       activeDraftId: draft.id,
       drafts: [draft],
-      version: 1,
+      version: 2,
     };
   });
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
@@ -94,19 +113,27 @@ export function CvStudio() {
   const [fitState, setFitState] = useState({ scale: 1, overflow: false });
   const [previewScale, setPreviewScale] = useState(1);
   const activeDraft = getActiveDraft(draftStore);
+  const editorPath = activeDraft?.remoteResumeId && activeDraft.editorToken
+    ? `/studio/${activeDraft.remoteResumeId}?token=${encodeURIComponent(activeDraft.editorToken)}`
+    : null;
+  const publicPath = activeDraft?.remoteSlug ? `/${activeDraft.remoteSlug}` : null;
 
   useEffect(() => {
     const hydrationTimer = window.setTimeout(() => {
       const loadedStore = loadDraftStore(window.localStorage);
-      const loadedDraft = getActiveDraft(loadedStore);
-      setDraftStore(loadedStore);
+      const nextStore = initialHostedResume
+        ? upsertHostedDraft(loadedStore, initialHostedResume)
+        : loadedStore;
+      const loadedDraft = getActiveDraft(nextStore);
+      saveDraftStore(window.localStorage, nextStore);
+      setDraftStore(nextStore);
       setMarkdown(loadedDraft?.markdown ?? DEFAULT_CV_MARKDOWN);
       setLastSavedAt(loadedDraft?.updatedAt ?? null);
       setHasHydrated(true);
     }, 0);
 
     return () => window.clearTimeout(hydrationTimer);
-  }, []);
+  }, [initialHostedResume]);
 
   const persistDraft = useEffectEvent((nextMarkdown: string) => {
     if (!activeDraft) {
@@ -141,6 +168,50 @@ export function CvStudio() {
   }, [hasHydrated, markdown]);
 
   useEffect(() => {
+    if (
+      !hasHydrated ||
+      !fontsReady ||
+      !activeDraft?.remoteResumeId ||
+      !activeDraft.editorToken
+    ) {
+      return;
+    }
+
+    const hostedSaveTimer = window.setTimeout(() => {
+      autosaveHostedResume();
+    }, 900);
+
+    return () => window.clearTimeout(hostedSaveTimer);
+  }, [
+    activeDraft?.editorToken,
+    activeDraft?.remoteResumeId,
+    fitState.scale,
+    fontsReady,
+    hasHydrated,
+    markdown,
+  ]);
+
+  useEffect(() => {
+    if (!hasHydrated) {
+      return;
+    }
+
+    if (editorPath) {
+      const currentPath = `${window.location.pathname}${window.location.search}`;
+
+      if (currentPath !== editorPath) {
+        router.replace(editorPath, { scroll: false });
+      }
+
+      return;
+    }
+
+    if (window.location.pathname.startsWith("/studio/")) {
+      router.replace("/", { scroll: false });
+    }
+  }, [editorPath, hasHydrated, router]);
+
+  useEffect(() => {
     if (!window.document.fonts) {
       const readyTimer = window.setTimeout(() => {
         setFontsReady(true);
@@ -162,6 +233,134 @@ export function CvStudio() {
       cancelled = true;
     };
   }, []);
+
+  const applyHostedResume = (resume: HostedResumeEditorRecord) => {
+    setDraftStore((current) => {
+      const currentDraft = getActiveDraft(current);
+      const nextStore = currentDraft
+        ? attachHostedResume(current, currentDraft.id, resume)
+        : upsertHostedDraft(current, resume);
+
+      saveDraftStore(window.localStorage, nextStore);
+      return nextStore;
+    });
+    setMarkdown(resume.markdown);
+    setLastSavedAt(resume.updatedAt);
+    setRemoteSyncState({ kind: "saved" });
+    const nextEditorPath = `/studio/${resume.id}?token=${encodeURIComponent(resume.editorToken)}`;
+
+    if (`${window.location.pathname}${window.location.search}` !== nextEditorPath) {
+      router.replace(nextEditorPath, { scroll: false });
+    }
+  };
+
+  const autosaveHostedResume = useEffectEvent(() => {
+    void mutateHostedResume({ silent: true });
+  });
+
+  const mutateHostedResume = async ({
+    publish = false,
+    silent = false,
+  }: {
+    publish?: boolean;
+    silent?: boolean;
+  } = {}) => {
+    if (!activeDraft) {
+      return;
+    }
+
+    if (!silent) {
+      setRemoteSyncState({ kind: publish ? "publishing" : "saving" });
+    }
+
+    try {
+      let response: Response;
+      let payload: HostedResumeResponse;
+
+      if (activeDraft.remoteResumeId && activeDraft.editorToken) {
+        response = await fetch(
+          publish
+            ? `/api/resumes/${activeDraft.remoteResumeId}/publish`
+            : `/api/resumes/${activeDraft.remoteResumeId}`,
+          {
+            body: JSON.stringify({
+              editorToken: activeDraft.editorToken,
+              fitScale: fitState.scale,
+              markdown,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+            method: publish ? "POST" : "PUT",
+          },
+        );
+      } else {
+        response = await fetch("/api/resumes", {
+          body: JSON.stringify({
+            fitScale: fitState.scale,
+            markdown,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+        });
+      }
+
+      const raw = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof raw?.error === "string" ? raw.error : "Unable to save hosted resume.",
+        );
+      }
+
+      payload = raw as HostedResumeResponse;
+
+      if (publish && !activeDraft.remoteResumeId && payload.resume.editorToken) {
+        const publishResponse = await fetch(`/api/resumes/${payload.resume.id}/publish`, {
+          body: JSON.stringify({
+            editorToken: payload.resume.editorToken,
+            fitScale: fitState.scale,
+            markdown,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+        });
+        const publishRaw = await publishResponse.json();
+
+        if (!publishResponse.ok) {
+          throw new Error(
+            typeof publishRaw?.error === "string"
+              ? publishRaw.error
+              : "Unable to publish hosted resume.",
+          );
+        }
+
+        payload = publishRaw as HostedResumeResponse;
+      }
+
+      applyHostedResume(payload.resume);
+    } catch (error) {
+      setRemoteSyncState({
+        kind: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to sync hosted resume.",
+      });
+    }
+  };
+
+  const copyHostedLink = async (path: string | null) => {
+    if (!path) {
+      return;
+    }
+
+    const absoluteUrl = new URL(path, window.location.origin).toString();
+    await navigator.clipboard.writeText(absoluteUrl);
+    window.alert(`Copied ${absoluteUrl}`);
+  };
 
   const measureFit = useEffectEvent(() => {
     const page = contentBoundsRef.current;
@@ -321,7 +520,21 @@ export function CvStudio() {
                 New draft
               </button>
               <button
+                className={secondaryActionButtonClass}
+                onClick={() => void mutateHostedResume()}
+                type="button"
+              >
+                {activeDraft?.remoteResumeId ? "Save online" : "Create link"}
+              </button>
+              <button
                 className={primaryActionButtonClass}
+                onClick={() => void mutateHostedResume({ publish: true })}
+                type="button"
+              >
+                {activeDraft?.isPublished ? "Update publish" : "Publish"}
+              </button>
+              <button
+                className={secondaryActionButtonClass}
                 onClick={() => window.print()}
                 type="button"
               >
@@ -360,6 +573,24 @@ export function CvStudio() {
                   >
                     Import markdown
                   </button>
+                  {publicPath && activeDraft?.isPublished ? (
+                    <button
+                      className={menuButtonClass}
+                      onClick={() => void copyHostedLink(publicPath)}
+                      type="button"
+                    >
+                      Copy public link
+                    </button>
+                  ) : null}
+                  {editorPath ? (
+                    <button
+                      className={menuButtonClass}
+                      onClick={() => void copyHostedLink(editorPath)}
+                      type="button"
+                    >
+                      Copy editor link
+                    </button>
+                  ) : null}
                   <button
                     className={menuButtonClass}
                     onClick={() => setShowPageGuides((current) => !current)}
@@ -394,6 +625,10 @@ export function CvStudio() {
             <span className="text-slate-400">/</span>
             <span className={fitState.overflow ? "text-amber-700" : ""}>
               {fitState.overflow ? "Needs tightening" : "Fits on one page"}
+            </span>
+            <span className="text-slate-400">/</span>
+            <span className={remoteSyncState.kind === "error" ? "text-rose-700" : ""}>
+              {describeRemoteSyncState(activeDraft, remoteSyncState)}
             </span>
           </div>
         </div>
@@ -611,290 +846,18 @@ const ResumePreview = forwardRef<HTMLDivElement, {
             width: `${pageMetrics.contentWidth}px`,
           } as CSSProperties}
         >
-          <div
-            className="cv-content-root"
-            ref={ref}
-            style={{
-              "--cv-scale": fitScale.toFixed(3),
-            } as CSSProperties}
-          >
-            <header
-              className={`${
-                document.style.showHeaderDivider ? "border-b border-slate-200" : ""
-              }`}
-              style={{
-                paddingBottom: document.style.showHeaderDivider ? "0.2in" : "0.08in",
-              }}
-            >
-              <h1
-                className="font-semibold leading-[0.94] tracking-[-0.036em] text-[var(--resume-ink)]"
-                style={{
-                  fontFamily: fontFamilyForChoice(document.style.displayFont),
-                  fontSize: `${typeScale.name}em`,
-                }}
-              >
-                {document.name}
-              </h1>
-
-              {document.headline ? (
-                <p
-                  className="mt-[0.1in] font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)]"
-                  style={{
-                    fontFamily: fontFamilyForChoice(document.style.displayFont),
-                    fontSize: `${typeScale.headline}em`,
-                  }}
-                >
-                  {document.headline}
-                </p>
-              ) : null}
-
-              {document.contactLines.length ? (
-                <div
-                  className="mt-[0.11in] flex flex-col gap-[0.035in] leading-[1.4] text-[var(--resume-subtle)]"
-                  style={{ fontSize: `${typeScale.contact}em` }}
-                >
-                  {document.contactLines.map((line, index) => (
-                    <p key={`contact-${index}-${line}`}>
-                      <InlineMarkdown content={line} />
-                    </p>
-                  ))}
-                </div>
-              ) : null}
-            </header>
-
-            <div
-              className="flex flex-col gap-[0.16in]"
-              style={{
-                marginTop: document.style.showHeaderDivider ? "0.2in" : "0.09in",
-              }}
-            >
-              {document.sections.map((section) => (
-                <ResumeSectionBlock
-                  key={section.id}
-                  section={section}
-                  stylePrefs={document.style}
-                  typeScale={typeScale}
-                />
-              ))}
-            </div>
+          <div ref={ref}>
+            <ResumeDocumentContent
+              document={document}
+              fitScale={fitScale}
+              typeScale={typeScale}
+            />
           </div>
         </div>
       </div>
     </article>
   );
 });
-
-function ResumeSectionBlock({
-  section,
-  stylePrefs,
-  typeScale,
-}: {
-  section: ResumeSection;
-  stylePrefs: ResumeStylePrefs;
-  typeScale: ReturnType<typeof resolveResumeTypography>;
-}) {
-  const isSkillsSection = section.skillGroups.length > 0;
-
-  return (
-    <section>
-      <div className="mb-[0.08in] flex items-center gap-[0.12in]">
-        <h2
-          className="shrink-0 font-semibold uppercase tracking-[0.22em] text-[var(--accent-strong)]"
-          style={{
-            fontFamily: fontFamilyForChoice(stylePrefs.displayFont),
-            fontSize: `${typeScale.sectionLabel}em`,
-          }}
-        >
-          {section.title}
-        </h2>
-        {stylePrefs.showSectionDivider ? (
-          <div className="h-px flex-1 bg-slate-200" />
-        ) : null}
-      </div>
-
-      {section.paragraphs.length && !isSkillsSection ? (
-        <div
-          className="flex flex-col gap-[0.07in] leading-[1.48] text-[var(--resume-ink)]"
-          style={{ fontSize: `${typeScale.body}em` }}
-        >
-          {section.paragraphs.map((paragraph, index) => (
-            <p key={`${section.id}-paragraph-${index}`}>
-              <InlineMarkdown content={paragraph} />
-            </p>
-          ))}
-        </div>
-      ) : null}
-
-      {section.bullets.length && !section.entries.length && !isSkillsSection ? (
-        <ul
-          className="mt-[0.04in] flex flex-col gap-[0.05in] pl-[0.18in] leading-[1.42] text-[var(--resume-ink)]"
-          style={{ fontSize: `${typeScale.body}em` }}
-        >
-          {section.bullets.map((bullet, index) => (
-            <li key={`${section.id}-bullet-${index}`} className="list-disc">
-              <InlineMarkdown content={bullet} />
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {section.entries.length ? (
-        <div className="flex flex-col gap-[0.13in]">
-          {section.entries.map((entry, entryIndex) => (
-            <article key={`${section.id}-entry-${entryIndex}`}>
-              <div className="flex items-baseline justify-between gap-[0.18in]">
-                <div className="min-w-0">
-                  <p
-                    className="font-semibold leading-tight text-[var(--resume-ink)]"
-                    style={{
-                      fontSize: `${typeScale.entryTitle}em`,
-                    }}
-                  >
-                    {entry.titleParts[0] ?? ""}
-                    {entry.titleParts[1] ? (
-                      <span className="font-medium text-[var(--resume-subtle)]">
-                        {" "}
-                        · {entry.titleParts.slice(1).join(" · ")}
-                      </span>
-                    ) : null}
-                  </p>
-                </div>
-
-                {entry.metaRight ? (
-                  <p
-                    className="shrink-0 text-right font-semibold uppercase tracking-[0.11em] text-[var(--resume-subtle)]"
-                    style={{ fontSize: `${typeScale.date}em` }}
-                  >
-                    {entry.metaRight}
-                  </p>
-                ) : null}
-              </div>
-
-              {entry.metaLeft ? (
-                <p
-                  className="mt-[0.024in] italic text-[var(--resume-subtle)]"
-                  style={{ fontSize: `${typeScale.entryMeta}em` }}
-                >
-                  <InlineMarkdown content={entry.metaLeft} />
-                </p>
-              ) : null}
-
-              {entry.paragraphs.length ? (
-                <div
-                  className="mt-[0.045in] flex flex-col gap-[0.04in] leading-[1.43] text-[var(--resume-ink)]"
-                  style={{ fontSize: `${typeScale.body}em` }}
-                >
-                  {entry.paragraphs.map((paragraph, paragraphIndex) => (
-                    <p key={`${section.id}-entry-${entryIndex}-paragraph-${paragraphIndex}`}>
-                      <InlineMarkdown content={paragraph} />
-                    </p>
-                  ))}
-                </div>
-              ) : null}
-
-              {entry.bullets.length ? (
-                <ul
-                  className="mt-[0.05in] flex flex-col gap-[0.045in] pl-[0.18in] leading-[1.42] text-[var(--resume-ink)]"
-                  style={{ fontSize: `${typeScale.body}em` }}
-                >
-                  {entry.bullets.map((bullet, bulletIndex) => (
-                    <li
-                      key={`${section.id}-entry-${entryIndex}-bullet-${bulletIndex}`}
-                      className="list-disc"
-                    >
-                      <InlineMarkdown content={bullet} />
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </article>
-          ))}
-        </div>
-      ) : null}
-
-      {isSkillsSection ? (
-        <dl
-          className="grid gap-y-[0.04in] leading-[1.4] text-[var(--resume-ink)] md:grid-cols-[auto_1fr] md:gap-x-[0.16in]"
-          style={{ fontSize: `${typeScale.skills}em` }}
-        >
-          {section.skillGroups.map((group, index) => (
-            <Fragment key={`${section.id}-skill-${index}`}>
-              <dt
-                className="font-semibold text-[var(--resume-ink)]"
-              >
-                {group.label}
-              </dt>
-              <dd
-                className="text-[var(--resume-subtle)] md:pl-[0.02in]"
-              >
-                <InlineMarkdown content={group.value} />
-              </dd>
-            </Fragment>
-          ))}
-        </dl>
-      ) : null}
-    </section>
-  );
-}
-
-function InlineMarkdown({ content }: { content: string }) {
-  return (
-    <ReactMarkdown
-      disallowedElements={[
-        "blockquote",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "hr",
-        "img",
-        "li",
-        "ol",
-        "pre",
-        "table",
-        "tbody",
-        "td",
-        "th",
-        "thead",
-        "tr",
-        "ul",
-      ]}
-      remarkPlugins={[remarkGfm]}
-      skipHtml
-      unwrapDisallowed
-      components={{
-        p: ({ children }) => <>{children}</>,
-        a: ({ children, href }) => (
-          <a
-            className="cv-link"
-            href={href}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {children}
-          </a>
-        ),
-        strong: ({ children }) => (
-          <strong className="font-semibold text-[var(--resume-ink)]">
-            {children}
-          </strong>
-        ),
-        em: ({ children }) => (
-          <em className="italic text-[var(--resume-subtle)]">{children}</em>
-        ),
-        code: ({ children }) => (
-          <code className="rounded bg-black/5 px-[0.12em] py-[0.04em] font-mono text-[0.92em]">
-            {children}
-          </code>
-        ),
-      }}
-    >
-      {content}
-    </ReactMarkdown>
-  );
-}
 
 function EditorLoadingState() {
   return (
@@ -1265,17 +1228,6 @@ function FitStyleProbes({
   );
 }
 
-function fontFamilyForChoice(choice: ResumeFontChoice) {
-  if (choice === "serif") {
-    return "var(--font-display-serif), serif";
-  }
-
-  if (choice === "mono") {
-    return "var(--font-ui-mono), monospace";
-  }
-
-  return "var(--font-ui-sans), sans-serif";
-}
 
 function switchDraft(
   draftId: string,
@@ -1386,4 +1338,31 @@ function importDraftFile(
     event.target.value = "";
   };
   reader.readAsText(file);
+}
+
+function describeRemoteSyncState(
+  activeDraft: ResumeDraft | null,
+  remoteSyncState: RemoteSyncState,
+) {
+  if (remoteSyncState.kind === "error") {
+    return remoteSyncState.message;
+  }
+
+  if (remoteSyncState.kind === "saving") {
+    return "Saving online";
+  }
+
+  if (remoteSyncState.kind === "publishing") {
+    return "Publishing";
+  }
+
+  if (!activeDraft?.remoteResumeId) {
+    return "Local only";
+  }
+
+  if (activeDraft.isPublished) {
+    return "Published";
+  }
+
+  return "Saved online";
 }
