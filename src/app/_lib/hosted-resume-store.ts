@@ -31,6 +31,13 @@ export class HostedResumeStoreUnavailableError extends Error {
   }
 }
 
+export class HostedResumeStoreConnectionError extends Error {
+  constructor(message = "Hosted resume storage is unreachable.") {
+    super(message);
+    this.name = "HostedResumeStoreConnectionError";
+  }
+}
+
 type HostedResumeStore = {
   create(input: { fitScale: number; markdown: string }): Promise<HostedResumeEditorRecord>;
   getForEdit(input: {
@@ -59,14 +66,22 @@ export async function createHostedResume(input: {
   fitScale: number;
   markdown: string;
 }) {
-  return getHostedResumeStore().create(input);
+  try {
+    return await getHostedResumeStore().create(input);
+  } catch (error) {
+    throw mapHostedResumeStoreError(error);
+  }
 }
 
 export async function getHostedResumeForEdit(input: {
   editorToken: string;
   resumeId: string;
 }) {
-  return getHostedResumeStore().getForEdit(input);
+  try {
+    return await getHostedResumeStore().getForEdit(input);
+  } catch (error) {
+    throw mapHostedResumeStoreError(error);
+  }
 }
 
 export async function saveHostedResume(input: {
@@ -75,7 +90,11 @@ export async function saveHostedResume(input: {
   markdown: string;
   resumeId: string;
 }) {
-  return getHostedResumeStore().save(input);
+  try {
+    return await getHostedResumeStore().save(input);
+  } catch (error) {
+    throw mapHostedResumeStoreError(error);
+  }
 }
 
 export async function publishHostedResume(input: {
@@ -84,11 +103,19 @@ export async function publishHostedResume(input: {
   markdown: string;
   resumeId: string;
 }) {
-  return getHostedResumeStore().publish(input);
+  try {
+    return await getHostedResumeStore().publish(input);
+  } catch (error) {
+    throw mapHostedResumeStoreError(error);
+  }
 }
 
 export async function getPublishedResumeBySlug(slug: string) {
-  return getHostedResumeStore().getPublishedBySlug(slug);
+  try {
+    return await getHostedResumeStore().getPublishedBySlug(slug);
+  } catch (error) {
+    throw mapHostedResumeStoreError(error);
+  }
 }
 
 function getHostedResumeStore(): HostedResumeStore {
@@ -370,6 +397,49 @@ function getPostgresClient() {
   });
 
   return postgresClient;
+}
+
+function mapHostedResumeStoreError(error: unknown) {
+  if (
+    error instanceof HostedResumeStoreUnavailableError ||
+    error instanceof HostedResumeStoreConnectionError
+  ) {
+    return error;
+  }
+
+  if (isSupabaseDirectUrlDnsError(error)) {
+    return new HostedResumeStoreConnectionError(
+      "The configured Supabase DATABASE_URL uses the direct db host, which is IPv6-only and fails on Vercel. Replace DATABASE_URL with Supabase's pooler connection string.",
+    );
+  }
+
+  if (isDatabaseDnsError(error)) {
+    return new HostedResumeStoreConnectionError(
+      "Hosted resume storage could not resolve its database host. Check DATABASE_URL.",
+    );
+  }
+
+  return error;
+}
+
+function isDatabaseDnsError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "ENOTFOUND"
+  );
+}
+
+function isSupabaseDirectUrlDnsError(error: unknown) {
+  return (
+    isDatabaseDnsError(error) &&
+    typeof error === "object" &&
+    error !== null &&
+    "hostname" in error &&
+    typeof (error as { hostname?: unknown }).hostname === "string" &&
+    /^db\..+\.supabase\.co$/i.test((error as { hostname: string }).hostname)
+  );
 }
 
 async function ensureSchema(sql: postgres.Sql) {

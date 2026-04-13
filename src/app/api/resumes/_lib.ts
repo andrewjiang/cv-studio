@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { HostedResumeStoreUnavailableError } from "@/app/_lib/hosted-resume-store";
+import {
+  HostedResumeStoreConnectionError,
+  HostedResumeStoreUnavailableError,
+} from "@/app/_lib/hosted-resume-store";
 import type { HostedResumeEditorRecord, HostedResumeResponse } from "@/app/_lib/hosted-resume-types";
 
 export function parseResumeMutationBody(body: unknown) {
@@ -38,6 +41,13 @@ export function buildResumeResponse(
 
 export function handleResumeStoreError(error: unknown) {
   if (error instanceof HostedResumeStoreUnavailableError) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 503 },
+    );
+  }
+
+  if (error instanceof HostedResumeStoreConnectionError) {
     return NextResponse.json(
       { error: error.message },
       { status: 503 },
