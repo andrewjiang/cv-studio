@@ -399,10 +399,10 @@ export function CvStudio() {
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-[112rem] flex-1 flex-col px-4 py-4 lg:px-8 lg:py-5">
-        <div className={shellClassName}>
+      <div className="studio-workspace mx-auto flex w-full max-w-[112rem] flex-1 flex-col px-4 py-4 lg:px-8 lg:py-5">
+        <div className={`studio-grid ${shellClassName}`}>
           {mode === "edit" ? (
-            <section className="flex min-h-[calc(100vh-10.25rem)] flex-col">
+            <section className="editor-column flex min-h-[calc(100vh-10.25rem)] flex-col">
               <div className="app-chrome mb-3 flex flex-col gap-3 px-1">
                 <h2 className="text-[0.95rem] font-semibold uppercase tracking-[0.12em] text-slate-800">
                   Markdown Source
@@ -478,7 +478,7 @@ export function CvStudio() {
             </section>
           ) : null}
 
-          <section className="flex flex-col items-center">
+          <section className="preview-column flex flex-col items-center">
             <div
               className="app-chrome mb-3 flex items-center justify-between gap-4 px-1"
               style={{ width: `${pageMetrics.pageWidth * previewScale}px` }}
@@ -1168,7 +1168,7 @@ function FitStyleProbes({
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute left-0 top-0 -z-10 opacity-0"
+      className="fit-style-probes pointer-events-none absolute left-0 top-0 -z-10 opacity-0"
     >
       <article
         className="cv-document"

@@ -151,13 +151,21 @@ textarea {
   html,
   body {
     background: white;
+    margin: 0;
+    padding: 0;
   }
 
   body {
     min-height: auto;
+    overflow: visible;
   }
 
   .app-chrome {
+    display: none !important;
+  }
+
+  .editor-column,
+  .fit-style-probes {
     display: none !important;
   }
 
@@ -166,26 +174,42 @@ textarea {
     background: white;
   }
 
-  .cv-stage {
-    width: auto;
-    max-width: none;
+  .studio-workspace,
+  .studio-grid,
+  .preview-column,
+  .cv-stage,
+  .cv-paper-frame {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
 
-  .cv-paper-frame {
-    width: auto !important;
-    height: auto !important;
+  .preview-column {
+    align-items: stretch !important;
   }
 
   .cv-sheet {
-    aspect-ratio: auto;
+    display: block !important;
     border: none;
     box-shadow: none;
+    margin: 0 !important;
     overflow: hidden;
     transform: none !important;
+    transform-origin: top left !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .cv-document {
-    height: auto;
-    font-size: 16px;
+    height: 100% !important;
+  }
+
+  .cv-content-root {
+    font-size: calc(16px * var(--cv-scale)) !important;
   }
 }
