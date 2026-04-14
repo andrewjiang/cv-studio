@@ -5,6 +5,7 @@ import {
   type Dispatch,
   type CSSProperties,
   type ChangeEvent,
+  type ReactNode,
   type RefObject,
   type SetStateAction,
   useEffect,
@@ -34,10 +35,12 @@ import {
   type ResumeDraftStore,
 } from "@/app/_lib/cv-drafts";
 import {
+  AGGRESSIVE_CV_SCALE_LIMITS,
   CV_SCALE_LIMITS,
   estimateResumeScale,
   getPageMetrics,
   readMeasuredTextStyle,
+  type CvScaleLimits,
   type CvTypography,
 } from "@/app/_lib/cv-fit";
 import {
@@ -49,6 +52,7 @@ import {
   resolveResumeTypography,
   splitCvMarkdown,
   type ResumeDocument,
+  type ResumePageSize,
   type ResumeStylePrefs,
 } from "@/app/_lib/cv-markdown";
 import type {
@@ -78,6 +82,7 @@ export function CvStudio({
   const [fontsReady, setFontsReady] = useState(false);
   const [showStylePrefs, setShowStylePrefs] = useState(false);
   const [showPageGuides, setShowPageGuides] = useState(false);
+  const [pageSizeNotice, setPageSizeNotice] = useState<string | null>(null);
   const [remoteSyncState, setRemoteSyncState] = useState<RemoteSyncState>({ kind: "idle" });
   const [draftStore, setDraftStore] = useState<ResumeDraftStore>(() => {
     const draft = createDefaultDraft(DEFAULT_CV_MARKDOWN);
@@ -110,7 +115,7 @@ export function CvStudio({
   const skillsTermProbeRef = useRef<HTMLSpanElement>(null);
   const skillsValueProbeRef = useRef<HTMLSpanElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
-  const [fitState, setFitState] = useState({ scale: 1, overflow: false });
+  const [fitState, setFitState] = useState({ aggressive: false, overflow: false, scale: 1 });
   const [previewScale, setPreviewScale] = useState(1);
   const activeDraft = getActiveDraft(draftStore);
   const editorPath = activeDraft?.remoteResumeId && activeDraft.editorToken
@@ -234,16 +239,26 @@ export function CvStudio({
     };
   }, []);
 
-  const applyHostedResume = (resume: HostedResumeEditorRecord) => {
+  const applyHostedResume = (
+    resume: HostedResumeEditorRecord,
+    targetDraftId: string,
+  ) => {
+    let shouldSyncCurrentView = false;
+
     setDraftStore((current) => {
-      const currentDraft = getActiveDraft(current);
-      const nextStore = currentDraft
-        ? attachHostedResume(current, currentDraft.id, resume)
+      shouldSyncCurrentView = current.activeDraftId === targetDraftId;
+      const nextStore = current.drafts.some((draft) => draft.id === targetDraftId)
+        ? attachHostedResume(current, targetDraftId, resume)
         : upsertHostedDraft(current, resume);
 
       saveDraftStore(window.localStorage, nextStore);
       return nextStore;
     });
+
+    if (!shouldSyncCurrentView) {
+      return;
+    }
+
     setMarkdown(resume.markdown);
     setLastSavedAt(resume.updatedAt);
     setRemoteSyncState({ kind: "saved" });
@@ -269,6 +284,11 @@ export function CvStudio({
       return;
     }
 
+    const targetDraft = activeDraft;
+    const targetDraftId = targetDraft.id;
+    const nextMarkdown = markdown;
+    const nextFitScale = fitState.scale;
+
     if (!silent) {
       setRemoteSyncState({ kind: publish ? "publishing" : "saving" });
     }
@@ -277,16 +297,16 @@ export function CvStudio({
       let response: Response;
       let payload: HostedResumeResponse;
 
-      if (activeDraft.remoteResumeId && activeDraft.editorToken) {
+      if (targetDraft.remoteResumeId && targetDraft.editorToken) {
         response = await fetch(
           publish
-            ? `/api/resumes/${activeDraft.remoteResumeId}/publish`
-            : `/api/resumes/${activeDraft.remoteResumeId}`,
+            ? `/api/resumes/${targetDraft.remoteResumeId}/publish`
+            : `/api/resumes/${targetDraft.remoteResumeId}`,
           {
             body: JSON.stringify({
-              editorToken: activeDraft.editorToken,
-              fitScale: fitState.scale,
-              markdown,
+              editorToken: targetDraft.editorToken,
+              fitScale: nextFitScale,
+              markdown: nextMarkdown,
             }),
             headers: {
               "Content-Type": "application/json",
@@ -297,8 +317,8 @@ export function CvStudio({
       } else {
         response = await fetch("/api/resumes", {
           body: JSON.stringify({
-            fitScale: fitState.scale,
-            markdown,
+            fitScale: nextFitScale,
+            markdown: nextMarkdown,
           }),
           headers: {
             "Content-Type": "application/json",
@@ -317,12 +337,12 @@ export function CvStudio({
 
       payload = raw as HostedResumeResponse;
 
-      if (publish && !activeDraft.remoteResumeId && payload.resume.editorToken) {
+      if (publish && !targetDraft.remoteResumeId && payload.resume.editorToken) {
         const publishResponse = await fetch(`/api/resumes/${payload.resume.id}/publish`, {
           body: JSON.stringify({
             editorToken: payload.resume.editorToken,
-            fitScale: fitState.scale,
-            markdown,
+            fitScale: nextFitScale,
+            markdown: nextMarkdown,
           }),
           headers: {
             "Content-Type": "application/json",
@@ -342,7 +362,7 @@ export function CvStudio({
         payload = publishRaw as HostedResumeResponse;
       }
 
-      applyHostedResume(payload.resume);
+      applyHostedResume(payload.resume, targetDraftId);
     } catch (error) {
       setRemoteSyncState({
         kind: "error",
@@ -383,23 +403,41 @@ export function CvStudio({
     }
 
     const predictedScale = estimateResumeScale(resumeDocument, typography);
-    const { overflow, scale } = refineScaleWithDom({
+    let result = refineScaleWithDom({
       content,
       initialScale: predictedScale,
+      limits: CV_SCALE_LIMITS,
       page,
     });
+    let aggressive = false;
+
+    if (result.overflow) {
+      aggressive = true;
+      result = refineScaleWithDom({
+        content,
+        initialScale: estimateResumeScale(
+          resumeDocument,
+          typography,
+          AGGRESSIVE_CV_SCALE_LIMITS,
+        ),
+        limits: AGGRESSIVE_CV_SCALE_LIMITS,
+        page,
+      });
+    }
 
     setFitState((current) => {
       if (
-        current.scale === scale &&
-        current.overflow === overflow
+        current.aggressive === aggressive &&
+        current.scale === result.scale &&
+        current.overflow === result.overflow
       ) {
         return current;
       }
 
       return {
-        scale,
-        overflow,
+        aggressive,
+        overflow: result.overflow,
+        scale: result.scale,
       };
     });
   });
@@ -431,6 +469,23 @@ export function CvStudio({
 
     measureFit();
   }, [fontsReady, hasHydrated, markdown]);
+
+  useEffect(() => {
+    if (!hasHydrated || resumeDocument.style.pageSize !== "letter" || !fitState.overflow) {
+      return;
+    }
+
+    setMarkdown((current) => updateMarkdownPageSize(current, "legal"));
+    setPageSizeNotice("This draft was too long for one page on letter, so it was auto-switched to legal.");
+  }, [fitState.overflow, hasHydrated, resumeDocument.style.pageSize]);
+
+  useEffect(() => {
+    if (resumeDocument.style.pageSize !== "letter") {
+      return;
+    }
+
+    setPageSizeNotice(null);
+  }, [resumeDocument.style.pageSize]);
 
   useLayoutEffect(() => {
     if (!hasHydrated) {
@@ -564,67 +619,76 @@ export function CvStudio({
                   >
                     <MenuIcon />
                   </summary>
-                  <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-[14rem] rounded-[1rem] border border-black/10 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)]">
-                    <button
-                      className={menuButtonClass}
-                      onClick={() => setMarkdown(DEFAULT_CV_MARKDOWN)}
-                      type="button"
-                    >
-                      Reset template
-                    </button>
-                    <button
-                      className={menuButtonClass}
-                      onClick={() => renameCurrentDraft(activeDraft, setDraftStore)}
-                      type="button"
-                    >
-                      Rename draft
-                    </button>
-                    <button
-                      className={menuButtonClass}
-                      onClick={() => exportDraft(activeDraft)}
-                      type="button"
-                    >
-                      Export markdown
-                    </button>
-                    <button
-                      className={menuButtonClass}
-                      onClick={() => importInputRef.current?.click()}
-                      type="button"
-                    >
-                      Import markdown
-                    </button>
-                    <button
-                      className={menuButtonClass}
-                      onClick={() => void mutateHostedResume()}
-                      type="button"
-                    >
-                      {activeDraft?.remoteResumeId ? "Save online" : "Create link"}
-                    </button>
-                    {publicPath && activeDraft?.isPublished ? (
+                  <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-[16.5rem] rounded-[1rem] border border-black/10 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)]">
+                    <MenuSection title="Draft">
                       <button
                         className={menuButtonClass}
+                        onClick={() => renameCurrentDraft(activeDraft, setDraftStore)}
+                        type="button"
+                      >
+                        Rename draft
+                      </button>
+                      <button
+                        className={`${menuButtonClass} text-rose-700 hover:bg-rose-50`}
+                        onClick={() => setMarkdown(DEFAULT_CV_MARKDOWN)}
+                        type="button"
+                      >
+                        Reset to starter template
+                      </button>
+                    </MenuSection>
+
+                    <MenuSection title="Import / Export">
+                      <button
+                        className={menuButtonClass}
+                        onClick={() => importInputRef.current?.click()}
+                        type="button"
+                      >
+                        Import markdown
+                      </button>
+                      <button
+                        className={menuButtonClass}
+                        onClick={() => exportDraft(activeDraft)}
+                        type="button"
+                      >
+                        Export markdown
+                      </button>
+                    </MenuSection>
+
+                    <MenuSection title="Sharing">
+                      <button
+                        className={menuButtonClass}
+                        onClick={() => void mutateHostedResume()}
+                        type="button"
+                      >
+                        {activeDraft?.remoteResumeId ? "Sync online" : "Create link"}
+                      </button>
+                      <button
+                        className={menuButtonClass}
+                        disabled={!publicPath || !activeDraft?.isPublished}
                         onClick={() => void copyHostedLink(publicPath)}
                         type="button"
                       >
                         Copy public link
                       </button>
-                    ) : null}
-                    {editorPath ? (
                       <button
                         className={menuButtonClass}
+                        disabled={!editorPath}
                         onClick={() => void copyHostedLink(editorPath)}
                         type="button"
                       >
                         Copy editor link
                       </button>
-                    ) : null}
-                    <button
-                      className={menuButtonClass}
-                      onClick={() => setShowPageGuides((current) => !current)}
-                      type="button"
-                    >
-                      {showPageGuides ? "Hide page guides" : "Show page guides"}
-                    </button>
+                    </MenuSection>
+
+                    <MenuSection title="Advanced">
+                      <button
+                        className={menuButtonClass}
+                        onClick={() => setShowPageGuides((current) => !current)}
+                        type="button"
+                      >
+                        {showPageGuides ? "Hide page guides" : "Show page guides"}
+                      </button>
+                    </MenuSection>
                   </div>
                 </details>
               </div>
@@ -725,6 +789,18 @@ export function CvStudio({
                 </button>
               </div>
             </div>
+            {pageSizeNotice || fitState.aggressive || fitState.overflow ? (
+              <div
+                className="app-chrome mb-3 px-1 text-[0.77rem] text-slate-500"
+                style={{ width: `${pageMetrics.pageWidth * previewScale}px` }}
+              >
+                {pageSizeNotice
+                  ? pageSizeNotice
+                  : fitState.overflow
+                  ? "This draft is still too long for one page at the minimum fit size."
+                  : "Aggressive fit is active for this page size."}
+              </div>
+            ) : null}
 
             <div className="cv-stage" ref={stageViewportRef}>
               <div
@@ -983,12 +1059,29 @@ const textActionLinkClass =
   "inline-flex items-center gap-2 text-[0.86rem] font-medium text-slate-600 underline-offset-4 transition hover:text-slate-950 hover:underline";
 
 const menuButtonClass =
-  "block w-full rounded-[0.75rem] px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50";
+  "block w-full rounded-[0.75rem] px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent";
 
 function modeButtonClass(active: boolean) {
   return active
     ? "rounded-full bg-slate-900 px-4 py-2 text-[0.88rem] font-semibold text-white shadow-[0_6px_16px_rgba(15,23,42,0.14)]"
     : "rounded-full px-4 py-2 text-[0.88rem] font-semibold text-slate-500 transition hover:text-slate-700";
+}
+
+function MenuSection({
+  children,
+  title,
+}: {
+  children: ReactNode;
+  title: string;
+}) {
+  return (
+    <div className="border-b border-black/6 px-1 py-1.5 last:border-b-0">
+      <p className="px-3 pb-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
+        {title}
+      </p>
+      <div className="flex flex-col gap-0.5">{children}</div>
+    </div>
+  );
 }
 
 function DownloadIcon() {
@@ -1087,13 +1180,15 @@ function readTypography(nodes: {
 function refineScaleWithDom({
   content,
   initialScale,
+  limits,
   page,
 }: {
   content: HTMLDivElement;
   initialScale: number;
+  limits: CvScaleLimits;
   page: HTMLDivElement;
 }) {
-  let scale = clampScale(initialScale);
+  let scale = clampScale(initialScale, limits);
   let overflow = false;
 
   const measureOverflow = () => content.scrollHeight > page.clientHeight + 1;
@@ -1108,8 +1203,8 @@ function refineScaleWithDom({
   applyCandidateScale(scale);
   overflow = measureOverflow();
 
-  while (!overflow && scale < CV_SCALE_LIMITS.max) {
-    const nextScale = clampScale(scale + CV_SCALE_LIMITS.step);
+  while (!overflow && scale < limits.max) {
+    const nextScale = clampScale(scale + limits.step, limits);
 
     if (nextScale === scale) {
       break;
@@ -1127,14 +1222,14 @@ function refineScaleWithDom({
     scale = nextScale;
   }
 
-  while (overflow && scale > CV_SCALE_LIMITS.min) {
-    scale = clampScale(scale - CV_SCALE_LIMITS.step);
+  while (overflow && scale > limits.min) {
+    scale = clampScale(scale - limits.step, limits);
     applyCandidateScale(scale);
     overflow = measureOverflow();
   }
 
   if (overflow) {
-    applyCandidateScale(CV_SCALE_LIMITS.min);
+    applyCandidateScale(limits.min);
   }
 
   return {
@@ -1143,10 +1238,28 @@ function refineScaleWithDom({
   };
 }
 
-function clampScale(value: number) {
+function clampScale(value: number, limits: CvScaleLimits) {
   return Number(
-    Math.min(CV_SCALE_LIMITS.max, Math.max(CV_SCALE_LIMITS.min, value)).toFixed(3),
+    Math.min(limits.max, Math.max(limits.min, value)).toFixed(3),
   );
+}
+
+function updateMarkdownPageSize(markdown: string, pageSize: ResumePageSize) {
+  const { bodyMarkdown } = splitCvMarkdown(markdown);
+  const nextStyle = parseCvMarkdown(markdown).style;
+
+  if (nextStyle.pageSize === pageSize) {
+    return markdown;
+  }
+
+  return composeCvMarkdown({
+    bodyMarkdown,
+    frontmatter: composeCvFrontmatter({
+      ...DEFAULT_RESUME_STYLE,
+      ...nextStyle,
+      pageSize,
+    }),
+  });
 }
 
 function FitStyleProbes({
@@ -1292,10 +1405,14 @@ function switchDraft(
     return;
   }
 
-  setDraftStore((current) => ({
-    ...current,
-    activeDraftId: draftId,
-  }));
+  setDraftStore((current) => {
+    const nextStore = {
+      ...current,
+      activeDraftId: draftId,
+    };
+    saveDraftStore(window.localStorage, nextStore);
+    return nextStore;
+  });
   setMarkdown(nextDraft.markdown);
   setLastSavedAt(nextDraft.updatedAt);
 }

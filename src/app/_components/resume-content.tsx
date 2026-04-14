@@ -567,12 +567,12 @@ export function getPaperCompression(fitScale: number) {
     return 1;
   }
 
-  if (fitScale <= 0.72) {
-    return 0.76;
+  if (fitScale <= 0.68) {
+    return 0.7;
   }
 
-  const progress = (0.92 - fitScale) / 0.2;
-  return 1 - progress * 0.24;
+  const progress = (0.92 - fitScale) / 0.24;
+  return 1 - progress * 0.3;
 }
 
 export function fontFamilyForChoice(choice: ResumeFontChoice) {

@@ -35,6 +35,14 @@ export const CV_SCALE_LIMITS = {
   step: 0.005,
 };
 
+export const AGGRESSIVE_CV_SCALE_LIMITS = {
+  min: 0.68,
+  max: 1.18,
+  step: 0.005,
+};
+
+export type CvScaleLimits = typeof CV_SCALE_LIMITS;
+
 export type MeasuredTextStyle = {
   fontFamily: string;
   fontSize: number;
@@ -101,11 +109,12 @@ export function readMeasuredTextStyle(node: HTMLElement | null): MeasuredTextSty
 export function estimateResumeScale(
   document: ResumeDocument,
   typography: CvTypography,
+  limits: CvScaleLimits = CV_SCALE_LIMITS,
 ) {
   const page = getPageMetrics(document.style);
-  let low = CV_SCALE_LIMITS.min;
-  let high = CV_SCALE_LIMITS.max;
-  let best = CV_SCALE_LIMITS.min;
+  let low = limits.min;
+  let high = limits.max;
+  let best = limits.min;
 
   for (let iteration = 0; iteration < 12; iteration += 1) {
     const scale = (low + high) / 2;
@@ -133,12 +142,13 @@ function estimateDocumentHeight(
     prepared: new Map(),
     preparedSegments: new Map(),
   };
+  const compression = getFitCompression(scale);
 
   let total = 0;
   total += measureParagraph(document.name, typography.name, page.contentWidth, scale, caches);
 
   if (document.headline) {
-    total += 0.1 * PX_PER_INCH;
+    total += compressSpacing(0.1 * PX_PER_INCH, compression);
     total += measureParagraph(
       document.headline,
       typography.headline,
@@ -149,30 +159,30 @@ function estimateDocumentHeight(
   }
 
   if (document.contactRows.length) {
-    total += 0.11 * PX_PER_INCH;
+    total += compressSpacing(0.11 * PX_PER_INCH, compression);
 
     document.contactRows.forEach((line, index) => {
       total += measureParagraph(line, typography.contact, page.contentWidth, scale, caches);
 
       if (index < document.contactRows.length - 1) {
-        total += CONTACT_GAP;
+        total += compressSpacing(CONTACT_GAP, compression);
       }
     });
   }
 
-  total += 0.2 * PX_PER_INCH;
+  total += compressSpacing(0.2 * PX_PER_INCH, compression);
   total += HEADER_BORDER_ALLOWANCE;
 
   document.sections.forEach((section, index) => {
     if (index === 0) {
-      total += DOCUMENT_TOP_MARGIN;
+      total += compressSpacing(DOCUMENT_TOP_MARGIN, compression);
     } else {
-      total += SECTION_GAP;
+      total += compressSpacing(SECTION_GAP, compression);
     }
 
     total += Math.max(typography.sectionLabel.lineHeight * scale, 1);
-    total += SECTION_HEADING_MARGIN_BOTTOM;
-    total += estimateSectionHeight(section, typography, scale, caches, page);
+    total += compressSpacing(SECTION_HEADING_MARGIN_BOTTOM, compression);
+    total += estimateSectionHeight(section, typography, scale, caches, page, compression);
   });
 
   return total;
@@ -184,9 +194,10 @@ function estimateSectionHeight(
   scale: number,
   caches: MeasurementCaches,
   page: PageMetrics,
+  compression: number,
 ) {
   if (section.skillGroups.length) {
-    return estimateSkillsHeight(section, typography, scale, caches, page);
+    return estimateSkillsHeight(section, typography, scale, caches, page, compression);
   }
 
   let total = 0;
@@ -198,31 +209,31 @@ function estimateSectionHeight(
       page.contentWidth,
       scale,
       caches,
-      SECTION_PARAGRAPH_GAP,
+      compressSpacing(SECTION_PARAGRAPH_GAP, compression),
     );
   }
 
   if (section.bullets.length && !section.entries.length) {
     if (total > 0) {
-      total += ENTRY_BULLET_MARGIN_TOP;
+      total += compressSpacing(ENTRY_BULLET_MARGIN_TOP, compression);
     }
 
-    total += measureBulletGroup(section.bullets, typography.body, scale, caches, page);
+    total += measureBulletGroup(section.bullets, typography.body, scale, caches, page, compression);
   }
 
   if (section.entries.length) {
     if (total > 0) {
-      total += ENTRY_GAP;
+      total += compressSpacing(ENTRY_GAP, compression);
     }
 
     total += section.entries.reduce((height, entry, index) => {
-      const entryHeight = estimateEntryHeight(entry, typography, scale, caches, page);
+      const entryHeight = estimateEntryHeight(entry, typography, scale, caches, page, compression);
 
       if (index === 0) {
         return entryHeight;
       }
 
-      return height + ENTRY_GAP + entryHeight;
+      return height + compressSpacing(ENTRY_GAP, compression) + entryHeight;
     }, 0);
   }
 
@@ -235,6 +246,7 @@ function estimateEntryHeight(
   scale: number,
   caches: MeasurementCaches,
   page: PageMetrics,
+  compression: number,
 ) {
   let total = 0;
   const dateText = inlineMarkdownToText(entry.metaRight ?? "");
@@ -260,7 +272,7 @@ function estimateEntryHeight(
   total += Math.max(titleHeight, dateHeight);
 
   if (entry.metaLeft) {
-    total += ENTRY_META_MARGIN_TOP;
+    total += compressSpacing(ENTRY_META_MARGIN_TOP, compression);
     total += measureParagraph(
       entry.metaLeft,
       typography.entryMeta,
@@ -271,20 +283,20 @@ function estimateEntryHeight(
   }
 
   if (entry.paragraphs.length) {
-    total += ENTRY_PARAGRAPH_MARGIN_TOP;
+    total += compressSpacing(ENTRY_PARAGRAPH_MARGIN_TOP, compression);
     total += measureParagraphGroup(
       entry.paragraphs,
       typography.body,
       page.contentWidth,
       scale,
       caches,
-      SECTION_PARAGRAPH_GAP,
+      compressSpacing(SECTION_PARAGRAPH_GAP, compression),
     );
   }
 
   if (entry.bullets.length) {
-    total += ENTRY_BULLET_MARGIN_TOP;
-    total += measureBulletGroup(entry.bullets, typography.body, scale, caches, page);
+    total += compressSpacing(ENTRY_BULLET_MARGIN_TOP, compression);
+    total += measureBulletGroup(entry.bullets, typography.body, scale, caches, page, compression);
   }
 
   return total;
@@ -296,6 +308,7 @@ function estimateSkillsHeight(
   scale: number,
   caches: MeasurementCaches,
   page: PageMetrics,
+  compression: number,
 ) {
   const termColumnWidth = section.skillGroups.reduce((maxWidth, group) => {
     const width = measureTextNaturalWidth(group.label, typography.skillsTerm, scale, caches);
@@ -313,7 +326,7 @@ function estimateSkillsHeight(
       return rowHeight;
     }
 
-    return height + SKILL_ROW_GAP + rowHeight;
+    return height + compressSpacing(SKILL_ROW_GAP, compression) + rowHeight;
   }, 0);
 }
 
@@ -342,6 +355,7 @@ function measureBulletGroup(
   scale: number,
   caches: MeasurementCaches,
   page: PageMetrics,
+  compression: number,
 ) {
   const width = Math.max(1, page.contentWidth - BULLET_INDENT);
 
@@ -352,8 +366,25 @@ function measureBulletGroup(
       return bulletHeight;
     }
 
-    return height + BULLET_GAP + bulletHeight;
+    return height + compressSpacing(BULLET_GAP, compression) + bulletHeight;
   }, 0);
+}
+
+function compressSpacing(value: number, compression: number) {
+  return value * compression;
+}
+
+function getFitCompression(fitScale: number) {
+  if (fitScale >= 0.92) {
+    return 1;
+  }
+
+  if (fitScale <= 0.68) {
+    return 0.7;
+  }
+
+  const progress = (0.92 - fitScale) / 0.24;
+  return 1 - progress * 0.3;
 }
 
 function measureParagraph(
