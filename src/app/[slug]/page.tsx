@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PublicResumeFooterActions } from "@/app/_components/public-resume-footer-actions";
 import { ResumeDocumentContent, fontFamilyForChoice } from "@/app/_components/resume-content";
 import { getPageMetrics } from "@/app/_lib/cv-fit";
 import {
@@ -79,16 +79,6 @@ export default async function PublicResumePage({
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#faf7f1_0%,#f4efe8_100%)] text-slate-900">
       <div className="mx-auto flex min-h-screen w-full max-w-[112rem] flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <div className="app-chrome mb-4 flex items-center justify-between text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-slate-500 lg:mb-6">
-          <span>Published with CV Studio</span>
-          <Link
-            className="rounded-full border border-black/10 bg-white/80 px-3 py-2 text-[0.75rem] font-medium tracking-normal text-slate-700 transition hover:border-black/20 hover:bg-white"
-            href="/"
-          >
-            Create your own
-          </Link>
-        </div>
-
         <div className="lg:hidden">
           <article
             className="rounded-[1.6rem] border border-black/8 bg-white px-5 py-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)]"
@@ -136,6 +126,8 @@ export default async function PublicResumePage({
             </article>
           </div>
         </div>
+
+        <PublicResumeFooterActions />
       </div>
 
       <style media="print">{`@page { size: ${document.style.pageSize}; margin: 0; }`}</style>

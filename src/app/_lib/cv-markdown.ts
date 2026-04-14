@@ -24,6 +24,8 @@ export type ResumeDocument = {
   name: string;
   headline: string;
   contactLines: string[];
+  contactItems: ResumeContactItem[];
+  contactRows: string[];
   sections: ResumeSection[];
   style: ResumeStylePrefs;
 };
@@ -35,9 +37,18 @@ export type CvMarkdownParts = {
 
 export type ResumeFontChoice = "sans" | "serif" | "mono";
 export type ResumePageSize = "letter" | "legal";
+export type ResumeContactStyle = "classic" | "compact" | "web-icons";
+
+export type ResumeContactItem = {
+  href?: string;
+  kind: "email" | "location" | "phone" | "social" | "text";
+  label: string;
+  platform?: "email" | "github" | "linkedin" | "phone" | "x";
+};
 
 export type ResumeStylePrefs = {
   bodyFont: ResumeFontChoice;
+  contactStyle: ResumeContactStyle;
   displayFont: ResumeFontChoice;
   pageMargin: number;
   showHeaderDivider: boolean;
@@ -59,6 +70,7 @@ export type ResumeTypographyScale = {
 
 export const DEFAULT_RESUME_STYLE: ResumeStylePrefs = {
   bodyFont: "sans",
+  contactStyle: "compact",
   displayFont: "serif",
   pageMargin: 1,
   showHeaderDivider: false,
@@ -188,13 +200,17 @@ export function parseCvMarkdown(markdown: string): ResumeDocument {
     firstIntroLine.includes("|") ||
     firstIntroLine.includes("http") ||
     firstIntroLine.includes("[");
+  const contactLines = headlineLooksLikeContact
+    ? compactIntro
+    : compactIntro.slice(1);
+  const contactItems = parseContactItems(contactLines);
 
   return {
     name,
     headline: headlineLooksLikeContact ? "" : firstIntroLine,
-    contactLines: headlineLooksLikeContact
-      ? compactIntro
-      : compactIntro.slice(1),
+    contactItems,
+    contactLines,
+    contactRows: buildContactRows(contactItems, style.contactStyle, contactLines),
     sections,
     style,
   };
@@ -239,6 +255,7 @@ export function composeCvMarkdown(parts: CvMarkdownParts) {
 export function composeCvFrontmatter(style: ResumeStylePrefs) {
   return `displayFont: ${style.displayFont}
 bodyFont: ${style.bodyFont}
+contactStyle: ${style.contactStyle}
 pageMargin: ${style.pageMargin}
 showHeaderDivider: ${style.showHeaderDivider}
 showSectionDivider: ${style.showSectionDivider}
@@ -347,6 +364,11 @@ function parseResumeStyle(frontmatter: string): ResumeStylePrefs {
 
     if (isFontChoiceStyleKey(key)) {
       style[key] = parseFontChoice(rawValue) as ResumeStylePrefs[typeof key];
+      continue;
+    }
+
+    if (key === "contactStyle") {
+      style.contactStyle = parseContactStyle(rawValue);
       continue;
     }
 
@@ -489,9 +511,9 @@ function parseSection(title: string, lines: string[], id: string): ResumeSection
 
     if (activeEntry && !activeEntry.metaLeft && !activeEntry.metaRight && isMetaLine(line)) {
       flushParagraphBuffer();
-      const [left = "", ...rest] = splitPipe(stripOuterAsterisks(line));
-      activeEntry.metaLeft = left;
-      activeEntry.metaRight = rest.join(" | ");
+      const [left = "", ...rest] = splitPipeRaw(stripOuterAsterisks(line));
+      activeEntry.metaLeft = left.trim();
+      activeEntry.metaRight = rest.join(" | ").trim();
       continue;
     }
 
@@ -526,6 +548,10 @@ function splitPipe(value: string) {
     .split("|")
     .map((part) => part.trim())
     .filter(Boolean);
+}
+
+function splitPipeRaw(value: string) {
+  return value.split("|").map((part) => part.trim());
 }
 
 function stripOuterAsterisks(value: string) {
@@ -568,6 +594,14 @@ function parseFontChoice(value: string): ResumeFontChoice {
   return "sans";
 }
 
+function parseContactStyle(value: string): ResumeContactStyle {
+  if (value === "classic" || value === "web-icons") {
+    return value;
+  }
+
+  return "compact";
+}
+
 function parsePageSize(value: string): ResumePageSize {
   return value === "legal" ? "legal" : "letter";
 }
@@ -590,4 +624,114 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function parseContactItems(lines: string[]) {
+  return lines
+    .flatMap((line) => splitPipe(line))
+    .map(parseContactItem);
+}
+
+function parseContactItem(segment: string): ResumeContactItem {
+  const markdownLink = segment.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+
+  if (markdownLink) {
+    const [, rawLabel, href] = markdownLink;
+    return normalizeContactLink(rawLabel.trim(), href.trim());
+  }
+
+  if (segment.includes("@") && !segment.includes(" ")) {
+    return {
+      href: `mailto:${segment}`,
+      kind: "email",
+      label: segment,
+      platform: "email",
+    };
+  }
+
+  if (/^\+?[\d()\-. ]{7,}$/.test(segment)) {
+    return {
+      href: `tel:${segment.replace(/[^\d+]/g, "")}`,
+      kind: "phone",
+      label: segment,
+      platform: "phone",
+    };
+  }
+
+  return {
+    kind: "location",
+    label: segment,
+  };
+}
+
+function normalizeContactLink(label: string, href: string): ResumeContactItem {
+  const normalizedHref = href.startsWith("mailto:") || href.startsWith("tel:")
+    ? href
+    : href.match(/^https?:\/\//i)
+      ? href
+      : `https://${href}`;
+
+  if (href.startsWith("mailto:") || label.includes("@")) {
+    return {
+      href: normalizedHref,
+      kind: "email",
+      label: label.includes("@") ? label : href.replace(/^mailto:/i, ""),
+      platform: "email",
+    };
+  }
+
+  let hostname = "";
+
+  try {
+    hostname = new URL(normalizedHref).hostname.toLowerCase();
+  } catch {
+    hostname = "";
+  }
+
+  if (hostname.includes("linkedin.com")) {
+    return {
+      href: normalizedHref,
+      kind: "social",
+      label: "LinkedIn",
+      platform: "linkedin",
+    };
+  }
+
+  if (hostname.includes("github.com")) {
+    return {
+      href: normalizedHref,
+      kind: "social",
+      label: "GitHub",
+      platform: "github",
+    };
+  }
+
+  if (hostname.includes("x.com") || hostname.includes("twitter.com")) {
+    return {
+      href: normalizedHref,
+      kind: "social",
+      label: "X",
+      platform: "x",
+    };
+  }
+
+  return {
+    href: normalizedHref,
+    kind: "text",
+    label,
+  };
+}
+
+function buildContactRows(
+  items: ResumeContactItem[],
+  contactStyle: ResumeContactStyle,
+  fallbackLines: string[],
+) {
+  if (contactStyle === "classic") {
+    return fallbackLines;
+  }
+
+  const rows = [items.map((item) => item.label).join(" · ")].filter(Boolean);
+
+  return rows.length ? rows : fallbackLines;
 }

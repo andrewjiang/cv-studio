@@ -148,13 +148,13 @@ function estimateDocumentHeight(
     );
   }
 
-  if (document.contactLines.length) {
+  if (document.contactRows.length) {
     total += 0.11 * PX_PER_INCH;
 
-    document.contactLines.forEach((line, index) => {
+    document.contactRows.forEach((line, index) => {
       total += measureParagraph(line, typography.contact, page.contentWidth, scale, caches);
 
-      if (index < document.contactLines.length - 1) {
+      if (index < document.contactRows.length - 1) {
         total += CONTACT_GAP;
       }
     });

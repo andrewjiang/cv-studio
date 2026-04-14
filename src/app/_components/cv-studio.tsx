@@ -23,7 +23,6 @@ import {
   addDraft,
   createDefaultDraft,
   createNamedDraft,
-  formatSavedAt,
   getActiveDraft,
   loadDraftStore,
   renameDraft,
@@ -465,7 +464,7 @@ export function CvStudio({
 
   const shellClassName =
     mode === "edit"
-      ? "grid items-start gap-5 xl:grid-cols-[minmax(28rem,0.88fr)_minmax(40rem,1.32fr)] 2xl:grid-cols-[minmax(30rem,0.82fr)_minmax(46rem,1.38fr)]"
+      ? "grid items-start gap-7 xl:grid-cols-[minmax(23rem,0.8fr)_minmax(38rem,1.2fr)]"
       : "flex justify-center";
 
   const toggleStylePrefs = () => {
@@ -484,176 +483,173 @@ export function CvStudio({
   return (
     <main className="app-shell flex flex-1 flex-col">
       <header className="app-chrome sticky top-0 z-20 border-b border-black/8 bg-white/84 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[112rem] flex-col gap-3 px-5 py-4 lg:px-8">
-          <div className="flex items-start justify-between gap-6">
+        <div className="mx-auto flex w-full max-w-[108rem] flex-col gap-3 px-5 py-3 lg:px-8">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
-                CV Studio
-              </p>
-              <h1 className="max-w-[24rem] font-[var(--font-display-serif)] text-[1.15rem] leading-tight text-slate-950 sm:text-[1.35rem]">
-                Markdown-first resume builder
+              <h1 className="text-[1.05rem] leading-none font-semibold uppercase tracking-[0.32em] text-[var(--accent-strong)] sm:text-[1.28rem]">
+                CV STUDIO
               </h1>
+              <p className="mt-1.5 max-w-[28rem] text-[0.9rem] leading-5 text-slate-600 sm:text-[0.94rem]">
+                Markdown-first CV builder that always fits on one page
+              </p>
             </div>
 
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-              <div className="rounded-full border border-black/10 bg-white/92 p-1">
-                <button
-                  className={modeButtonClass(mode === "edit")}
-                  onClick={() => setMode("edit")}
-                  type="button"
+            <div className="flex flex-col items-stretch gap-1.5 xl:min-w-[34rem] xl:items-end">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <div
+                  className="relative min-w-[14.5rem] rounded-[1rem] border border-black/10 bg-white/92 shadow-[0_8px_18px_rgba(15,23,42,0.05)]"
+                  title={lastSavedAt ? `Last saved ${new Date(lastSavedAt).toLocaleString()}` : "Drafts"}
                 >
-                  Edit
-                </button>
-                <button
-                  className={modeButtonClass(mode === "publish")}
-                  onClick={() => setMode("publish")}
-                  type="button"
-                >
-                  Publish
-                </button>
-              </div>
+                  <select
+                    aria-label="Select draft"
+                    className="h-11 w-full appearance-none bg-transparent px-4 pr-11 text-[0.92rem] font-medium text-slate-800 outline-none"
+                    onChange={(event) => {
+                      if (event.target.value === "__new__") {
+                        createDraftFromCurrent(markdown, setDraftStore, setMarkdown);
+                        return;
+                      }
 
-              <button
-                className={secondaryActionButtonClass}
-                onClick={() => createDraftFromCurrent(markdown, setDraftStore, setMarkdown)}
-                type="button"
-              >
-                New draft
-              </button>
-              <button
-                className={secondaryActionButtonClass}
-                onClick={() => void mutateHostedResume()}
-                type="button"
-              >
-                {activeDraft?.remoteResumeId ? "Save online" : "Create link"}
-              </button>
-              <button
-                className={primaryActionButtonClass}
-                onClick={() => void mutateHostedResume({ publish: true })}
-                type="button"
-              >
-                {activeDraft?.isPublished ? "Update publish" : "Publish"}
-              </button>
-              <button
-                className={secondaryActionButtonClass}
-                onClick={() => window.print()}
-                type="button"
-              >
-                Download PDF
-              </button>
-              <details className="relative">
-                <summary className={`menu-summary ${secondaryActionButtonClass}`}>
-                  More
-                </summary>
-                <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-[14rem] rounded-[1rem] border border-black/10 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)]">
+                      switchDraft(
+                        event.target.value,
+                        draftStore,
+                        setDraftStore,
+                        setMarkdown,
+                        setLastSavedAt,
+                      );
+                    }}
+                    value={draftStore.activeDraftId}
+                  >
+                    {draftStore.drafts.map((draft) => (
+                      <option key={draft.id} value={draft.id}>
+                        {draft.name}
+                      </option>
+                    ))}
+                    <option value="__new__">+ New draft</option>
+                  </select>
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
+                    <ChevronDownIcon />
+                  </span>
+                </div>
+
+                <div className="rounded-full border border-black/10 bg-white/92 p-1 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
                   <button
-                    className={menuButtonClass}
-                    onClick={() => setMarkdown(DEFAULT_CV_MARKDOWN)}
+                    className={modeButtonClass(mode === "edit")}
+                    onClick={() => setMode("edit")}
                     type="button"
                   >
-                    Reset template
+                    Edit
                   </button>
                   <button
-                    className={menuButtonClass}
-                    onClick={() => renameCurrentDraft(activeDraft, setDraftStore)}
+                    className={modeButtonClass(mode === "publish")}
+                    onClick={() => setMode("publish")}
                     type="button"
                   >
-                    Rename draft
-                  </button>
-                  <button
-                    className={menuButtonClass}
-                    onClick={() => exportDraft(activeDraft)}
-                    type="button"
-                  >
-                    Export markdown
-                  </button>
-                  <button
-                    className={menuButtonClass}
-                    onClick={() => importInputRef.current?.click()}
-                    type="button"
-                  >
-                    Import markdown
-                  </button>
-                  {publicPath && activeDraft?.isPublished ? (
-                    <button
-                      className={menuButtonClass}
-                      onClick={() => void copyHostedLink(publicPath)}
-                      type="button"
-                    >
-                      Copy public link
-                    </button>
-                  ) : null}
-                  {editorPath ? (
-                    <button
-                      className={menuButtonClass}
-                      onClick={() => void copyHostedLink(editorPath)}
-                      type="button"
-                    >
-                      Copy editor link
-                    </button>
-                  ) : null}
-                  <button
-                    className={menuButtonClass}
-                    onClick={() => setShowPageGuides((current) => !current)}
-                    type="button"
-                  >
-                    {showPageGuides ? "Hide page guides" : "Show page guides"}
+                    View
                   </button>
                 </div>
-              </details>
-            </div>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
-            <label className="text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Draft
-            </label>
-            <select
-              className="min-w-[12rem] rounded-full border border-black/10 bg-white/92 px-4 py-2 text-sm text-slate-800 outline-none"
-              onChange={(event) => switchDraft(event.target.value, draftStore, setDraftStore, setMarkdown, setLastSavedAt)}
-              value={draftStore.activeDraftId}
-            >
-              {draftStore.drafts.map((draft) => (
-                <option key={draft.id} value={draft.id}>
-                  {draft.name}
-                </option>
-              ))}
-            </select>
-            <span className="text-slate-400">/</span>
-            <span>{formatSavedAt(lastSavedAt)}</span>
-            <span className="text-slate-400">/</span>
-            <span>Preview {Math.round(fitState.scale * 100)}%</span>
-            <span className="text-slate-400">/</span>
-            <span className={fitState.overflow ? "text-amber-700" : ""}>
-              {fitState.overflow ? "Needs tightening" : "Fits on one page"}
-            </span>
-            <span className="text-slate-400">/</span>
-            <span className={remoteSyncState.kind === "error" ? "text-rose-700" : ""}>
-              {describeRemoteSyncState(activeDraft, remoteSyncState)}
-            </span>
+                <button
+                  className={primaryActionButtonClass}
+                  onClick={() => void mutateHostedResume({ publish: true })}
+                  type="button"
+                >
+                  {activeDraft?.isPublished ? "Update publish" : "Publish"}
+                </button>
+
+                <details className="relative">
+                  <summary
+                    aria-label="More actions"
+                    className={`menu-summary ${iconActionButtonClass}`}
+                    title="More"
+                  >
+                    <MenuIcon />
+                  </summary>
+                  <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-[14rem] rounded-[1rem] border border-black/10 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)]">
+                    <button
+                      className={menuButtonClass}
+                      onClick={() => setMarkdown(DEFAULT_CV_MARKDOWN)}
+                      type="button"
+                    >
+                      Reset template
+                    </button>
+                    <button
+                      className={menuButtonClass}
+                      onClick={() => renameCurrentDraft(activeDraft, setDraftStore)}
+                      type="button"
+                    >
+                      Rename draft
+                    </button>
+                    <button
+                      className={menuButtonClass}
+                      onClick={() => exportDraft(activeDraft)}
+                      type="button"
+                    >
+                      Export markdown
+                    </button>
+                    <button
+                      className={menuButtonClass}
+                      onClick={() => importInputRef.current?.click()}
+                      type="button"
+                    >
+                      Import markdown
+                    </button>
+                    <button
+                      className={menuButtonClass}
+                      onClick={() => void mutateHostedResume()}
+                      type="button"
+                    >
+                      {activeDraft?.remoteResumeId ? "Save online" : "Create link"}
+                    </button>
+                    {publicPath && activeDraft?.isPublished ? (
+                      <button
+                        className={menuButtonClass}
+                        onClick={() => void copyHostedLink(publicPath)}
+                        type="button"
+                      >
+                        Copy public link
+                      </button>
+                    ) : null}
+                    {editorPath ? (
+                      <button
+                        className={menuButtonClass}
+                        onClick={() => void copyHostedLink(editorPath)}
+                        type="button"
+                      >
+                        Copy editor link
+                      </button>
+                    ) : null}
+                    <button
+                      className={menuButtonClass}
+                      onClick={() => setShowPageGuides((current) => !current)}
+                      type="button"
+                    >
+                      {showPageGuides ? "Hide page guides" : "Show page guides"}
+                    </button>
+                  </div>
+                </details>
+              </div>
+
+              {remoteSyncState.kind === "error" ? (
+                <div className="pr-1 text-right text-[0.78rem] leading-5 text-rose-700">
+                  {describeRemoteSyncState(activeDraft, remoteSyncState)}
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="studio-workspace mx-auto flex w-full max-w-[112rem] flex-1 flex-col px-4 py-4 lg:px-8 lg:py-5">
+      <div className="studio-workspace mx-auto flex w-full max-w-[108rem] flex-1 flex-col px-5 pt-5 pb-4 lg:px-8 lg:pt-6 lg:pb-5">
         <div className={`studio-grid ${shellClassName}`}>
           {mode === "edit" ? (
             <section className="editor-column flex min-h-[calc(100vh-10.25rem)] flex-col">
-              <div className="app-chrome mb-3 flex flex-col gap-3 px-1">
+              <div className="app-chrome mb-3 flex items-center justify-between gap-4 px-2">
                 <h2 className="text-[0.95rem] font-semibold uppercase tracking-[0.12em] text-slate-800">
                   Markdown Source
                 </h2>
-                <p className="max-w-xl text-[0.92rem] leading-6 text-slate-600">
-                  Use <code className="font-mono text-[0.88em]">#</code> for
-                  your name,{" "}
-                  <code className="font-mono">##</code> for sections,{" "}
-                  <code className="font-mono">###</code> for entries, an italic
-                  line for location and dates, and bullets for measurable
-                  impact.
-                </p>
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center justify-end gap-3">
                   <button
-                    className={secondaryActionButtonClass}
+                    className={textActionLinkClass}
                     onClick={toggleStylePrefs}
                     type="button"
                   >
@@ -661,17 +657,6 @@ export function CvStudio({
                       ? "Hide styling preferences"
                       : "Show styling preferences"}
                   </button>
-                  {showStylePrefs ? (
-                    <p className="text-[0.84rem] leading-6 text-slate-500">
-                      Set{" "}
-                      <code className="font-mono text-[0.88em]">pageSize: letter</code>{" "}
-                      or{" "}
-                      <code className="font-mono text-[0.88em]">pageSize: legal</code>{" "}
-                      and tune{" "}
-                      <code className="font-mono text-[0.88em]">pageMargin</code>{" "}
-                      and divider rules in the frontmatter. Text sizing is automatic.
-                    </p>
-                  ) : null}
                 </div>
               </div>
 
@@ -720,6 +705,25 @@ export function CvStudio({
               <h2 className="text-[0.95rem] font-semibold uppercase tracking-[0.12em] text-slate-800">
                 Live Preview
               </h2>
+              <div className="flex items-center gap-2">
+                {publicPath && activeDraft?.isPublished ? (
+                  <button
+                    className={textActionLinkClass}
+                    onClick={() => void copyHostedLink(publicPath)}
+                    type="button"
+                  >
+                    Share link
+                  </button>
+                ) : null}
+                <button
+                  className={textActionLinkClass}
+                  onClick={() => window.print()}
+                  type="button"
+                >
+                  <DownloadIcon />
+                  <span>Download PDF</span>
+                </button>
+              </div>
             </div>
 
             <div className="cv-stage" ref={stageViewportRef}>
@@ -969,19 +973,63 @@ function SkeletonLine({ className }: { className: string }) {
   return <div className={`skeleton-shimmer rounded-full bg-slate-200/70 ${className}`} />;
 }
 
-const secondaryActionButtonClass =
-  "rounded-full border border-black/10 bg-white/92 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-black/20 hover:bg-white";
-
 const primaryActionButtonClass =
-  "rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:border-[var(--accent-strong)] hover:bg-[var(--accent-strong)]";
+  "inline-flex h-11 items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--accent)] px-5 text-[0.92rem] font-semibold text-white transition hover:border-[var(--accent-strong)] hover:bg-[var(--accent-strong)]";
+
+const iconActionButtonClass =
+  "flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/92 text-slate-700 transition hover:border-black/20 hover:bg-white";
+
+const textActionLinkClass =
+  "inline-flex items-center gap-2 text-[0.86rem] font-medium text-slate-600 underline-offset-4 transition hover:text-slate-950 hover:underline";
 
 const menuButtonClass =
   "block w-full rounded-[0.75rem] px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50";
 
 function modeButtonClass(active: boolean) {
   return active
-    ? "rounded-full bg-slate-900 px-3 py-1.5 text-sm font-medium text-white shadow-[0_6px_16px_rgba(15,23,42,0.14)]"
-    : "rounded-full px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-700";
+    ? "rounded-full bg-slate-900 px-4 py-2 text-[0.88rem] font-semibold text-white shadow-[0_6px_16px_rgba(15,23,42,0.14)]"
+    : "rounded-full px-4 py-2 text-[0.88rem] font-semibold text-slate-500 transition hover:text-slate-700";
+}
+
+function DownloadIcon() {
+  return (
+    <svg aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M12 4v9m0 0 3.5-3.5M12 13l-3.5-3.5M5 16.5v1A1.5 1.5 0 0 0 6.5 19h11a1.5 1.5 0 0 0 1.5-1.5v-1"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M5 7.5h14M5 12h14M5 16.5h14"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg aria-hidden="true" className="h-[0.95rem] w-[0.95rem]" fill="none" viewBox="0 0 24 24">
+      <path
+        d="m6.75 9 5.25 6 5.25-6"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
 }
 
 function readTypography(nodes: {

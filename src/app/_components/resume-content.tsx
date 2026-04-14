@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   resolveResumeTypography,
+  type ResumeContactItem,
   type ResumeDocument,
   type ResumeFontChoice,
   type ResumeSection,
@@ -25,10 +26,11 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
   variant = "paper",
 }, ref) {
   const spacing = getSpacingTokens(variant, fitScale);
+  const isMobile = variant === "mobile";
 
   return (
     <div
-      className={variant === "mobile" ? "cv-content-root resume-mobile" : "cv-content-root"}
+      className={isMobile ? "cv-content-root resume-mobile" : "cv-content-root"}
       ref={ref}
       style={
         {
@@ -38,7 +40,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
       }
     >
       <header
-        className={document.style.showHeaderDivider ? "border-b border-slate-200" : ""}
+        className={`${document.style.showHeaderDivider ? "border-b border-slate-200" : ""} ${isMobile ? "text-center" : ""}`}
         style={{
           paddingBottom: document.style.showHeaderDivider
             ? spacing.headerPaddingWithDivider
@@ -46,7 +48,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
         }}
       >
         <h1
-          className="font-semibold leading-[0.94] tracking-[-0.036em] text-[var(--resume-ink)]"
+          className={`font-semibold leading-[0.94] tracking-[-0.036em] text-[var(--resume-ink)] ${isMobile ? "mx-auto" : ""}`}
           style={{
             fontFamily: fontFamilyForChoice(document.style.displayFont),
             fontSize: `${typeScale.name}em`,
@@ -57,7 +59,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
 
         {document.headline ? (
           <p
-            className="font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)]"
+            className={`font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)] ${isMobile ? "mx-auto" : ""}`}
             style={{
               fontFamily: fontFamilyForChoice(document.style.displayFont),
               fontSize: `${typeScale.headline}em`,
@@ -68,23 +70,16 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
           </p>
         ) : null}
 
-        {document.contactLines.length ? (
+        {document.contactRows.length ? (
           <div
-            className="flex flex-col leading-[1.4] text-[var(--resume-subtle)]"
+            className={`flex flex-col leading-[1.4] text-[var(--resume-subtle)] ${isMobile ? "items-center" : ""}`}
             style={{
               fontSize: `${typeScale.contact}em`,
               gap: spacing.contactGap,
               marginTop: spacing.contactMarginTop,
             }}
           >
-            {document.contactLines.map((line, index) => (
-              <p
-                key={`contact-${index}-${line}`}
-                className="break-words [overflow-wrap:anywhere]"
-              >
-                <InlineMarkdown content={line} />
-              </p>
-            ))}
+            <ResumeContactBlock document={document} variant={variant} />
           </div>
         ) : null}
       </header>
@@ -112,6 +107,181 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
     </div>
   );
 });
+
+function ResumeContactBlock({
+  document,
+  variant,
+}: {
+  document: ResumeDocument;
+  variant: ResumeContentVariant;
+}) {
+  if (document.style.contactStyle === "classic") {
+    return (
+      <>
+        {document.contactRows.map((line, index) => (
+          <p
+            key={`contact-${index}-${line}`}
+            className="break-words [overflow-wrap:anywhere]"
+          >
+            <InlineMarkdown content={line} />
+          </p>
+        ))}
+      </>
+    );
+  }
+
+  const textItems = document.contactItems.filter((item) => !item.href);
+  const linkedItems = document.contactItems.filter((item) => item.href);
+  const useIcons = variant === "mobile";
+
+  if (variant === "paper") {
+    return (
+      <div className="flex flex-wrap items-center gap-x-[0.5rem] gap-y-[0.18rem]">
+        {document.contactItems.map((item, index) => (
+          <Fragment key={`contact-inline-${item.label}-${index}`}>
+            {index > 0 ? <span className="text-slate-300">·</span> : null}
+            <ContactItem item={item} useIcons={false} />
+          </Fragment>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {textItems.length ? (
+        <div className="flex max-w-full flex-wrap items-center justify-center gap-x-[0.45rem] gap-y-[0.22rem] text-center">
+          {textItems.map((item, index) => (
+            <Fragment key={`contact-text-${item.label}-${index}`}>
+              {index > 0 ? <span className="text-slate-300">·</span> : null}
+              <ContactItem item={item} useIcons={false} />
+            </Fragment>
+          ))}
+        </div>
+      ) : null}
+      {linkedItems.length ? (
+        <div
+          className={
+            useIcons
+              ? "flex flex-wrap items-center justify-center gap-2 text-[var(--accent-strong)]"
+              : "flex flex-wrap items-center gap-x-[0.5rem] gap-y-[0.18rem] text-[var(--accent-strong)]"
+          }
+        >
+          {linkedItems.map((item, index) => (
+            <Fragment key={`contact-link-${item.label}-${index}`}>
+              {!useIcons && index > 0 ? <span className="text-slate-300">·</span> : null}
+              <ContactItem item={item} iconOnly={useIcons} useIcons={useIcons} />
+            </Fragment>
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function ContactItem({
+  iconOnly = false,
+  item,
+  useIcons,
+}: {
+  iconOnly?: boolean;
+  item: ResumeContactItem;
+  useIcons: boolean;
+}) {
+  const content = (
+    <>
+      {useIcons && item.platform ? <ContactIcon platform={item.platform} /> : null}
+      {iconOnly ? <span className="sr-only">{item.label}</span> : <span>{item.label}</span>}
+    </>
+  );
+
+  if (item.href) {
+    return (
+      <a
+        aria-label={item.label}
+        className={
+          iconOnly
+            ? "cv-link inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/8 bg-[#f5f1ea] text-[var(--accent-strong)] shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:bg-[#ece6dd]"
+            : "cv-link inline-flex items-center gap-1.5"
+        }
+        href={item.href}
+        rel="noreferrer"
+        target="_blank"
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <span
+      className={
+        iconOnly
+          ? "inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/8 bg-[#f5f1ea] text-[var(--accent-strong)] shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+          : "inline-flex items-center gap-1.5"
+      }
+    >
+      {content}
+    </span>
+  );
+}
+
+function ContactIcon({
+  platform,
+}: {
+  platform: NonNullable<ResumeContactItem["platform"]>;
+}) {
+  const commonProps = {
+    "aria-hidden": "true",
+    className: "h-[0.95em] w-[0.95em]",
+    fill: "none",
+    viewBox: "0 0 24 24",
+  } as const;
+
+  if (platform === "linkedin") {
+    return (
+      <svg {...commonProps}>
+        <path
+          d="M6.96 8.68a1.24 1.24 0 1 1 0-2.48 1.24 1.24 0 0 1 0 2.48Zm-1.07 1.84h2.14v7.3H5.89v-7.3Zm3.48 0h2.05v1h.03c.28-.54.98-1.12 2.02-1.12 2.16 0 2.56 1.42 2.56 3.27v4.15h-2.13v-3.68c0-.88-.02-2.02-1.23-2.02-1.24 0-1.43.97-1.43 1.96v3.74H9.37v-7.3Z"
+          fill="currentColor"
+        />
+      </svg>
+    );
+  }
+
+  if (platform === "github") {
+    return (
+      <svg {...commonProps}>
+        <path d="M9.5 18c-4 1.2-4-2-5.5-2.5M15.5 20v-3.1a2.7 2.7 0 0 0-.8-2.1c2.7-.3 5.5-1.3 5.5-6a4.6 4.6 0 0 0-1.2-3.2 4.3 4.3 0 0 0-.1-3.1s-1-.3-3.3 1.2a11.4 11.4 0 0 0-6 0C7.3 2.2 6.3 2.5 6.3 2.5a4.3 4.3 0 0 0-.1 3.1A4.6 4.6 0 0 0 5 8.8c0 4.7 2.8 5.7 5.5 6a2.7 2.7 0 0 0-.8 2.1V20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+
+  if (platform === "x") {
+    return (
+      <svg {...commonProps}>
+        <path
+          d="M6.72 5.5h2.2l3.6 4.87 4.24-4.87h1.62l-5.15 5.93 5.98 8.07h-4.04l-3.82-5.16-4.49 5.16H5.24l5.39-6.2L4.9 5.5h4.05l3.53 4.77L16.53 5.5H18l-4.96 5.72 5.71 7.69H16.9l-4.04-5.45-4.73 5.45H6.7l5.62-6.47L6.72 5.5Z"
+          fill="currentColor"
+        />
+      </svg>
+    );
+  }
+
+  if (platform === "email") {
+    return (
+      <svg {...commonProps}>
+        <path d="M4.5 7.5h15v9h-15zM4.5 8l7.5 5 7.5-5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...commonProps}>
+      <path d="M12 4v16M4 12h16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
 
 function ResumeSectionBlock({
   fitScale,
