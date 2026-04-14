@@ -11,6 +11,7 @@ import type {
   ResumeSection,
   ResumeStylePrefs,
 } from "@/app/_lib/cv-markdown";
+import { resolveResumeDensityMultiplier } from "@/app/_lib/cv-markdown";
 
 const PX_PER_INCH = 96;
 const DOCUMENT_TOP_MARGIN = 0.2 * PX_PER_INCH;
@@ -142,7 +143,7 @@ function estimateDocumentHeight(
     prepared: new Map(),
     preparedSegments: new Map(),
   };
-  const compression = getFitCompression(scale);
+  const compression = getFitCompression(scale) * resolveResumeDensityMultiplier(document.style.density);
 
   let total = 0;
   total += measureParagraph(document.name, typography.name, page.contentWidth, scale, caches);
@@ -254,7 +255,7 @@ function estimateEntryHeight(
     ? measureTextNaturalWidth(dateText, typography.entryDate, scale, caches)
     : 0;
   const titleWidth = dateWidth
-    ? Math.max(1, page.contentWidth - dateWidth - ENTRY_TITLE_GAP)
+    ? Math.max(1, page.contentWidth - dateWidth - compressSpacing(ENTRY_TITLE_GAP, compression))
     : page.contentWidth;
   const titleText = entry.titleParts.join(" · ");
 
@@ -314,12 +315,13 @@ function estimateSkillsHeight(
     const width = measureTextNaturalWidth(group.label, typography.skillsTerm, scale, caches);
     return Math.max(maxWidth, width);
   }, 0);
-  const valueWidth = Math.max(1, page.contentWidth - termColumnWidth - SKILL_COLUMN_GAP);
+  const skillColumnGap = compressSpacing(SKILL_COLUMN_GAP, compression);
+  const computedValueWidth = Math.max(1, page.contentWidth - termColumnWidth - skillColumnGap);
 
   return section.skillGroups.reduce((height, group, index) => {
     const rowHeight = Math.max(
       measureParagraph(group.label, typography.skillsTerm, termColumnWidth, scale, caches),
-      measureParagraph(group.value, typography.skillsValue, valueWidth, scale, caches),
+      measureParagraph(group.value, typography.skillsValue, computedValueWidth, scale, caches),
     );
 
     if (index === 0) {

@@ -44,16 +44,29 @@ import {
   type CvTypography,
 } from "@/app/_lib/cv-fit";
 import {
+  RESUME_ACCENT_LABELS,
+  RESUME_ACCENT_TONES,
+  RESUME_DENSITIES,
+  RESUME_DENSITY_LABELS,
+  RESUME_HEADER_ALIGNMENT_LABELS,
+  RESUME_HEADER_ALIGNMENTS,
+  RESUME_PRESET_LABELS,
+  RESUME_STYLE_PRESETS,
   composeCvFrontmatter,
   composeCvMarkdown,
   DEFAULT_CV_MARKDOWN,
   DEFAULT_RESUME_STYLE,
   parseCvMarkdown,
+  resolveResumeStylePresetDefaults,
   resolveResumeTypography,
   splitCvMarkdown,
+  type ResumeAccentTone,
   type ResumeDocument,
+  type ResumeDensity,
+  type ResumeHeaderAlignment,
   type ResumePageSize,
   type ResumeStylePrefs,
+  type ResumeStylePreset,
 } from "@/app/_lib/cv-markdown";
 import type {
   HostedResumeEditorRecord,
@@ -288,6 +301,14 @@ export function CvStudio({
     const targetDraftId = targetDraft.id;
     const nextMarkdown = markdown;
     const nextFitScale = fitState.scale;
+    const hasSharedRemoteLink = Boolean(
+      targetDraft.remoteResumeId &&
+      draftStore.drafts.some((draft) =>
+        draft.id !== targetDraftId &&
+        draft.remoteResumeId === targetDraft.remoteResumeId,
+      ),
+    );
+    const shouldCreateFreshRemote = !targetDraft.remoteResumeId || hasSharedRemoteLink;
 
     if (!silent) {
       setRemoteSyncState({ kind: publish ? "publishing" : "saving" });
@@ -297,7 +318,7 @@ export function CvStudio({
       let response: Response;
       let payload: HostedResumeResponse;
 
-      if (targetDraft.remoteResumeId && targetDraft.editorToken) {
+      if (!shouldCreateFreshRemote && targetDraft.remoteResumeId && targetDraft.editorToken) {
         response = await fetch(
           publish
             ? `/api/resumes/${targetDraft.remoteResumeId}/publish`
@@ -725,6 +746,32 @@ export function CvStudio({
               </div>
 
               <div className="app-chrome studio-panel editor-surface flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.6rem]">
+                {showStylePrefs ? (
+                  <StylePreferenceControls
+                    onAccentToneChange={(accentTone) => {
+                      setMarkdown((current) => updateMarkdownStyle(current, (style) => ({
+                        ...style,
+                        accentTone,
+                      })));
+                    }}
+                    onDensityChange={(density) => {
+                      setMarkdown((current) => updateMarkdownStyle(current, (style) => ({
+                        ...style,
+                        density,
+                      })));
+                    }}
+                    onHeaderAlignmentChange={(headerAlignment) => {
+                      setMarkdown((current) => updateMarkdownStyle(current, (style) => ({
+                        ...style,
+                        headerAlignment,
+                      })));
+                    }}
+                    onPresetChange={(stylePreset) => {
+                      setMarkdown((current) => applyStylePreset(current, stylePreset));
+                    }}
+                    style={resumeDocument.style}
+                  />
+                ) : null}
                 {hasHydrated ? (
                   <textarea
                     className="min-h-[32rem] flex-1 resize-none bg-transparent px-5 py-5 font-mono text-[0.98rem] leading-7 text-slate-900 outline-none"
@@ -820,15 +867,15 @@ export function CvStudio({
                     width: `${pageMetrics.pageWidth}px`,
                   }}
                 >
-                  {hasHydrated ? (
-                    <ResumePreview
-                      contentBoundsRef={contentBoundsRef}
-                      document={resumeDocument}
-                      fitScale={fitState.scale}
-                      showPageGuides={showPageGuides}
-                      typeScale={typeScale}
-                      ref={contentRef}
-                    />
+                {hasHydrated ? (
+                  <ResumePreview
+                    contentBoundsRef={contentBoundsRef}
+                    document={resumeDocument}
+                    fitScale={fitState.scale}
+                    showPageGuides={showPageGuides}
+                    typeScale={typeScale}
+                    ref={contentRef}
+                  />
                   ) : (
                     <PreviewLoadingState pageMetrics={pageMetrics} />
                   )}
@@ -1045,6 +1092,119 @@ function PreviewLoadingState({
   );
 }
 
+function StylePreferenceControls({
+  onAccentToneChange,
+  onDensityChange,
+  onHeaderAlignmentChange,
+  onPresetChange,
+  style,
+}: {
+  onAccentToneChange: (accentTone: ResumeAccentTone) => void;
+  onDensityChange: (density: ResumeDensity) => void;
+  onHeaderAlignmentChange: (headerAlignment: ResumeHeaderAlignment) => void;
+  onPresetChange: (stylePreset: ResumeStylePreset) => void;
+  style: ResumeStylePrefs;
+}) {
+  return (
+    <div className="border-b border-black/8 px-5 py-4">
+      <div className="flex flex-col gap-4">
+        <div>
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Presets
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {RESUME_STYLE_PRESETS.map((preset) => (
+              <button
+                key={preset}
+                className={
+                  style.stylePreset === preset
+                    ? "rounded-[1rem] border border-[var(--accent)] bg-[var(--accent)]/8 px-3 py-3 text-left"
+                    : "rounded-[1rem] border border-black/8 bg-white/60 px-3 py-3 text-left transition hover:border-black/14 hover:bg-white/80"
+                }
+                onClick={() => onPresetChange(preset)}
+                type="button"
+              >
+                <p className="text-[0.88rem] font-semibold text-slate-900">
+                  {RESUME_PRESET_LABELS[preset]}
+                </p>
+                <p className="mt-1 text-[0.76rem] leading-5 text-slate-500">
+                  {describePreset(preset)}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <StyleSelect
+            label="Accent"
+            onChange={(value) => onAccentToneChange(value as ResumeAccentTone)}
+            options={RESUME_ACCENT_TONES.map((tone) => ({
+              label: RESUME_ACCENT_LABELS[tone],
+              value: tone,
+            }))}
+            value={style.accentTone}
+          />
+          <StyleSelect
+            label="Density"
+            onChange={(value) => onDensityChange(value as ResumeDensity)}
+            options={RESUME_DENSITIES.map((density) => ({
+              label: RESUME_DENSITY_LABELS[density],
+              value: density,
+            }))}
+            value={style.density}
+          />
+          <StyleSelect
+            label="Header alignment"
+            onChange={(value) => onHeaderAlignmentChange(value as ResumeHeaderAlignment)}
+            options={RESUME_HEADER_ALIGNMENTS.map((alignment) => ({
+              label: RESUME_HEADER_ALIGNMENT_LABELS[alignment],
+              value: alignment,
+            }))}
+            value={style.headerAlignment}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StyleSelect({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  options: Array<{ label: string; value: string }>;
+  value: string;
+}) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </span>
+      <div className="relative rounded-[0.95rem] border border-black/8 bg-white/76">
+        <select
+          className="h-11 w-full appearance-none bg-transparent px-4 pr-10 text-[0.9rem] font-medium text-slate-800 outline-none"
+          onChange={(event) => onChange(event.target.value)}
+          value={value}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+          <ChevronDownIcon />
+        </span>
+      </div>
+    </label>
+  );
+}
+
 function SkeletonLine({ className }: { className: string }) {
   return <div className={`skeleton-shimmer rounded-full bg-slate-200/70 ${className}`} />;
 }
@@ -1242,6 +1402,47 @@ function clampScale(value: number, limits: CvScaleLimits) {
   return Number(
     Math.min(limits.max, Math.max(limits.min, value)).toFixed(3),
   );
+}
+
+function describePreset(preset: ResumeStylePreset) {
+  switch (preset) {
+    case "classic":
+      return "Neutral, ATS-safe, and low-decoration.";
+    case "creative":
+      return "Expressive but printable: centered header and richer accent.";
+    case "minimal":
+      return "Contemporary sans serif with restrained rules.";
+    case "editorial":
+      return "Serif-led hierarchy with a more authored feel.";
+    case "executive":
+      return "Formal tone with stronger contrast and spacing.";
+    case "technical":
+      return "Compact, efficient, and slightly more system-like.";
+  }
+}
+
+function updateMarkdownStyle(
+  markdown: string,
+  updater: (style: ResumeStylePrefs) => ResumeStylePrefs,
+) {
+  const { bodyMarkdown } = splitCvMarkdown(markdown);
+  const nextStyle = updater(parseCvMarkdown(markdown).style);
+
+  return composeCvMarkdown({
+    bodyMarkdown,
+    frontmatter: composeCvFrontmatter(nextStyle),
+  });
+}
+
+function applyStylePreset(markdown: string, preset: ResumeStylePreset) {
+  const currentStyle = parseCvMarkdown(markdown).style;
+  const presetStyle = resolveResumeStylePresetDefaults(preset);
+
+  return updateMarkdownStyle(markdown, () => ({
+    ...presetStyle,
+    pageMargin: currentStyle.pageMargin,
+    pageSize: currentStyle.pageSize,
+  }));
 }
 
 function updateMarkdownPageSize(markdown: string, pageSize: ResumePageSize) {

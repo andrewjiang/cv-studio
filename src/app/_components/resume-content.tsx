@@ -3,10 +3,12 @@ import { forwardRef, Fragment } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
+  fontFamilyForToken,
+  resolveResumeDensityMultiplier,
+  resolveResumeStyle,
   resolveResumeTypography,
   type ResumeContactItem,
   type ResumeDocument,
-  type ResumeFontChoice,
   type ResumeSection,
   type ResumeStylePrefs,
   type ResumeTypographyScale,
@@ -25,7 +27,8 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
   typeScale = resolveResumeTypography(document.style),
   variant = "paper",
 }, ref) {
-  const spacing = getSpacingTokens(variant, fitScale);
+  const resolvedStyle = resolveResumeStyle(document.style);
+  const spacing = getSpacingTokens(variant, fitScale, document.style);
   const isMobile = variant === "mobile";
 
   return (
@@ -34,13 +37,19 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
       ref={ref}
       style={
         {
+          "--accent": resolvedStyle.accent,
+          "--accent-strong": resolvedStyle.accentStrong,
           "--cv-paper-compression": getPaperCompression(fitScale).toFixed(3),
           "--cv-scale": fitScale.toFixed(3),
+          "--resume-icon-surface": resolvedStyle.iconSurface,
+          "--resume-icon-surface-hover": resolvedStyle.iconSurfaceHover,
+          "--resume-ink": resolvedStyle.ink,
+          "--resume-subtle": resolvedStyle.subtle,
         } as CSSProperties
       }
     >
       <header
-        className={`${document.style.showHeaderDivider ? "border-b border-slate-200" : ""} ${isMobile ? "text-center" : ""}`}
+        className={`${document.style.showHeaderDivider ? "border-b border-slate-200" : ""} ${isMobile || resolvedStyle.headerAlignment === "center" ? "text-center" : ""}`}
         style={{
           paddingBottom: document.style.showHeaderDivider
             ? spacing.headerPaddingWithDivider
@@ -50,7 +59,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
         <h1
           className={`font-semibold leading-[0.94] tracking-[-0.036em] text-[var(--resume-ink)] ${isMobile ? "mx-auto" : ""}`}
           style={{
-            fontFamily: fontFamilyForChoice(document.style.displayFont),
+            fontFamily: resolvedStyle.displayFontFamily,
             fontSize: `${typeScale.name}em`,
           }}
         >
@@ -61,7 +70,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
           <p
             className={`font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)] ${isMobile ? "mx-auto" : ""}`}
             style={{
-              fontFamily: fontFamilyForChoice(document.style.displayFont),
+              fontFamily: resolvedStyle.displayFontFamily,
               fontSize: `${typeScale.headline}em`,
               marginTop: spacing.headlineMarginTop,
             }}
@@ -97,6 +106,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
           <ResumeSectionBlock
             fitScale={fitScale}
             key={section.id}
+            resolvedStyle={resolvedStyle}
             section={section}
             stylePrefs={document.style}
             typeScale={typeScale}
@@ -201,7 +211,7 @@ function ContactItem({
         aria-label={item.label}
         className={
           iconOnly
-            ? "cv-link inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/8 bg-[#f5f1ea] text-[var(--accent-strong)] shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:bg-[#ece6dd]"
+            ? "cv-link inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/8 bg-[var(--resume-icon-surface)] text-[var(--accent-strong)] shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:bg-[var(--resume-icon-surface-hover)]"
             : "cv-link inline-flex items-center gap-1.5"
         }
         href={item.href}
@@ -217,7 +227,7 @@ function ContactItem({
     <span
       className={
         iconOnly
-          ? "inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/8 bg-[#f5f1ea] text-[var(--accent-strong)] shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+          ? "inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/8 bg-[var(--resume-icon-surface)] text-[var(--accent-strong)] shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
           : "inline-flex items-center gap-1.5"
       }
     >
@@ -285,19 +295,21 @@ function ContactIcon({
 
 function ResumeSectionBlock({
   fitScale,
+  resolvedStyle,
   section,
   stylePrefs,
   typeScale,
   variant,
 }: {
   fitScale: number;
+  resolvedStyle: ReturnType<typeof resolveResumeStyle>;
   section: ResumeSection;
   stylePrefs: ResumeStylePrefs;
   typeScale: ResumeTypographyScale;
   variant: ResumeContentVariant;
 }) {
   const isSkillsSection = section.skillGroups.length > 0;
-  const spacing = getSpacingTokens(variant, fitScale);
+  const spacing = getSpacingTokens(variant, fitScale, stylePrefs);
 
   return (
     <section>
@@ -305,7 +317,7 @@ function ResumeSectionBlock({
         <h2
           className="shrink-0 font-semibold uppercase tracking-[0.22em] text-[var(--accent-strong)]"
           style={{
-            fontFamily: fontFamilyForChoice(stylePrefs.displayFont),
+            fontFamily: resolvedStyle.displayFontFamily,
             fontSize: `${typeScale.sectionLabel}em`,
           }}
         >
@@ -510,34 +522,40 @@ function InlineMarkdown({ content }: { content: string }) {
   );
 }
 
-function getSpacingTokens(variant: ResumeContentVariant, fitScale: number) {
+function getSpacingTokens(
+  variant: ResumeContentVariant,
+  fitScale: number,
+  stylePrefs: ResumeStylePrefs,
+) {
+  const densityMultiplier = resolveResumeDensityMultiplier(stylePrefs.density);
+
   if (variant === "mobile") {
     return {
-      bulletGap: "0.45rem",
-      bulletGroupMarginTop: "0.35rem",
-      contactGap: "0.35rem",
-      contactMarginTop: "0.7rem",
-      contentMarginTopWithDivider: "1rem",
-      contentMarginTopWithoutDivider: "0.75rem",
-      entryBulletMarginTop: "0.45rem",
-      entryGap: "1.1rem",
-      entryMetaMarginTop: "0.18rem",
-      entryParagraphGap: "0.45rem",
-      entryParagraphMarginTop: "0.4rem",
-      headlineMarginTop: "0.6rem",
-      headerPaddingWithDivider: "1rem",
-      headerPaddingWithoutDivider: "0.4rem",
-      paragraphGap: "0.65rem",
-      sectionGap: "1.25rem",
-      sectionHeaderGap: "0.75rem",
-      sectionHeaderMarginBottom: "0.7rem",
-      skillColumnGap: "1rem",
+      bulletGap: `calc(0.45rem * ${densityMultiplier})`,
+      bulletGroupMarginTop: `calc(0.35rem * ${densityMultiplier})`,
+      contactGap: `calc(0.35rem * ${densityMultiplier})`,
+      contactMarginTop: `calc(0.7rem * ${densityMultiplier})`,
+      contentMarginTopWithDivider: `calc(1rem * ${densityMultiplier})`,
+      contentMarginTopWithoutDivider: `calc(0.75rem * ${densityMultiplier})`,
+      entryBulletMarginTop: `calc(0.45rem * ${densityMultiplier})`,
+      entryGap: `calc(1.1rem * ${densityMultiplier})`,
+      entryMetaMarginTop: `calc(0.18rem * ${densityMultiplier})`,
+      entryParagraphGap: `calc(0.45rem * ${densityMultiplier})`,
+      entryParagraphMarginTop: `calc(0.4rem * ${densityMultiplier})`,
+      headlineMarginTop: `calc(0.6rem * ${densityMultiplier})`,
+      headerPaddingWithDivider: `calc(1rem * ${densityMultiplier})`,
+      headerPaddingWithoutDivider: `calc(0.4rem * ${densityMultiplier})`,
+      paragraphGap: `calc(0.65rem * ${densityMultiplier})`,
+      sectionGap: `calc(1.25rem * ${densityMultiplier})`,
+      sectionHeaderGap: `calc(0.75rem * ${densityMultiplier})`,
+      sectionHeaderMarginBottom: `calc(0.7rem * ${densityMultiplier})`,
+      skillColumnGap: `calc(1rem * ${densityMultiplier})`,
     };
   }
 
   const compression = getPaperCompression(fitScale);
   const compress = (value: string) =>
-    `calc(${value} * var(--cv-paper-compression, ${compression.toFixed(3)}))`;
+    `calc(${value} * ${densityMultiplier} * var(--cv-paper-compression, ${compression.toFixed(3)}))`;
 
   return {
     bulletGap: compress("0.045in"),
@@ -575,14 +593,4 @@ export function getPaperCompression(fitScale: number) {
   return 1 - progress * 0.3;
 }
 
-export function fontFamilyForChoice(choice: ResumeFontChoice) {
-  if (choice === "serif") {
-    return "var(--font-display-serif), serif";
-  }
-
-  if (choice === "mono") {
-    return "var(--font-ui-mono), monospace";
-  }
-
-  return "var(--font-ui-sans), sans-serif";
-}
+export { fontFamilyForToken as fontFamilyForChoice };

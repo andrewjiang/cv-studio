@@ -127,7 +127,7 @@ export default async function PublicResumePage({
           </div>
         </div>
 
-        <PublicResumeFooterActions />
+        <PublicResumeFooterActions slug={slug} />
       </div>
 
       <style media="print">{`@page { size: ${document.style.pageSize}; margin: 0; }`}</style>
