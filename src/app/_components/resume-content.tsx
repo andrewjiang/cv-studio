@@ -286,6 +286,21 @@ function ContactIcon({
     );
   }
 
+  if (platform === "website") {
+    return (
+      <svg {...commonProps}>
+        <path
+          d="M4.75 12h14.5M12 4.75a11.7 11.7 0 0 1 0 14.5M12 4.75a11.7 11.7 0 0 0 0 14.5M6.1 7.25h11.8M6.1 16.75h11.8"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+        <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+
   return (
     <svg {...commonProps}>
       <path d="M12 4v16M4 12h16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />

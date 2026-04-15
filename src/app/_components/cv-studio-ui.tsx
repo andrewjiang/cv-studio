@@ -120,7 +120,7 @@ export function StylePreferenceControls({
           />
         </div>
 
-        <div className="grid gap-3 md:grid-cols-[repeat(2,minmax(0,1fr))_auto_auto] md:items-end">
+        <div className="grid gap-3 md:grid-cols-[repeat(2,minmax(0,1fr))_minmax(0,1.15fr)] md:items-end">
           <StyleSelect
             label="Page size"
             onChange={(value) => onPageSizeChange(value as ResumePageSize)}
@@ -133,16 +133,18 @@ export function StylePreferenceControls({
             options={PAGE_MARGIN_OPTIONS}
             value={String(style.pageMargin)}
           />
-          <CheckboxControl
-            checked={style.showHeaderDivider}
-            label="Header divider"
-            onChange={onShowHeaderDividerChange}
-          />
-          <CheckboxControl
-            checked={style.showSectionDivider}
-            label="Section dividers"
-            onChange={onShowSectionDividerChange}
-          />
+          <CheckboxGroupControl label="Dividers">
+            <CheckboxControl
+              checked={style.showHeaderDivider}
+              label="Header"
+              onChange={onShowHeaderDividerChange}
+            />
+            <CheckboxControl
+              checked={style.showSectionDivider}
+              label="Section"
+              onChange={onShowSectionDividerChange}
+            />
+          </CheckboxGroupControl>
         </div>
       </div>
     </div>
@@ -298,25 +300,43 @@ export function DownloadIcon() {
   );
 }
 
+export function DesktopIcon() {
+  return (
+    <svg aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" fill="none" viewBox="0 0 24 24">
+      <rect x="4.5" y="5.5" width="15" height="10.5" rx="1.8" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M9 19h6M12 16v3" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+export function MobileIcon() {
+  return (
+    <svg aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" fill="none" viewBox="0 0 24 24">
+      <rect x="7.5" y="3.75" width="9" height="16.5" rx="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="12" cy="16.7" r="0.85" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function ShareIcon() {
   return (
     <svg aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" fill="none" viewBox="0 0 24 24">
       <path
-        d="M10.15 13.85 8.2 15.8a3.25 3.25 0 1 1-4.6-4.6l3.1-3.1a3.25 3.25 0 0 1 4.6 0"
+        d="M9.25 9.25H7.75a3.75 3.75 0 0 0 0 7.5h1.5"
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.8"
       />
       <path
-        d="m13.85 10.15 1.95-1.95a3.25 3.25 0 1 1 4.6 4.6l-3.1 3.1a3.25 3.25 0 0 1-4.6 0"
+        d="M14.75 9.25h1.5a3.75 3.75 0 0 1 0 7.5h-1.5"
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.8"
       />
       <path
-        d="m8.9 15.1 6.2-6.2"
+        d="M8.75 12h6.5"
         stroke="currentColor"
         strokeLinecap="round"
         strokeWidth="1.8"
@@ -495,6 +515,25 @@ function CheckboxControl({
       />
       <span className="text-[0.84rem] font-medium text-slate-700">{label}</span>
     </label>
+  );
+}
+
+function CheckboxGroupControl({
+  children,
+  label,
+}: {
+  children: ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </span>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {children}
+      </div>
+    </div>
   );
 }
 

@@ -17,14 +17,15 @@ import {
   CheckIcon,
   ChevronDownIcon,
   CloseIcon,
+  DesktopIcon,
   DownloadIcon,
   iconActionButtonClass,
   MenuIcon,
   MenuSection,
   menuButtonClass,
+  MobileIcon,
   modeButtonClass,
   primaryActionButtonClass,
-  PublishIcon,
   ShareIcon,
   SpinnerIcon,
   StylePreferenceControls,
@@ -67,14 +68,13 @@ import type {
   WorkspacePayload,
 } from "@/app/_lib/hosted-resume-types";
 
-type StudioMode = "edit" | "publish";
+type StudioMode = "edit" | "preview" | "publish";
+type MobilePreviewVariant = "mobile" | "desktop";
 
 type RemoteSyncState =
   | { kind: "idle" }
   | { kind: "error"; message: string }
-  | { kind: "published" }
   | { kind: "publishing" }
-  | { kind: "saved" }
   | { kind: "saving" };
 
 type StudioNotice =
@@ -113,12 +113,17 @@ export function CvStudio({
   const [templateBusyKey, setTemplateBusyKey] = useState<TemplateKey | null>(null);
   const [fitState, setFitState] = useState({ aggressive: false, overflow: false, scale: 1 });
   const [previewScale, setPreviewScale] = useState(1);
+  const [mobileDesktopPreviewScale, setMobileDesktopPreviewScale] = useState(0.36);
+  const [mobilePreviewVariant, setMobilePreviewVariant] = useState<MobilePreviewVariant>("mobile");
 
   const markdownRef = useRef(markdown);
   const activeResumeRef = useRef(activeResume);
   const pageRef = useRef<HTMLDivElement>(null);
   const contentBoundsRef = useRef<HTMLDivElement>(null);
   const stageViewportRef = useRef<HTMLDivElement>(null);
+  const mobileDesktopStageRef = useRef<HTMLDivElement>(null);
+  const fitMeasureBoundsRef = useRef<HTMLDivElement>(null);
+  const fitMeasureContentRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const nameProbeRef = useRef<HTMLHeadingElement>(null);
   const headlineProbeRef = useRef<HTMLParagraphElement>(null);
@@ -128,6 +133,8 @@ export function CvStudio({
   const entryTitleProbeRef = useRef<HTMLParagraphElement>(null);
   const entryDateProbeRef = useRef<HTMLParagraphElement>(null);
   const entryMetaProbeRef = useRef<HTMLParagraphElement>(null);
+  const mobileDesktopPreviewBoundsRef = useRef<HTMLDivElement>(null);
+  const mobileDesktopPreviewContentRef = useRef<HTMLDivElement>(null);
   const skillsTermProbeRef = useRef<HTMLSpanElement>(null);
   const skillsValueProbeRef = useRef<HTMLSpanElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -135,6 +142,7 @@ export function CvStudio({
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef(0);
+  const autoPublishKeyRef = useRef<string | null>(null);
 
   const resumeDocument = parseCvMarkdown(markdown);
   const typeScale = resolveResumeTypography(resumeDocument.style);
@@ -151,11 +159,11 @@ export function CvStudio({
   const isPublishing = remoteSyncState.kind === "publishing";
   const publishButtonLabel = isPublishing
     ? "Publishing..."
-    : remoteSyncState.kind === "published"
-      ? "Published"
-      : activeResume.isPublished
-        ? "Publish changes"
-        : "Publish";
+    : activeResume.isPublished
+      ? "Publish changes"
+      : "Publish";
+  const mobileCompactIconButtonClass =
+    "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-black/10 bg-white/92 text-slate-700 transition hover:border-black/20 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40";
 
   useEffect(() => {
     markdownRef.current = markdown;
@@ -164,6 +172,10 @@ export function CvStudio({
   useEffect(() => {
     activeResumeRef.current = activeResume;
   }, [activeResume]);
+
+  useEffect(() => {
+    autoPublishKeyRef.current = null;
+  }, [activeResume.id]);
 
   useEffect(() => {
     setWorkspaceState(workspace);
@@ -275,7 +287,7 @@ export function CvStudio({
     setActiveResume(payload.resume);
     setEditorLink(payload.editorUrl);
     setPublicLink(payload.publicUrl);
-    setRemoteSyncState({ kind: syncResult === "published" ? "published" : "saved" });
+    setRemoteSyncState({ kind: "idle" });
     setNotice(
       syncResult === "published"
         ? { kind: "success", message: "Published. Share link is ready." }
@@ -348,6 +360,10 @@ export function CvStudio({
     void mutateResume({ silent: true });
   });
 
+  const autoPublishResume = useEffectEvent(() => {
+    void mutateResume({ publish: true });
+  });
+
   useEffect(() => {
     if (!fontsReady || markdown === activeResume.markdown) {
       return;
@@ -359,6 +375,32 @@ export function CvStudio({
 
     return () => window.clearTimeout(timer);
   }, [activeResume.id, activeResume.markdown, fitState.scale, fontsReady, markdown]);
+
+  useEffect(() => {
+    if (mode !== "publish" || isPublishing) {
+      return;
+    }
+
+    if (activeResume.isPublished && markdown === activeResume.markdown) {
+      return;
+    }
+
+    const publishKey = `${activeResume.id}:${markdown}`;
+
+    if (autoPublishKeyRef.current === publishKey) {
+      return;
+    }
+
+    autoPublishKeyRef.current = publishKey;
+    autoPublishResume();
+  }, [
+    activeResume.id,
+    activeResume.isPublished,
+    activeResume.markdown,
+    isPublishing,
+    markdown,
+    mode,
+  ]);
 
   const copyHostedLink = async (link: string | null) => {
     const absoluteUrl = resolveAbsoluteUrl(link);
@@ -372,8 +414,8 @@ export function CvStudio({
   };
 
   const measureFit = useEffectEvent(() => {
-    const page = contentBoundsRef.current;
-    const content = contentRef.current;
+    const page = fitMeasureBoundsRef.current;
+    const content = fitMeasureContentRef.current;
     const typography = readTypography({
       body: bodyProbeRef.current,
       contact: contactProbeRef.current,
@@ -445,6 +487,20 @@ export function CvStudio({
     setPreviewScale((current) => (current === nextScale ? current : nextScale));
   });
 
+  const updateMobileDesktopPreviewScale = useEffectEvent(() => {
+    const stageViewport = mobileDesktopStageRef.current;
+
+    if (!stageViewport) {
+      return;
+    }
+
+    const nextScale = Number(
+      Math.min(1, stageViewport.clientWidth / pageMetrics.pageWidth).toFixed(3),
+    );
+
+    setMobileDesktopPreviewScale((current) => (current === nextScale ? current : nextScale));
+  });
+
   useLayoutEffect(() => {
     if (!fontsReady) {
       return;
@@ -474,6 +530,10 @@ export function CvStudio({
     updatePreviewScale();
   }, [pageMetrics.pageHeight, pageMetrics.pageWidth]);
 
+  useLayoutEffect(() => {
+    updateMobileDesktopPreviewScale();
+  }, [mobilePreviewVariant, mode, pageMetrics.pageHeight, pageMetrics.pageWidth]);
+
   useEffect(() => {
     const stageViewport = stageViewportRef.current;
 
@@ -491,6 +551,24 @@ export function CvStudio({
 
     return () => observer.disconnect();
   }, [pageMetrics.pageWidth]);
+
+  useEffect(() => {
+    const stageViewport = mobileDesktopStageRef.current;
+
+    if (!stageViewport) {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      window.requestAnimationFrame(() => {
+        updateMobileDesktopPreviewScale();
+      });
+    });
+
+    observer.observe(stageViewport);
+
+    return () => observer.disconnect();
+  }, [mobilePreviewVariant, mode, pageMetrics.pageWidth]);
 
   const toggleStylePrefs = () => {
     if (!showStylePrefs && !markdownParts.frontmatter) {
@@ -739,6 +817,7 @@ export function CvStudio({
                   importMarkdown={() => importInputRef.current?.click()}
                   isPublished={activeResume.isPublished}
                   isRenamingDraft={isRenamingDraft}
+                  mobile
                   onCopyEditorLink={() => void copyHostedLink(editorLink)}
                   onCopyPublicLink={() => void copyHostedLink(publicLink)}
                   onDeleteDraft={() => void deleteCurrentResume()}
@@ -772,18 +851,10 @@ export function CvStudio({
             </div>
           </div>
 
-          {(notice.kind !== "idle" || remoteSyncState.kind === "saving" || remoteSyncState.kind === "publishing") ? (
+          {remoteSyncState.kind === "saving" || remoteSyncState.kind === "publishing" ? (
             <div className="flex items-center justify-between gap-3 text-[0.8rem] leading-5">
-              {notice.kind !== "idle" ? (
-                <span className={notice.kind === "error" ? "text-rose-700" : "text-emerald-700"}>
-                  {notice.message}
-                </span>
-              ) : (
-                <>
-                  <span className="text-slate-500">{describeRemoteSyncState(activeResume, remoteSyncState)}</span>
-                  <SpinnerIcon />
-                </>
-              )}
+              <span className="text-slate-500">{describeRemoteSyncState(activeResume, remoteSyncState)}</span>
+              <SpinnerIcon />
             </div>
           ) : null}
         </div>
@@ -836,8 +907,8 @@ export function CvStudio({
                     Edit
                   </button>
                   <button
-                    className={modeButtonClass(mode === "publish")}
-                    onClick={() => setMode("publish")}
+                    className={modeButtonClass(mode !== "edit")}
+                    onClick={() => setMode("preview")}
                     type="button"
                   >
                     View
@@ -850,7 +921,7 @@ export function CvStudio({
                   onClick={() => void mutateResume({ publish: true })}
                   type="button"
                 >
-                  {isPublishing ? <SpinnerIcon /> : remoteSyncState.kind === "published" ? <CheckIcon /> : null}
+                  {isPublishing ? <SpinnerIcon /> : null}
                   <span>{publishButtonLabel}</span>
                 </button>
 
@@ -878,6 +949,7 @@ export function CvStudio({
                       importMarkdown={() => importInputRef.current?.click()}
                       isPublished={activeResume.isPublished}
                       isRenamingDraft={isRenamingDraft}
+                      mobile={false}
                       onCopyEditorLink={() => void copyHostedLink(editorLink)}
                       onCopyPublicLink={() => void copyHostedLink(publicLink)}
                       onDeleteDraft={() => void deleteCurrentResume()}
@@ -911,22 +983,7 @@ export function CvStudio({
                 </div>
               </div>
 
-              {notice.kind !== "idle" ? (
-                <div className="flex items-center justify-end gap-3 pr-1 text-right text-[0.8rem] leading-5">
-                  <span className={notice.kind === "error" ? "text-rose-700" : "text-emerald-700"}>
-                    {notice.message}
-                  </span>
-                  {notice.kind === "success" && publicLink && activeResume.isPublished ? (
-                    <button
-                      className={textActionLinkClass}
-                      onClick={() => void copyHostedLink(publicLink)}
-                      type="button"
-                    >
-                      Copy share link
-                    </button>
-                  ) : null}
-                </div>
-              ) : remoteSyncState.kind === "saving" || remoteSyncState.kind === "publishing" ? (
+              {remoteSyncState.kind === "saving" || remoteSyncState.kind === "publishing" ? (
                 <div className="flex items-center justify-end gap-2 pr-1 text-right text-[0.8rem] leading-5 text-slate-500">
                   <SpinnerIcon />
                   <span>{describeRemoteSyncState(activeResume, remoteSyncState)}</span>
@@ -937,22 +994,44 @@ export function CvStudio({
         </div>
       </header>
 
+      {notice.kind !== "idle" ? (
+        <div className="pointer-events-none fixed inset-x-4 bottom-4 z-40 flex justify-center lg:inset-x-auto lg:right-6 lg:bottom-6">
+          <div
+            className={`pointer-events-auto inline-flex max-w-[min(100%,28rem)] items-center gap-2 rounded-[1rem] border px-4 py-3 text-[0.88rem] font-medium shadow-[0_18px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl ${
+              notice.kind === "error"
+                ? "border-rose-200 bg-white/96 text-rose-700"
+                : "border-emerald-200 bg-white/96 text-emerald-700"
+            }`}
+          >
+            {notice.kind === "success" ? <CheckIcon /> : null}
+            <span>{notice.message}</span>
+          </div>
+        </div>
+      ) : null}
+
       <div className="studio-workspace mx-auto flex w-full max-w-[108rem] flex-1 flex-col px-4 pt-4 pb-4 sm:px-5 lg:px-8 lg:pt-6 lg:pb-5">
         <div className="app-chrome mb-3 flex items-center justify-between gap-2 px-1 lg:hidden">
-          <div className="w-[10rem] shrink-0 rounded-full border border-black/10 bg-white/92 p-1 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <div className="flex w-[12.2rem] shrink-0 gap-[0.2rem] rounded-full border border-black/10 bg-white/92 p-[0.2rem] shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
             <button
-              className={`${modeButtonClass(mode === "edit")} w-1/2 !px-3 !py-1.5 !text-[0.8rem]`}
+              className={`${modeButtonClass(mode === "edit")} min-w-0 flex-1 !px-2 !py-1.5 !text-[0.77rem]`}
               onClick={() => setMode("edit")}
               type="button"
             >
               Edit
             </button>
             <button
-              className={`${modeButtonClass(mode === "publish")} w-1/2 !px-3 !py-1.5 !text-[0.8rem]`}
-              onClick={() => setMode("publish")}
+              className={`${modeButtonClass(mode === "preview")} min-w-0 flex-1 !px-2 !py-1.5 !text-[0.77rem]`}
+              onClick={() => setMode("preview")}
               type="button"
             >
               Preview
+            </button>
+            <button
+              className={`${modeButtonClass(mode === "publish")} min-w-0 flex-1 !px-2 !py-1.5 !text-[0.77rem]`}
+              onClick={() => setMode("publish")}
+              type="button"
+            >
+              Publish
             </button>
           </div>
 
@@ -965,32 +1044,42 @@ export function CvStudio({
             >
               {showStylePrefs ? <CloseIcon /> : <TuneIcon />}
             </button>
+          ) : mode === "preview" ? (
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                aria-label="Show mobile preview"
+                className={`${mobileCompactIconButtonClass} ${mobilePreviewVariant === "mobile" ? "border-[var(--accent)]/20 bg-[var(--accent)]/8 text-[var(--accent-strong)]" : ""}`}
+                onClick={() => setMobilePreviewVariant("mobile")}
+                title="Show mobile preview"
+                type="button"
+              >
+                <MobileIcon />
+              </button>
+              <button
+                aria-label="Show desktop preview"
+                className={`${mobileCompactIconButtonClass} ${mobilePreviewVariant === "desktop" ? "border-[var(--accent)]/20 bg-[var(--accent)]/8 text-[var(--accent-strong)]" : ""}`}
+                onClick={() => setMobilePreviewVariant("desktop")}
+                title="Show desktop preview"
+                type="button"
+              >
+                <DesktopIcon />
+              </button>
+            </div>
           ) : (
             <div className="ml-auto flex items-center gap-2">
               <button
-                aria-label={activeResume.isPublished ? "Publish changes" : "Publish"}
-                className={iconActionButtonClass}
-                disabled={isPublishing}
-                onClick={() => void mutateResume({ publish: true })}
-                title={activeResume.isPublished ? "Publish changes" : "Publish"}
+                aria-label={activeResume.isPublished ? "Copy share link" : "Publishing share link"}
+                className={mobileCompactIconButtonClass}
+                disabled={!activeResume.isPublished}
+                onClick={() => void copyHostedLink(publicLink)}
+                title={activeResume.isPublished ? "Copy share link" : "Publishing share link"}
                 type="button"
               >
-                {isPublishing ? <SpinnerIcon /> : activeResume.isPublished ? <CheckIcon /> : <PublishIcon />}
+                {isPublishing ? <SpinnerIcon /> : <ShareIcon />}
               </button>
-              {activeResume.isPublished ? (
-                <button
-                  aria-label="Copy share link"
-                  className={iconActionButtonClass}
-                  onClick={() => void copyHostedLink(publicLink)}
-                  title="Copy share link"
-                  type="button"
-                >
-                  <ShareIcon />
-                </button>
-              ) : null}
               <button
                 aria-label="Download PDF"
-                className={iconActionButtonClass}
+                className={mobileCompactIconButtonClass}
                 onClick={() => window.print()}
                 title="Download PDF"
                 type="button"
@@ -1140,7 +1229,7 @@ export function CvStudio({
               </div>
             ) : null}
 
-            <div className="cv-stage hidden lg:block" ref={stageViewportRef}>
+            <div className="cv-stage hidden justify-center lg:flex" ref={stageViewportRef}>
               <div
                 className="cv-paper-frame"
                 style={{
@@ -1154,7 +1243,7 @@ export function CvStudio({
                   style={{
                     height: `${pageMetrics.pageHeight}px`,
                     transform: `scale(${previewScale})`,
-                    transformOrigin: "top center",
+                    transformOrigin: "top left",
                     width: `${pageMetrics.pageWidth}px`,
                   }}
                 >
@@ -1170,17 +1259,48 @@ export function CvStudio({
               </div>
             </div>
 
-            <article
-              className="w-full rounded-[1.45rem] border border-black/8 bg-white px-5 py-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)] lg:hidden"
-              style={{ fontFamily: fontFamilyForChoice(resumeDocument.style.bodyFont) }}
-            >
-              <ResumeDocumentContent
-                document={resumeDocument}
-                fitScale={1}
-                typeScale={mobileTypeScale}
-                variant="mobile"
-              />
-            </article>
+            {mobilePreviewVariant === "mobile" ? (
+              <article
+                className="w-full rounded-[1.45rem] border border-black/8 bg-white px-5 py-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)] lg:hidden"
+                style={{ fontFamily: fontFamilyForChoice(resumeDocument.style.bodyFont) }}
+              >
+                <ResumeDocumentContent
+                  document={resumeDocument}
+                  fitScale={1}
+                  typeScale={mobileTypeScale}
+                  variant="mobile"
+                />
+              </article>
+            ) : (
+              <div className="flex w-full justify-center px-1 pt-1 lg:hidden" ref={mobileDesktopStageRef}>
+                <div
+                  className="cv-paper-frame mx-auto"
+                  style={{
+                    height: `${pageMetrics.pageHeight * mobileDesktopPreviewScale}px`,
+                    width: `${pageMetrics.pageWidth * mobileDesktopPreviewScale}px`,
+                  }}
+                >
+                  <div
+                    className="cv-sheet"
+                    style={{
+                      height: `${pageMetrics.pageHeight}px`,
+                      transform: `scale(${mobileDesktopPreviewScale})`,
+                      transformOrigin: "top left",
+                      width: `${pageMetrics.pageWidth}px`,
+                    }}
+                  >
+                    <ResumePreview
+                      contentBoundsRef={mobileDesktopPreviewBoundsRef}
+                      document={resumeDocument}
+                      fitScale={fitState.scale}
+                      ref={mobileDesktopPreviewContentRef}
+                      showPageGuides={showPageGuides}
+                      typeScale={typeScale}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </div>
       </div>
@@ -1199,6 +1319,28 @@ export function CvStudio({
         stylePrefs={resumeDocument.style}
         typeScale={typeScale}
       />
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-[-10000px] top-0 opacity-0"
+      >
+        <div
+          className="cv-paper-frame"
+          style={{
+            height: `${pageMetrics.pageHeight}px`,
+            width: `${pageMetrics.pageWidth}px`,
+          }}
+        >
+          <ResumePreview
+            contentBoundsRef={fitMeasureBoundsRef}
+            document={resumeDocument}
+            fitScale={fitState.scale}
+            ref={fitMeasureContentRef}
+            showPageGuides={false}
+            typeScale={typeScale}
+          />
+        </div>
+      </div>
 
       {showTemplateChooser ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/28 px-4 py-5 backdrop-blur-sm">
@@ -1243,6 +1385,7 @@ function ResumeMenu({
   importMarkdown,
   isPublished,
   isRenamingDraft,
+  mobile = false,
   onCopyEditorLink,
   onCopyPublicLink,
   onDeleteDraft,
@@ -1263,6 +1406,7 @@ function ResumeMenu({
   importMarkdown: () => void;
   isPublished: boolean;
   isRenamingDraft: boolean;
+  mobile?: boolean;
   onCopyEditorLink: () => void;
   onCopyPublicLink: () => void;
   onDeleteDraft: () => void;
@@ -1278,7 +1422,20 @@ function ResumeMenu({
   showPageGuides: boolean;
 }) {
   return (
-    <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-[17.5rem] rounded-[1rem] border border-black/10 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)]">
+    <div
+      className={
+        mobile
+          ? "fixed inset-x-0 top-[5.55rem] z-30 px-4"
+          : "absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-[17.5rem]"
+      }
+    >
+      <div
+        className={
+          mobile
+            ? "w-full rounded-[1.15rem] border border-black/10 bg-white p-2 shadow-[0_24px_60px_rgba(15,23,42,0.16)]"
+            : "rounded-[1rem] border border-black/10 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)]"
+        }
+      >
       <MenuSection title="Draft">
         {isRenamingDraft ? (
           <div className="px-3 py-2">
@@ -1394,6 +1551,7 @@ function ResumeMenu({
           {showPageGuides ? "Hide page guides" : "Show page guides"}
         </button>
       </MenuSection>
+      </div>
     </div>
   );
 }
@@ -1820,10 +1978,6 @@ function describeRemoteSyncState(
 
   if (remoteSyncState.kind === "publishing") {
     return "Publishing";
-  }
-
-  if (remoteSyncState.kind === "published") {
-    return "Published";
   }
 
   if (activeResume.isPublished) {

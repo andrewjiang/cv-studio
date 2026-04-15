@@ -26,6 +26,8 @@ html {
   background:
     radial-gradient(circle at top, rgba(15, 118, 110, 0.12), transparent 32%),
     linear-gradient(180deg, #fbf7f0 0%, #f4efe8 100%);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -69,8 +71,6 @@ textarea {
 }
 
 .cv-stage {
-  display: flex;
-  justify-content: center;
   width: 100%;
 }
 
@@ -92,12 +92,16 @@ textarea {
   position: relative;
   color: var(--resume-ink);
   font-family: var(--font-ui-sans), sans-serif;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .cv-content-root {
   --cv-scale: 1;
   font-size: calc(16px * var(--cv-scale));
   line-height: 1.36;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .cv-link {

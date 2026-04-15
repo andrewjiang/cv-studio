@@ -95,7 +95,7 @@ export type ResumeContactItem = {
   href?: string;
   kind: "email" | "location" | "phone" | "social" | "text";
   label: string;
-  platform?: "email" | "github" | "linkedin" | "phone" | "x";
+  platform?: "email" | "github" | "linkedin" | "phone" | "website" | "x";
 };
 
 export type ResumeStylePrefs = {

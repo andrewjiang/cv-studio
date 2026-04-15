@@ -65,12 +65,13 @@ function normalizeContactLink(label: string, href: string): ResumeContactItem {
     : href.match(/^https?:\/\//i)
       ? href
       : `https://${href}`;
+  const emailLikeLabel = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(label);
 
-  if (href.startsWith("mailto:") || label.includes("@")) {
+  if (href.startsWith("mailto:") || emailLikeLabel) {
     return {
       href: normalizedHref,
       kind: "email",
-      label: label.includes("@") ? label : href.replace(/^mailto:/i, ""),
+      label: emailLikeLabel ? label : href.replace(/^mailto:/i, ""),
       platform: "email",
     };
   }
@@ -107,6 +108,15 @@ function normalizeContactLink(label: string, href: string): ResumeContactItem {
       kind: "social",
       label: "X",
       platform: "x",
+    };
+  }
+
+  if (hostname) {
+    return {
+      href: normalizedHref,
+      kind: "text",
+      label,
+      platform: "website",
     };
   }
 

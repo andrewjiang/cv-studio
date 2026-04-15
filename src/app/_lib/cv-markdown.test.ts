@@ -114,4 +114,16 @@ accentTone: claret`,
       stylePreset: "creative",
     });
   });
+
+  it("does not misclassify social handles as email links", () => {
+    const document = parseCvMarkdown(`# Name
+Role
+[@andrew](https://x.com/andrew) | [@andrew](https://linkedin.com/in/andrew) | [@andrew](mailto:andrew@example.com)`);
+
+    expect(document.contactItems).toMatchObject([
+      { label: "X", platform: "x" },
+      { label: "LinkedIn", platform: "linkedin" },
+      { label: "andrew@example.com", platform: "email" },
+    ]);
+  });
 });
