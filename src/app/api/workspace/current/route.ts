@@ -1,10 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createWorkspaceResume } from "@/app/_lib/hosted-resume-store";
+import { switchWorkspaceResume } from "@/app/_lib/hosted-resume-store";
 import { readWorkspaceCookieFromRequest } from "@/app/_lib/workspace-cookie";
 import {
   buildResumeResponse,
   handleResumeStoreError,
-  parseTemplateCreateBody,
 } from "@/app/api/resumes/_lib";
 
 export async function POST(request: NextRequest) {
@@ -18,27 +17,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = parseTemplateCreateBody(await request.json());
+    const body = await request.json() as { resumeId?: unknown };
 
-    if (!body) {
+    if (typeof body.resumeId !== "string" || !body.resumeId) {
       return NextResponse.json(
-        { error: "Expected a templateKey in the request body." },
+        { error: "Expected a resumeId in the request body." },
         { status: 400 },
       );
     }
 
-    const payload = await createWorkspaceResume({
-      markdown: body.markdown,
-      templateKey: body.templateKey,
-      title: body.title,
+    const payload = await switchWorkspaceResume({
+      resumeId: body.resumeId,
       workspaceId,
     });
 
     if (!payload) {
-      return NextResponse.json({ error: "Workspace not found." }, { status: 404 });
+      return NextResponse.json({ error: "Resume not found." }, { status: 404 });
     }
 
-    return NextResponse.json(buildResumeResponse(request, payload), { status: 201 });
+    return NextResponse.json(buildResumeResponse(request, payload));
   } catch (error) {
     return handleResumeStoreError(error);
   }

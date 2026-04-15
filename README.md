@@ -1,73 +1,80 @@
-# CV Studio
+# Tiny CV
 
-CV Studio is a markdown-first resume builder for technical CVs.
+Tiny CV is an open-source, markdown-first resume builder that keeps your resume on one printable page.
 
-It gives you a split editor and live preview, keeps the resume on a fixed paper surface, and fits the content to a single printable page before export. The source of truth is always markdown.
+Write in markdown, tune the styling with a few safe controls, preview the result on a real sheet of paper, and publish a clean public link when it is ready.
 
 Live app: https://cvstudio-chi.vercel.app
 
-![CV Studio desktop editor](docs/cv-studio-desktop.png)
+![Tiny CV desktop editor](docs/cv-studio-desktop.png)
 
-## Why it exists
+## Why it feels different
 
-Most resume tools either lock you into rigid forms or give you a generic rich text editor that is hard to control. CV Studio takes a different approach:
+Most resume tools are either:
 
-- write the resume as markdown
-- preview it on real paper dimensions
-- keep the document to one page
-- export a clean PDF from the browser
+- rigid form builders
+- generic rich text editors
+- template marketplaces with too many knobs and not enough structure
 
-The goal is a resume tool that feels closer to working in code than fighting a template marketplace.
+Tiny CV is built around a simpler model:
+
+- markdown is the source of truth
+- the preview lives on fixed paper dimensions
+- fitting to one page is automatic
+- the published version stays focused on the resume itself
+
+It is designed for people who would rather edit a document than fight a WYSIWYG.
+
+## What it does
+
+- Markdown-first editing with a live paper preview
+- One-page fit using Pretext-assisted estimation plus DOM verification
+- Letter and legal page support
+- Style presets for different resume moods without breaking printability
+- PDF export from the browser print flow
+- Server-backed anonymous workspaces, so drafts survive refreshes and browser back
+- Public share links and private edit links
+- Resume templates for engineers, designers, sales roles, and founders
+- Mobile editing and mobile resume viewing that are adapted for smaller screens
 
 ## Screenshots
 
-### Editor and live preview
+### Editor
 
-![Desktop editor and live preview](docs/cv-studio-desktop.png)
+![Desktop editor and preview](docs/cv-studio-desktop.png)
 
-### Print-ready output
+### Print output
 
 ![Print-ready resume output](docs/cv-studio-print.png)
 
-## Core features
-
-- Markdown is the source of truth. The editor works from resume-oriented markdown instead of forms.
-- Live preview renders on fixed `letter` or `legal` paper dimensions.
-- One-page fit uses Pretext-assisted measurement plus DOM verification.
-- PDF export uses the browser print flow and targets the resume sheet directly.
-- Local-first draft management includes multiple drafts, rename, import, export, and autosave.
-- Hosted resumes can be saved online, published, and shared with a clean public URL.
-- Secret edit links let a resume owner reopen the hosted editor without a full auth system.
-- Optional styling preferences live in markdown frontmatter and stay hidden unless you want them.
-- Edit and publish modes let you switch between the writing surface and the clean resume view.
-
 ## How it works
 
-CV Studio separates three things that most resume builders blend together:
+Tiny CV keeps three concerns separate:
 
 1. Content
    The resume body is plain markdown.
 2. Presentation
-   Paper size, page margin, divider rules, fonts, and baseline sizing live in frontmatter.
+   Fonts, dividers, density, paper size, and margins live in frontmatter and UI controls.
 3. Fit
-   The app estimates layout with Pretext, then verifies the result against the actual DOM before export.
+   The app estimates scale, measures the real DOM, and adjusts until the resume fits the printable area.
 
-That split is what makes the preview, print output, and markdown source line up consistently.
+That separation is what keeps the editor, preview, PDF export, and shared page aligned.
 
-## Hosted resumes
+## Hosted model
 
-CV Studio now supports a simple hosted workflow:
+Tiny CV is now fully server-backed.
 
-- `Create link` creates a hosted resume and gives the draft a stable edit URL.
-- `Publish` snapshots the current draft to a public slug route.
-- `/:slug` renders a clean public resume page.
-- `/studio/:id?token=...` reopens the hosted editor.
+- Every browser gets an anonymous workspace via an `httpOnly` cookie
+- Drafts live in the database, not `localStorage`
+- `/studio/[resumeId]` is the editor route
+- `/:slug` is the public published resume
+- Private edit links can attach an existing resume back into the current workspace
 
-For local development without a database, CV Studio falls back to a file-backed store in `.data/hosted-resumes.json`.
+For local development without a database, the app falls back to a file-backed store in `.data/hosted-resumes.json`.
 
-## Resume markdown format
+## Resume format
 
-The default structure is intentionally simple:
+The core markdown shape is intentionally small:
 
 ```md
 # Your Name
@@ -84,17 +91,19 @@ Short summary paragraph.
 - Improved something important
 
 ## Projects
-### CV Studio | React, Next.js, TypeScript
+### Tiny CV | React, Next.js, TypeScript
 - Built a markdown-first resume editor with one-page preview and PDF export.
 ```
 
-Optional style preferences live in frontmatter:
+Optional style preferences are stored in frontmatter:
 
 ```md
 ---
-displayFont: serif
-bodyFont: sans
-pageMargin: 1
+stylePreset: technical
+accentTone: forest
+density: compact
+headerAlignment: left
+pageMargin: 0.9
 pageSize: letter
 showHeaderDivider: false
 showSectionDivider: true
@@ -103,8 +112,6 @@ showSectionDivider: true
 
 ## Local development
 
-Install dependencies and start the app:
-
 ```bash
 pnpm install
 pnpm dev
@@ -112,42 +119,48 @@ pnpm dev
 
 Open `http://localhost:3000`.
 
-If a dev server for this workspace is already running, `pnpm dev` will reuse it. If you want a clean restart:
+If you want a clean dev restart:
 
 ```bash
 pnpm dev:restart
 ```
 
+## Environment
+
+Create `.env.local` only if you want a real database in development:
+
+```bash
+DATABASE_URL=postgresql://...
+```
+
+Without `DATABASE_URL`, Tiny CV uses a local file-backed store for development.
+
 ## Verification
 
 ```bash
+pnpm test
 pnpm lint
 pnpm build
-pnpm start
 ```
-
-## Production database
-
-To enable hosted save and publish in production, set:
-
-```bash
-DATABASE_URL=...
-```
-
-The app is written to use Postgres in production and a local file-backed store in development when `DATABASE_URL` is not set.
-
-## PDF export
-
-Use `Download PDF` in the app. CV Studio prints only the resume sheet, not the surrounding editor UI, and preserves the fitted content scale for export.
 
 ## Stack
 
 - Next.js 16
 - React 19
 - Tailwind CSS 4
-- `@chenglou/pretext` for layout estimation
-- `react-markdown` and `remark-gfm` for markdown rendering
+- Postgres
+- `@chenglou/pretext`
+- `react-markdown`
+- `remark-gfm`
+- Vitest
 
-## Status
+## Roadmap
 
-CV Studio is local-first by default, with hosted resume save/publish available when storage is configured. The next major step is adding full user accounts on top of the current secret-link editor model.
+- Full account system on top of the current anonymous workspace model
+- Better template previews
+- More share-page customization
+- Cleaner import/export flows for existing resumes
+
+## License
+
+MIT

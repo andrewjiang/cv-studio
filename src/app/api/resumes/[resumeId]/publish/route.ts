@@ -1,34 +1,48 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { publishHostedResume } from "@/app/_lib/hosted-resume-store";
-import { buildResumeResponse, handleResumeStoreError, parseResumeMutationBody } from "@/app/api/resumes/_lib";
+import { publishWorkspaceResume } from "@/app/_lib/hosted-resume-store";
+import { readWorkspaceCookieFromRequest } from "@/app/_lib/workspace-cookie";
+import {
+  buildResumeResponse,
+  handleResumeStoreError,
+  parseResumeMutationBody,
+} from "@/app/api/resumes/_lib";
 
 export async function POST(
   request: NextRequest,
   context: RouteContext<"/api/resumes/[resumeId]/publish">,
 ) {
   try {
+    const workspaceId = readWorkspaceCookieFromRequest(request);
+
+    if (!workspaceId) {
+      return NextResponse.json(
+        { error: "Missing workspace cookie." },
+        { status: 401 },
+      );
+    }
+
     const { resumeId } = await context.params;
     const body = parseResumeMutationBody(await request.json());
 
-    if (!body || !body.editorToken) {
+    if (!body) {
       return NextResponse.json(
-        { error: "Expected markdown, fitScale, and editorToken in the request body." },
+        { error: "Expected markdown and fitScale in the request body." },
         { status: 400 },
       );
     }
 
-    const resume = await publishHostedResume({
-      editorToken: body.editorToken,
+    const payload = await publishWorkspaceResume({
       fitScale: body.fitScale,
       markdown: body.markdown,
       resumeId,
+      workspaceId,
     });
 
-    if (!resume) {
+    if (!payload) {
       return NextResponse.json({ error: "Resume not found." }, { status: 404 });
     }
 
-    return NextResponse.json(buildResumeResponse(request, resume));
+    return NextResponse.json(buildResumeResponse(request, payload));
   } catch (error) {
     return handleResumeStoreError(error);
   }

@@ -3,7 +3,11 @@ import {
   HostedResumeStoreConnectionError,
   HostedResumeStoreUnavailableError,
 } from "@/app/_lib/hosted-resume-store";
-import type { HostedResumeEditorRecord, HostedResumeResponse } from "@/app/_lib/hosted-resume-types";
+import type {
+  HostedResumeResponse,
+  StudioBootstrapPayload,
+  TemplateKey,
+} from "@/app/_lib/hosted-resume-types";
 
 export function parseResumeMutationBody(body: unknown) {
   if (!body || typeof body !== "object") {
@@ -17,7 +21,6 @@ export function parseResumeMutationBody(body: unknown) {
   }
 
   return {
-    editorToken: typeof value.editorToken === "string" ? value.editorToken : "",
     fitScale:
       typeof value.fitScale === "number" && Number.isFinite(value.fitScale)
         ? value.fitScale
@@ -26,16 +29,67 @@ export function parseResumeMutationBody(body: unknown) {
   };
 }
 
+export function parseTemplateCreateBody(body: unknown) {
+  if (!body || typeof body !== "object") {
+    return null;
+  }
+
+  const value = body as Record<string, unknown>;
+
+  if (!isTemplateKey(value.templateKey)) {
+    return null;
+  }
+
+  return {
+    markdown: typeof value.markdown === "string" && value.markdown.trim() ? value.markdown : undefined,
+    templateKey: value.templateKey,
+    title: typeof value.title === "string" && value.title.trim() ? value.title.trim() : undefined,
+  };
+}
+
+export function parseResumeRenameBody(body: unknown) {
+  if (!body || typeof body !== "object") {
+    return null;
+  }
+
+  const value = body as Record<string, unknown>;
+
+  if (typeof value.title !== "string" || !value.title.trim()) {
+    return null;
+  }
+
+  return {
+    title: value.title.trim(),
+  };
+}
+
+export function parseAttachResumeBody(body: unknown) {
+  if (!body || typeof body !== "object") {
+    return null;
+  }
+
+  const value = body as Record<string, unknown>;
+
+  if (typeof value.token !== "string" || !value.token) {
+    return null;
+  }
+
+  return {
+    token: value.token,
+  };
+}
+
 export function buildResumeResponse(
   request: NextRequest,
-  resume: HostedResumeEditorRecord,
+  payload: StudioBootstrapPayload,
 ): HostedResumeResponse {
   const origin = request.nextUrl.origin;
 
   return {
-    editorUrl: `${origin}/studio/${resume.id}?token=${encodeURIComponent(resume.editorToken)}`,
-    publicUrl: `${origin}/${resume.slug}`,
-    resume,
+    editorUrl: payload.editorPath ? `${origin}${payload.editorPath}` : null,
+    publicUrl: `${origin}${payload.publicPath}`,
+    resume: payload.resume,
+    workspace: payload.workspace,
   };
 }
 
@@ -55,4 +109,8 @@ export function handleResumeStoreError(error: unknown) {
   }
 
   throw error;
+}
+
+function isTemplateKey(value: unknown): value is TemplateKey {
+  return value === "engineer" || value === "designer" || value === "sales" || value === "founder";
 }

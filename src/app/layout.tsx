@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   IBM_Plex_Mono,
   IBM_Plex_Sans,
@@ -42,8 +42,13 @@ const uiMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CV Studio",
-  description: "Markdown-first resume editor with one-page preview and PDF export.",
+  title: "Tiny CV",
+  description: "Markdown-first resume builder that always fits on one page.",
+};
+
+export const viewport: Viewport = {
+  initialScale: 1,
+  width: "device-width",
 };
 
 export default function RootLayout({

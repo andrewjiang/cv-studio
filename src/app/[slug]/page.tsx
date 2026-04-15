@@ -28,7 +28,7 @@ export async function generateMetadata({
   } catch (error) {
     if (error instanceof HostedResumeStoreUnavailableError) {
       return {
-        title: "Resume not found | CV Studio",
+        title: "Resume not found | Tiny CV",
       };
     }
 
@@ -37,14 +37,14 @@ export async function generateMetadata({
 
   if (!resume) {
     return {
-      title: "Resume not found | CV Studio",
+      title: "Resume not found | Tiny CV",
     };
   }
 
   const document = parseCvMarkdown(resume.markdown);
 
   return {
-    description: `${document.name}'s resume, published with CV Studio.`,
+    description: `${document.name}'s resume, published with Tiny CV.`,
     title: `${document.name} | Resume`,
   };
 }
@@ -127,7 +127,7 @@ export default async function PublicResumePage({
           </div>
         </div>
 
-        <PublicResumeFooterActions slug={slug} />
+        <PublicResumeFooterActions />
       </div>
 
       <style media="print">{`@page { size: ${document.style.pageSize}; margin: 0; }`}</style>

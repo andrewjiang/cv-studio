@@ -1,32 +1,50 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  getHostedResumeForEdit,
-  saveHostedResume,
+  deleteWorkspaceResume,
+  getStudioBootstrap,
+  renameWorkspaceResume,
+  saveWorkspaceResume,
 } from "@/app/_lib/hosted-resume-store";
-import { buildResumeResponse, handleResumeStoreError, parseResumeMutationBody } from "@/app/api/resumes/_lib";
+import { readWorkspaceCookieFromRequest } from "@/app/_lib/workspace-cookie";
+import {
+  buildResumeResponse,
+  handleResumeStoreError,
+  parseResumeMutationBody,
+  parseResumeRenameBody,
+} from "@/app/api/resumes/_lib";
+
+function getWorkspaceIdOrResponse(request: NextRequest) {
+  const workspaceId = readWorkspaceCookieFromRequest(request);
+
+  if (!workspaceId) {
+    return NextResponse.json(
+      { error: "Missing workspace cookie." },
+      { status: 401 },
+    );
+  }
+
+  return workspaceId;
+}
 
 export async function GET(
   request: NextRequest,
   context: RouteContext<"/api/resumes/[resumeId]">,
 ) {
   try {
-    const { resumeId } = await context.params;
-    const editorToken = request.nextUrl.searchParams.get("token");
+    const workspaceId = getWorkspaceIdOrResponse(request);
 
-    if (!editorToken) {
-      return NextResponse.json(
-        { error: "Missing token query parameter." },
-        { status: 400 },
-      );
+    if (workspaceId instanceof NextResponse) {
+      return workspaceId;
     }
 
-    const resume = await getHostedResumeForEdit({ editorToken, resumeId });
+    const { resumeId } = await context.params;
+    const payload = await getStudioBootstrap({ resumeId, workspaceId });
 
-    if (!resume) {
+    if (!payload) {
       return NextResponse.json({ error: "Resume not found." }, { status: 404 });
     }
 
-    return NextResponse.json(buildResumeResponse(request, resume));
+    return NextResponse.json(buildResumeResponse(request, payload));
   } catch (error) {
     return handleResumeStoreError(error);
   }
@@ -37,28 +55,99 @@ export async function PUT(
   context: RouteContext<"/api/resumes/[resumeId]">,
 ) {
   try {
+    const workspaceId = getWorkspaceIdOrResponse(request);
+
+    if (workspaceId instanceof NextResponse) {
+      return workspaceId;
+    }
+
     const { resumeId } = await context.params;
     const body = parseResumeMutationBody(await request.json());
 
-    if (!body || !body.editorToken) {
+    if (!body) {
       return NextResponse.json(
-        { error: "Expected markdown, fitScale, and editorToken in the request body." },
+        { error: "Expected markdown and fitScale in the request body." },
         { status: 400 },
       );
     }
 
-    const resume = await saveHostedResume({
-      editorToken: body.editorToken,
+    const payload = await saveWorkspaceResume({
       fitScale: body.fitScale,
       markdown: body.markdown,
       resumeId,
+      workspaceId,
     });
 
-    if (!resume) {
+    if (!payload) {
       return NextResponse.json({ error: "Resume not found." }, { status: 404 });
     }
 
-    return NextResponse.json(buildResumeResponse(request, resume));
+    return NextResponse.json(buildResumeResponse(request, payload));
+  } catch (error) {
+    return handleResumeStoreError(error);
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: RouteContext<"/api/resumes/[resumeId]">,
+) {
+  try {
+    const workspaceId = getWorkspaceIdOrResponse(request);
+
+    if (workspaceId instanceof NextResponse) {
+      return workspaceId;
+    }
+
+    const { resumeId } = await context.params;
+    const body = parseResumeRenameBody(await request.json());
+
+    if (!body) {
+      return NextResponse.json(
+        { error: "Expected a non-empty title in the request body." },
+        { status: 400 },
+      );
+    }
+
+    const payload = await renameWorkspaceResume({
+      resumeId,
+      title: body.title,
+      workspaceId,
+    });
+
+    if (!payload) {
+      return NextResponse.json({ error: "Resume not found." }, { status: 404 });
+    }
+
+    return NextResponse.json(buildResumeResponse(request, payload));
+  } catch (error) {
+    return handleResumeStoreError(error);
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: RouteContext<"/api/resumes/[resumeId]">,
+) {
+  try {
+    const workspaceId = getWorkspaceIdOrResponse(request);
+
+    if (workspaceId instanceof NextResponse) {
+      return workspaceId;
+    }
+
+    const { resumeId } = await context.params;
+    const payload = await deleteWorkspaceResume({ resumeId, workspaceId });
+
+    if (!payload) {
+      return NextResponse.json({ error: "Resume not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      currentResumeId: payload.currentResumeId,
+      redirectPath: payload.currentResumeId ? `/studio/${payload.currentResumeId}` : "/",
+      workspace: payload.workspace,
+    });
   } catch (error) {
     return handleResumeStoreError(error);
   }
