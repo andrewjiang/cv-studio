@@ -67,10 +67,14 @@ export function getAuthPool() {
     throw new Error("DATABASE_URL is required for Tiny CV accounts.");
   }
 
+  const ssl = getAuthPoolSslConfig(process.env.DATABASE_URL);
+
   authPool ??= new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: ssl
+      ? stripConnectionStringSslMode(process.env.DATABASE_URL)
+      : process.env.DATABASE_URL,
     max: 5,
-    ssl: getAuthPoolSslConfig(process.env.DATABASE_URL),
+    ssl,
   });
 
   return authPool;
@@ -93,6 +97,16 @@ function getAuthPoolSslConfig(databaseUrl: string) {
   }
 
   return undefined;
+}
+
+function stripConnectionStringSslMode(databaseUrl: string) {
+  try {
+    const parsedUrl = new URL(databaseUrl);
+    parsedUrl.searchParams.delete("sslmode");
+    return parsedUrl.toString();
+  } catch {
+    return databaseUrl;
+  }
 }
 
 function getAuthBaseUrl() {
