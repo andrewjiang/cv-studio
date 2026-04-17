@@ -70,9 +70,29 @@ export function getAuthPool() {
   authPool ??= new Pool({
     connectionString: process.env.DATABASE_URL,
     max: 5,
+    ssl: getAuthPoolSslConfig(process.env.DATABASE_URL),
   });
 
   return authPool;
+}
+
+function getAuthPoolSslConfig(databaseUrl: string) {
+  const url = databaseUrl.toLowerCase();
+  const override = process.env.TINYCV_PG_SSL_REJECT_UNAUTHORIZED?.toLowerCase();
+
+  if (override === "false") {
+    return { rejectUnauthorized: false };
+  }
+
+  if (
+    url.includes("sslmode=require") ||
+    url.includes("pooler.supabase.com") ||
+    url.includes(".supabase.com")
+  ) {
+    return { rejectUnauthorized: false };
+  }
+
+  return undefined;
 }
 
 function getAuthBaseUrl() {
