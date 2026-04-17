@@ -1686,8 +1686,7 @@ async function resolveLocalStorePath() {
     return explicitPath;
   }
 
-  const { join } = await import("node:path");
-  return join(/*turbopackIgnore: true*/ process.cwd(), ".data", "hosted-resumes.json");
+  return ".data/hosted-resumes.json";
 }
 
 function createUniqueLocalResumeSlug(resumes: LocalStoredResume[]) {

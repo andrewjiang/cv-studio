@@ -7,6 +7,8 @@ import {
 } from "@/app/_components/account-client-actions";
 import { auth } from "@/app/_lib/auth";
 import { getAccountDashboard } from "@/app/_lib/account-store";
+import { getUserEntitlements } from "@/app/_lib/entitlements";
+import type { EntitlementResolution } from "@/app/_lib/entitlements-core";
 import { getWorkspace } from "@/app/_lib/hosted-resume-store";
 import { readWorkspaceCookie } from "@/app/_lib/workspace-cookie";
 
@@ -57,6 +59,7 @@ export default async function AccountPage() {
   }
 
   const dashboard = await getAccountDashboard(session.user.id);
+  const entitlementResolution = await getUserEntitlements(session.user.id);
 
   return (
     <AccountShell>
@@ -80,6 +83,8 @@ export default async function AccountPage() {
 
       <div className="mt-8 space-y-8">
         <AccountClaimButton hasWorkspaceResumes={hasWorkspaceResumes} />
+
+        <PlanStatusCard entitlementResolution={entitlementResolution} />
 
         <section>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -148,6 +153,98 @@ export default async function AccountPage() {
       </div>
     </AccountShell>
   );
+}
+
+function PlanStatusCard({
+  entitlementResolution,
+}: {
+  entitlementResolution: EntitlementResolution;
+}) {
+  const { entitlements, plan, source } = entitlementResolution;
+
+  return (
+    <section className="rounded-[1.75rem] border border-black/8 bg-white/75 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-2xl">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#065f46]">
+            Plan
+          </p>
+          <h2
+            className="mt-3 text-3xl font-medium tracking-[-0.04em] text-slate-950"
+            style={{ fontFamily: "var(--font-display-newsreader)" }}
+          >
+            {plan.label}
+          </h2>
+          <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
+            {plan.marketingDescription}
+          </p>
+          <p className="mt-4 text-sm font-bold text-slate-700">
+            {formatEntitlementSource(source)}
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[30rem]">
+          <PlanMetric
+            label="Branding"
+            value={entitlements.removeBranding ? "Removed" : "Tiny CV"}
+          />
+          <PlanMetric
+            label="Subdomains"
+            value={String(entitlements.customSubdomainLimit)}
+          />
+          <PlanMetric
+            label="PDF exports"
+            value={`${entitlements.monthlyPdfExports}/mo`}
+          />
+        </div>
+      </div>
+
+      {plan.key === "free" ? (
+        <div className="mt-5 rounded-2xl border border-[#065f46]/15 bg-[#ecfdf5] px-4 py-3 text-sm font-semibold leading-6 text-[#064e3b]">
+          Payments are the next slice: Founder Pass first, then annual Pro.
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function PlanMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-black/8 bg-[#fbf7f0] p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+        {label}
+      </p>
+      <p className="mt-2 text-lg font-bold text-slate-950">{value}</p>
+    </div>
+  );
+}
+
+function formatEntitlementSource(source: EntitlementResolution["source"]) {
+  if (source.source === "grant") {
+    return source.expiresAt
+      ? `Granted access through ${formatShortDate(source.expiresAt)}.`
+      : "Lifetime access is active.";
+  }
+
+  if (source.source === "subscription") {
+    if (source.cancelAtPeriodEnd && source.currentPeriodEnd) {
+      return `Active until ${formatShortDate(source.currentPeriodEnd)}.`;
+    }
+
+    return source.currentPeriodEnd
+      ? `Renews ${formatShortDate(source.currentPeriodEnd)}.`
+      : "Subscription is active.";
+  }
+
+  return "Free plan is active.";
+}
+
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
 }
 
 function AccountShell({ children }: { children: React.ReactNode }) {
