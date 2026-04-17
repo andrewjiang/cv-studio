@@ -10,6 +10,11 @@ import {
   isEditorAccessTokenValid,
 } from "@/app/_lib/editor-links";
 import { getResumeTemplate } from "@/app/_lib/resume-templates";
+import {
+  createFriendlyResumeSlug,
+  createFriendlyResumeSlugFallback,
+  normalizeSlugForComparison,
+} from "@/app/_lib/resume-slugs";
 import type {
   HostedResumeEditorRecord,
   HostedResumePublicRecord,
@@ -387,8 +392,11 @@ function createLocalFileStore(): HostedResumeStore {
 
     async getPublishedBySlug(slug) {
       const store = await readLocalStore();
+      const normalizedSlug = normalizeSlugForComparison(slug);
       const resume = store.resumes.find((candidate) =>
-        candidate.slug === slug && candidate.isPublished && Boolean(candidate.publishedMarkdown)
+        normalizeSlugForComparison(candidate.slug) === normalizedSlug &&
+        candidate.isPublished &&
+        Boolean(candidate.publishedMarkdown)
       );
 
       return resume ? toPublicRecord(resume) : null;
@@ -696,7 +704,7 @@ function createPostgresStore(): HostedResumeStore {
           updated_at,
           published_at
         from resumes
-        where slug = ${slug}
+        where lower(slug) = lower(${slug})
           and is_published = true
           and published_markdown is not null
         limit 1
@@ -1026,6 +1034,11 @@ async function ensureSchema(sql: SqlClient) {
       `;
 
       await sql`
+        create index if not exists resumes_slug_lower_idx
+        on resumes(lower(slug))
+      `;
+
+      await sql`
         create index if not exists workspace_resume_memberships_lookup_idx
         on workspace_resume_memberships(workspace_id, deleted_at, last_opened_at desc)
       `;
@@ -1119,7 +1132,7 @@ function createLocalResumeRecord(
   const normalizedMarkdown = normalizeCvMarkdown(input.markdown);
   const derivedTitle = deriveResumeTitle(normalizedMarkdown);
   const now = new Date().toISOString();
-  const slug = createUniqueSlug(store.resumes, input.title ?? derivedTitle);
+  const slug = createUniqueLocalResumeSlug(store.resumes);
 
   return {
     createdAt: now,
@@ -1330,7 +1343,7 @@ async function createPostgresResume(
   const title = input.title ?? derivedTitle;
   const titleIsCustom = input.titleIsCustom ?? false;
   const id = randomUUID();
-  const slug = await createUniqueSlugInPostgres(sql, title);
+  const slug = await createUniqueSlugInPostgres(sql);
   const now = input.updatedAt ? new Date(input.updatedAt) : new Date();
 
   await sql`
@@ -1567,13 +1580,14 @@ async function findDuplicatePostgresResume(
   return rows.find((row) => hashToken(row.markdown) === hashToken(markdown)) ?? null;
 }
 
-async function createUniqueSlugInPostgres(sql: SqlClient, title: string) {
-  const baseSlug = slugify(title);
+async function createUniqueSlugInPostgres(sql: SqlClient) {
+  let latestCandidate = createFriendlyResumeSlug();
 
-  for (let attempt = 0; attempt < 12; attempt += 1) {
-    const candidate = attempt === 0 ? baseSlug : `${baseSlug}-${randomSlugSuffix()}`;
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    const candidate = attempt === 0 ? latestCandidate : createFriendlyResumeSlug();
+    latestCandidate = candidate;
     const [row] = await sql<{ exists: boolean }[]>`
-      select exists(select 1 from resumes where slug = ${candidate}) as exists
+      select exists(select 1 from resumes where lower(slug) = lower(${candidate})) as exists
     `;
 
     if (!row?.exists) {
@@ -1581,7 +1595,18 @@ async function createUniqueSlugInPostgres(sql: SqlClient, title: string) {
     }
   }
 
-  return `${baseSlug}-${randomSlugSuffix()}-${randomSlugSuffix()}`;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const candidate = createFriendlyResumeSlugFallback(latestCandidate);
+    const [row] = await sql<{ exists: boolean }[]>`
+      select exists(select 1 from resumes where lower(slug) = lower(${candidate})) as exists
+    `;
+
+    if (!row?.exists) {
+      return candidate;
+    }
+  }
+
+  return createFriendlyResumeSlugFallback(latestCandidate);
 }
 
 function applyResumeMarkdownUpdate(
@@ -1665,28 +1690,28 @@ async function resolveLocalStorePath() {
   return join(/*turbopackIgnore: true*/ process.cwd(), ".data", "hosted-resumes.json");
 }
 
-function createUniqueSlug(resumes: LocalStoredResume[], title: string) {
-  const baseSlug = slugify(title);
-  let candidate = baseSlug;
-  let attempt = 1;
+function createUniqueLocalResumeSlug(resumes: LocalStoredResume[]) {
+  const existingSlugs = new Set(resumes.map((resume) => normalizeSlugForComparison(resume.slug)));
+  let latestCandidate = createFriendlyResumeSlug();
 
-  while (resumes.some((resume) => resume.slug === candidate)) {
-    attempt += 1;
-    candidate = `${baseSlug}-${attempt}`;
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    const candidate = attempt === 0 ? latestCandidate : createFriendlyResumeSlug();
+    latestCandidate = candidate;
+
+    if (!existingSlugs.has(normalizeSlugForComparison(candidate))) {
+      return candidate;
+    }
   }
 
-  return candidate;
-}
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const candidate = createFriendlyResumeSlugFallback(latestCandidate);
 
-function randomSlugSuffix() {
-  return randomUUID().slice(0, 4);
-}
+    if (!existingSlugs.has(normalizeSlugForComparison(candidate))) {
+      return candidate;
+    }
+  }
 
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "resume";
+  return createFriendlyResumeSlugFallback(latestCandidate);
 }
 
 function isTokenValidForResume(resume: LocalStoredResume | ResumeRow, token: string) {

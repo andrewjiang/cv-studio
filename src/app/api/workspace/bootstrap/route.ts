@@ -5,6 +5,7 @@ import {
   writeWorkspaceCookie,
 } from "@/app/_lib/workspace-cookie";
 import {
+  assertWorkspaceRateLimit,
   buildResumeResponse,
   handleResumeStoreError,
   parseTemplateCreateBody,
@@ -12,6 +13,12 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
+    const workspaceId = readWorkspaceCookieFromRequest(request);
+    await assertWorkspaceRateLimit({
+      action: "workspace:bootstrap",
+      request,
+      workspaceId,
+    });
     const body = parseTemplateCreateBody(await request.json());
 
     if (!body) {
@@ -23,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     const payload = await createWorkspaceBootstrap({
       templateKey: body.templateKey,
-      workspaceId: readWorkspaceCookieFromRequest(request),
+      workspaceId,
     });
 
     const response = NextResponse.json(buildResumeResponse(request, payload), { status: 201 });

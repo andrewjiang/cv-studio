@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createWorkspaceResume } from "@/app/_lib/hosted-resume-store";
 import { readWorkspaceCookieFromRequest } from "@/app/_lib/workspace-cookie";
 import {
+  assertWorkspaceRateLimit,
   buildResumeResponse,
   handleResumeStoreError,
   parseTemplateCreateBody,
@@ -17,6 +18,12 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       );
     }
+
+    await assertWorkspaceRateLimit({
+      action: "workspace:create",
+      request,
+      workspaceId,
+    });
 
     const body = parseTemplateCreateBody(await request.json());
 

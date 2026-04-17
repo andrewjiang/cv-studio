@@ -80,10 +80,13 @@ function printExistingServer(lock) {
 
 async function isHealthyDevServer(lock) {
   const appUrl = typeof lock.appUrl === "string" ? lock.appUrl : `http://localhost:${lock.port}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1_500);
 
   try {
     const response = await fetch(appUrl, {
       redirect: "manual",
+      signal: controller.signal,
     });
 
     if (existsSync(appPagePath) && response.status === 404) {
@@ -93,6 +96,8 @@ async function isHealthyDevServer(lock) {
     return response.ok || response.status < 500;
   } catch {
     return false;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

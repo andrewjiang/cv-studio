@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { switchWorkspaceResume } from "@/app/_lib/hosted-resume-store";
 import { readWorkspaceCookieFromRequest } from "@/app/_lib/workspace-cookie";
 import {
+  assertWorkspaceRateLimit,
   buildResumeResponse,
   handleResumeStoreError,
 } from "@/app/api/resumes/_lib";
@@ -16,6 +17,12 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       );
     }
+
+    await assertWorkspaceRateLimit({
+      action: "workspace:switch",
+      request,
+      workspaceId,
+    });
 
     const body = await request.json() as { resumeId?: unknown };
 

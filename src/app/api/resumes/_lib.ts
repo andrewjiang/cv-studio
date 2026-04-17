@@ -1,5 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  ApiRateLimitError,
+  ApiRateLimitUnavailableError,
+  assertApiRateLimit,
+  type ApiRateLimitAction,
+} from "@/app/_lib/api-rate-limit";
+import {
   HostedResumeStoreConnectionError,
   HostedResumeStoreUnavailableError,
 } from "@/app/_lib/hosted-resume-store";
@@ -93,8 +99,38 @@ export function buildResumeResponse(
   };
 }
 
+export async function assertWorkspaceRateLimit(input: {
+  action: ApiRateLimitAction;
+  request: NextRequest;
+  workspaceId?: string | null;
+}) {
+  await assertApiRateLimit(input);
+}
+
 export function handleResumeStoreError(error: unknown) {
+  if (error instanceof ApiRateLimitError) {
+    return NextResponse.json(
+      {
+        error: error.message,
+        retryAfterSeconds: error.retryAfterSeconds,
+      },
+      {
+        headers: {
+          "Retry-After": String(error.retryAfterSeconds),
+        },
+        status: 429,
+      },
+    );
+  }
+
   if (error instanceof HostedResumeStoreUnavailableError) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 503 },
+    );
+  }
+
+  if (error instanceof ApiRateLimitUnavailableError) {
     return NextResponse.json(
       { error: error.message },
       { status: 503 },

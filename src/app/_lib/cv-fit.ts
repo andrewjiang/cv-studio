@@ -31,13 +31,13 @@ const SKILL_COLUMN_GAP = 0.16 * PX_PER_INCH;
 const HEADER_BORDER_ALLOWANCE = 1;
 
 export const CV_SCALE_LIMITS = {
-  min: 0.72,
+  min: 0.3,
   max: 1.18,
   step: 0.005,
 };
 
 export const AGGRESSIVE_CV_SCALE_LIMITS = {
-  min: 0.68,
+  min: 0.2,
   max: 1.18,
   step: 0.005,
 };
@@ -381,12 +381,12 @@ function getFitCompression(fitScale: number) {
     return 1;
   }
 
-  if (fitScale <= 0.68) {
-    return 0.7;
+  if (fitScale <= 0.2) {
+    return 0.4;
   }
 
-  const progress = (0.92 - fitScale) / 0.24;
-  return 1 - progress * 0.3;
+  const progress = (0.92 - fitScale) / 0.72;
+  return 1 - progress * 0.6;
 }
 
 function measureParagraph(
@@ -400,6 +400,10 @@ function measureParagraph(
 
   if (!normalizedText) {
     return 0;
+  }
+
+  if (!canMeasureTextWithCanvas()) {
+    return estimateFallbackParagraphHeight(normalizedText, style, width, scale);
   }
 
   const font = buildCanvasFont(style, scale);
@@ -426,6 +430,10 @@ function measureTextNaturalWidth(
     return 0;
   }
 
+  if (!canMeasureTextWithCanvas()) {
+    return estimateFallbackTextWidth(normalizedText, style, scale);
+  }
+
   const font = buildCanvasFont(style, scale);
   const cacheKey = `${font}::${normalizedText}`;
   const cached = caches.naturalWidth.get(cacheKey);
@@ -444,6 +452,30 @@ function measureTextNaturalWidth(
   const width = measureNaturalWidth(prepared);
   caches.naturalWidth.set(cacheKey, width);
   return width;
+}
+
+function canMeasureTextWithCanvas() {
+  return typeof OffscreenCanvas !== "undefined" ||
+    (typeof document !== "undefined" && typeof document.createElement === "function");
+}
+
+function estimateFallbackParagraphHeight(
+  text: string,
+  style: MeasuredTextStyle,
+  width: number,
+  scale: number,
+) {
+  const naturalWidth = estimateFallbackTextWidth(text, style, scale);
+  const lineCount = Math.max(1, Math.ceil(naturalWidth / Math.max(width, 1)));
+  return lineCount * style.lineHeight * scale;
+}
+
+function estimateFallbackTextWidth(text: string, style: MeasuredTextStyle, scale: number) {
+  const fontSize = style.fontSize * scale;
+  const weight = Number.parseInt(style.fontWeight, 10);
+  const weightMultiplier = Number.isFinite(weight) && weight >= 600 ? 1.04 : 1;
+  const uppercaseMultiplier = text === text.toUpperCase() ? 1.08 : 1;
+  return text.length * fontSize * 0.54 * weightMultiplier * uppercaseMultiplier;
 }
 
 function buildCanvasFont(style: MeasuredTextStyle, scale: number) {

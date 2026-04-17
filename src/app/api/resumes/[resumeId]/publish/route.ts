@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { publishWorkspaceResume } from "@/app/_lib/hosted-resume-store";
 import { readWorkspaceCookieFromRequest } from "@/app/_lib/workspace-cookie";
 import {
+  assertWorkspaceRateLimit,
   buildResumeResponse,
   handleResumeStoreError,
   parseResumeMutationBody,
@@ -20,6 +21,12 @@ export async function POST(
         { status: 401 },
       );
     }
+
+    await assertWorkspaceRateLimit({
+      action: "workspace:publish",
+      request,
+      workspaceId,
+    });
 
     const { resumeId } = await context.params;
     const body = parseResumeMutationBody(await request.json());

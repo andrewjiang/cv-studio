@@ -1,7 +1,8 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, RefObject } from "react";
 import { forwardRef, Fragment } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { getPageMetrics } from "@/app/_lib/cv-fit";
 import {
   fontFamilyForToken,
   resolveResumeDensityMultiplier,
@@ -9,6 +10,7 @@ import {
   resolveResumeTypography,
   type ResumeContactItem,
   type ResumeDocument,
+  type ResumeResolvedStyle,
   type ResumeSection,
   type ResumeStylePrefs,
   type ResumeTypographyScale,
@@ -19,11 +21,13 @@ type ResumeContentVariant = "paper" | "mobile";
 export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
   document: ResumeDocument;
   fitScale?: number;
+  interactive?: boolean;
   typeScale?: ResumeTypographyScale;
   variant?: ResumeContentVariant;
 }>(function ResumeDocumentContent({
   document,
   fitScale = 1,
+  interactive = true,
   typeScale = resolveResumeTypography(document.style),
   variant = "paper",
 }, ref) {
@@ -49,7 +53,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
       }
     >
       <header
-        className={`${document.style.showHeaderDivider ? "border-b border-slate-200" : ""} ${isMobile || resolvedStyle.headerAlignment === "center" ? "text-center" : ""}`}
+        className={`${document.style.showHeaderDivider ? "border-b border-slate-200" : ""} ${resolvedStyle.headerAlignment === "center" ? "text-center" : ""}`}
         style={{
           paddingBottom: document.style.showHeaderDivider
             ? spacing.headerPaddingWithDivider
@@ -57,7 +61,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
         }}
       >
         <h1
-          className={`font-semibold leading-[0.94] tracking-[-0.036em] text-[var(--resume-ink)] ${isMobile ? "mx-auto" : ""}`}
+          className={`font-semibold leading-[0.94] tracking-[-0.036em] text-[var(--resume-ink)] ${resolvedStyle.headerAlignment === "center" ? "mx-auto" : ""}`}
           style={{
             fontFamily: resolvedStyle.displayFontFamily,
             fontSize: `${typeScale.name}em`,
@@ -68,7 +72,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
 
         {document.headline ? (
           <p
-            className={`font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)] ${isMobile ? "mx-auto" : ""}`}
+            className={`font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)] ${resolvedStyle.headerAlignment === "center" ? "mx-auto" : ""}`}
             style={{
               fontFamily: resolvedStyle.displayFontFamily,
               fontSize: `${typeScale.headline}em`,
@@ -81,14 +85,14 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
 
         {document.contactRows.length ? (
           <div
-            className={`flex flex-col leading-[1.4] text-[var(--resume-subtle)] ${isMobile ? "items-center" : ""}`}
+            className={`flex flex-col leading-[1.4] text-[var(--resume-subtle)] ${resolvedStyle.headerAlignment === "center" ? "items-center" : "items-start"}`}
             style={{
               fontSize: `${typeScale.contact}em`,
               gap: spacing.contactGap,
               marginTop: spacing.contactMarginTop,
             }}
           >
-            <ResumeContactBlock document={document} variant={variant} />
+            <ResumeContactBlock document={document} interactive={interactive} resolvedStyle={resolvedStyle} variant={variant} />
           </div>
         ) : null}
       </header>
@@ -105,6 +109,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
         {document.sections.map((section) => (
           <ResumeSectionBlock
             fitScale={fitScale}
+            interactive={interactive}
             key={section.id}
             resolvedStyle={resolvedStyle}
             section={section}
@@ -118,11 +123,88 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
   );
 });
 
+export const ResumePreview = forwardRef<HTMLDivElement, {
+  contentBoundsRef?: RefObject<HTMLDivElement | null>;
+  document: ResumeDocument;
+  fitScale?: number;
+  interactive?: boolean;
+  showPageGuides?: boolean;
+  typeScale?: ResumeTypographyScale;
+}>(function ResumePreview(
+  {
+    contentBoundsRef,
+    document,
+    fitScale = 1,
+    interactive = false,
+    showPageGuides = false,
+    typeScale = resolveResumeTypography(document.style),
+  },
+  ref,
+) {
+  const pageMetrics = getPageMetrics(document.style);
+
+  return (
+    <article
+      className="cv-document"
+      style={{
+        fontFamily: fontFamilyForToken(document.style.bodyFont),
+        height: `${pageMetrics.pageHeight}px`,
+      } as CSSProperties}
+    >
+      {showPageGuides ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+        >
+          <div
+            className="absolute border border-dashed border-emerald-500/70 bg-emerald-500/4"
+            style={{
+              bottom: `${pageMetrics.paddingBottom}px`,
+              left: `${pageMetrics.paddingX}px`,
+              right: `${pageMetrics.paddingX}px`,
+              top: `${pageMetrics.paddingTop}px`,
+            } as CSSProperties}
+          />
+        </div>
+      ) : null}
+      <div
+        className="h-full w-full"
+        style={{
+          paddingBottom: `${pageMetrics.paddingBottom}px`,
+          paddingLeft: `${pageMetrics.paddingX}px`,
+          paddingRight: `${pageMetrics.paddingX}px`,
+          paddingTop: `${pageMetrics.paddingTop}px`,
+        } as CSSProperties}
+      >
+        <div
+          ref={contentBoundsRef}
+          style={{
+            height: `${pageMetrics.contentHeight}px`,
+            width: `${pageMetrics.contentWidth}px`,
+          } as CSSProperties}
+        >
+          <ResumeDocumentContent
+            document={document}
+            fitScale={fitScale}
+            interactive={interactive}
+            ref={ref}
+            typeScale={typeScale}
+          />
+        </div>
+      </div>
+    </article>
+  );
+});
+
 function ResumeContactBlock({
   document,
+  interactive,
+  resolvedStyle,
   variant,
 }: {
   document: ResumeDocument;
+  interactive: boolean;
+  resolvedStyle: ResumeResolvedStyle;
   variant: ResumeContentVariant;
 }) {
   if (document.style.contactStyle === "classic") {
@@ -133,7 +215,7 @@ function ResumeContactBlock({
             key={`contact-${index}-${line}`}
             className="break-words [overflow-wrap:anywhere]"
           >
-            <InlineMarkdown content={line} />
+            <InlineMarkdown content={line} interactive={interactive} />
           </p>
         ))}
       </>
@@ -150,21 +232,23 @@ function ResumeContactBlock({
         {document.contactItems.map((item, index) => (
           <Fragment key={`contact-inline-${item.label}-${index}`}>
             {index > 0 ? <span className="text-slate-300">·</span> : null}
-            <ContactItem item={item} useIcons={false} />
+            <ContactItem interactive={interactive} item={item} useIcons={false} />
           </Fragment>
         ))}
       </div>
     );
   }
 
+  const alignmentClasses = resolvedStyle.headerAlignment === "center" ? "justify-center text-center" : "justify-start text-left";
+
   return (
     <>
       {textItems.length ? (
-        <div className="flex max-w-full flex-wrap items-center justify-center gap-x-[0.45rem] gap-y-[0.22rem] text-center">
+        <div className={`flex max-w-full flex-wrap gap-x-[0.45rem] gap-y-[0.22rem] ${alignmentClasses}`}>
           {textItems.map((item, index) => (
             <Fragment key={`contact-text-${item.label}-${index}`}>
               {index > 0 ? <span className="text-slate-300">·</span> : null}
-              <ContactItem item={item} useIcons={false} />
+              <ContactItem interactive={interactive} item={item} useIcons={false} />
             </Fragment>
           ))}
         </div>
@@ -173,14 +257,14 @@ function ResumeContactBlock({
         <div
           className={
             useIcons
-              ? "flex flex-wrap items-center justify-center gap-2 text-[var(--accent-strong)]"
-              : "flex flex-wrap items-center gap-x-[0.5rem] gap-y-[0.18rem] text-[var(--accent-strong)]"
+              ? `flex flex-wrap gap-2 text-[var(--accent-strong)] ${alignmentClasses}`
+              : `flex flex-wrap gap-x-[0.5rem] gap-y-[0.18rem] text-[var(--accent-strong)] ${alignmentClasses}`
           }
         >
           {linkedItems.map((item, index) => (
             <Fragment key={`contact-link-${item.label}-${index}`}>
               {!useIcons && index > 0 ? <span className="text-slate-300">·</span> : null}
-              <ContactItem item={item} iconOnly={useIcons} useIcons={useIcons} />
+              <ContactItem iconOnly={useIcons} interactive={interactive} item={item} useIcons={useIcons} />
             </Fragment>
           ))}
         </div>
@@ -191,10 +275,12 @@ function ResumeContactBlock({
 
 function ContactItem({
   iconOnly = false,
+  interactive,
   item,
   useIcons,
 }: {
   iconOnly?: boolean;
+  interactive: boolean;
   item: ResumeContactItem;
   useIcons: boolean;
 }) {
@@ -205,7 +291,7 @@ function ContactItem({
     </>
   );
 
-  if (item.href) {
+  if (item.href && interactive) {
     return (
       <a
         aria-label={item.label}
@@ -310,6 +396,7 @@ function ContactIcon({
 
 function ResumeSectionBlock({
   fitScale,
+  interactive,
   resolvedStyle,
   section,
   stylePrefs,
@@ -317,6 +404,7 @@ function ResumeSectionBlock({
   variant,
 }: {
   fitScale: number;
+  interactive: boolean;
   resolvedStyle: ReturnType<typeof resolveResumeStyle>;
   section: ResumeSection;
   stylePrefs: ResumeStylePrefs;
@@ -350,7 +438,7 @@ function ResumeSectionBlock({
         >
           {section.paragraphs.map((paragraph, index) => (
             <p key={`${section.id}-paragraph-${index}`}>
-              <InlineMarkdown content={paragraph} />
+              <InlineMarkdown content={paragraph} interactive={interactive} />
             </p>
           ))}
         </div>
@@ -367,7 +455,7 @@ function ResumeSectionBlock({
         >
           {section.bullets.map((bullet, index) => (
             <li key={`${section.id}-bullet-${index}`} className="list-disc">
-              <InlineMarkdown content={bullet} />
+              <InlineMarkdown content={bullet} interactive={interactive} />
             </li>
           ))}
         </ul>
@@ -411,7 +499,7 @@ function ResumeSectionBlock({
                     marginTop: spacing.entryMetaMarginTop,
                   }}
                 >
-                  <InlineMarkdown content={entry.metaLeft} />
+                  <InlineMarkdown content={entry.metaLeft} interactive={interactive} />
                 </p>
               ) : null}
 
@@ -426,7 +514,7 @@ function ResumeSectionBlock({
                 >
                   {entry.paragraphs.map((paragraph, paragraphIndex) => (
                     <p key={`${section.id}-entry-${entryIndex}-paragraph-${paragraphIndex}`}>
-                      <InlineMarkdown content={paragraph} />
+                      <InlineMarkdown content={paragraph} interactive={interactive} />
                     </p>
                   ))}
                 </div>
@@ -446,7 +534,7 @@ function ResumeSectionBlock({
                       key={`${section.id}-entry-${entryIndex}-bullet-${bulletIndex}`}
                       className="list-disc"
                     >
-                      <InlineMarkdown content={bullet} />
+                      <InlineMarkdown content={bullet} interactive={interactive} />
                     </li>
                   ))}
                 </ul>
@@ -468,7 +556,7 @@ function ResumeSectionBlock({
             <Fragment key={`${section.id}-skill-${index}`}>
               <dt className="font-semibold text-[var(--resume-ink)]">{group.label}</dt>
               <dd className="text-[var(--resume-subtle)] md:pl-[0.02in] [overflow-wrap:anywhere]">
-                <InlineMarkdown content={group.value} />
+                <InlineMarkdown content={group.value} interactive={interactive} />
               </dd>
             </Fragment>
           ))}
@@ -478,7 +566,13 @@ function ResumeSectionBlock({
   );
 }
 
-function InlineMarkdown({ content }: { content: string }) {
+function InlineMarkdown({
+  content,
+  interactive,
+}: {
+  content: string;
+  interactive: boolean;
+}) {
   return (
     <ReactMarkdown
       disallowedElements={[
@@ -507,24 +601,18 @@ function InlineMarkdown({ content }: { content: string }) {
       unwrapDisallowed
       components={{
         p: ({ children }) => <>{children}</>,
-        a: ({ children, href }) => (
-          <a
-            className="cv-link"
-            href={href}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {children}
-          </a>
-        ),
+        a: ({ children, href }) =>
+          interactive ? (
+            <a className="cv-link" href={href} rel="noreferrer" target="_blank">
+              {children}
+            </a>
+          ) : (
+            <span className="cv-link">{children}</span>
+          ),
         strong: ({ children }) => (
-          <strong className="font-semibold text-[var(--resume-ink)]">
-            {children}
-          </strong>
+          <strong className="font-semibold text-[var(--resume-ink)]">{children}</strong>
         ),
-        em: ({ children }) => (
-          <em className="italic text-[var(--resume-subtle)]">{children}</em>
-        ),
+        em: ({ children }) => <em className="italic text-[var(--resume-subtle)]">{children}</em>,
         code: ({ children }) => (
           <code className="rounded bg-black/5 px-[0.12em] py-[0.04em] font-mono text-[0.92em]">
             {children}
@@ -600,12 +688,12 @@ export function getPaperCompression(fitScale: number) {
     return 1;
   }
 
-  if (fitScale <= 0.68) {
-    return 0.7;
+  if (fitScale <= 0.2) {
+    return 0.4;
   }
 
-  const progress = (0.92 - fitScale) / 0.24;
-  return 1 - progress * 0.3;
+  const progress = (0.92 - fitScale) / 0.72;
+  return 1 - progress * 0.6;
 }
 
 export { fontFamilyForToken as fontFamilyForChoice };

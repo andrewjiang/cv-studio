@@ -1,7 +1,7 @@
 "use client";
 
+import Link from "next/link";
 import {
-  forwardRef,
   type ChangeEvent,
   type CSSProperties,
   type RefObject,
@@ -34,6 +34,7 @@ import {
 } from "@/app/_components/cv-studio-ui";
 import {
   ResumeDocumentContent,
+  ResumePreview,
   fontFamilyForChoice,
   getPaperCompression,
 } from "@/app/_components/resume-content";
@@ -55,7 +56,6 @@ import {
   resolveResumeStylePresetDefaults,
   resolveResumeTypography,
   splitCvMarkdown,
-  type ResumeDocument,
   type ResumePageSize,
   type ResumeStylePrefs,
   type ResumeStylePreset,
@@ -82,6 +82,25 @@ type StudioNotice =
   | { kind: "error"; message: string }
   | { kind: "success"; message: string };
 
+type FitAdjustmentPreference = {
+  disableAutoLegal: boolean;
+  disableAutoMargin: boolean;
+};
+
+type FitInterventionNotice =
+  | { kind: "margin"; from: number; to: number }
+  | { kind: "legal"; from: ResumePageSize; to: ResumePageSize };
+
+const AUTO_FIT_PREFS_STORAGE_KEY = "tinycv:auto-fit-preferences";
+const AUTO_MARGIN_THRESHOLD = 0.84;
+const AUTO_LEGAL_THRESHOLD = 0.72;
+const CUT_CONTENT_THRESHOLD = 0.56;
+const TIGHTEST_PAGE_MARGIN = 0.65;
+const DEFAULT_FIT_ADJUSTMENT_PREFERENCE: FitAdjustmentPreference = {
+  disableAutoLegal: false,
+  disableAutoMargin: false,
+};
+
 export function CvStudio({
   initialEditorPath,
   initialPublicPath,
@@ -103,7 +122,9 @@ export function CvStudio({
   const [menuOpen, setMenuOpen] = useState(false);
   const [isRenamingDraft, setIsRenamingDraft] = useState(false);
   const [renameDraftValue, setRenameDraftValue] = useState(initialResume.title);
-  const [pageSizeNotice, setPageSizeNotice] = useState<string | null>(null);
+  const [fitInterventionNotice, setFitInterventionNotice] = useState<FitInterventionNotice | null>(null);
+  const [autoFitPreferences, setAutoFitPreferences] = useState<Record<string, FitAdjustmentPreference>>({});
+  const [autoFitPreferencesReady, setAutoFitPreferencesReady] = useState(false);
   const [remoteSyncState, setRemoteSyncState] = useState<RemoteSyncState>({ kind: "idle" });
   const [notice, setNotice] = useState<StudioNotice>({ kind: "idle" });
   const [workspaceState, setWorkspaceState] = useState(workspace);
@@ -143,6 +164,8 @@ export function CvStudio({
   const renameInputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef(0);
   const autoPublishKeyRef = useRef<string | null>(null);
+  const lastAutoMarginAdjustmentRef = useRef<{ from: number; to: number } | null>(null);
+  const lastAutoPageSizeAdjustmentRef = useRef<{ from: ResumePageSize; to: ResumePageSize } | null>(null);
 
   const resumeDocument = parseCvMarkdown(markdown);
   const typeScale = resolveResumeTypography(resumeDocument.style);
@@ -164,6 +187,9 @@ export function CvStudio({
       : "Publish";
   const mobileCompactIconButtonClass =
     "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-black/10 bg-white/92 text-slate-700 transition hover:border-black/20 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40";
+  const fitAdjustmentPreference =
+    autoFitPreferences[activeResume.id] ?? DEFAULT_FIT_ADJUSTMENT_PREFERENCE;
+  const shouldWarnAboutContentLength = fitState.scale <= CUT_CONTENT_THRESHOLD;
 
   useEffect(() => {
     markdownRef.current = markdown;
@@ -178,6 +204,46 @@ export function CvStudio({
   }, [activeResume.id]);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(AUTO_FIT_PREFS_STORAGE_KEY);
+
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, Partial<FitAdjustmentPreference>>;
+        const normalized = Object.fromEntries(
+          Object.entries(parsed).map(([resumeId, preference]) => [
+            resumeId,
+            {
+              disableAutoLegal: Boolean(preference.disableAutoLegal),
+              disableAutoMargin: Boolean(preference.disableAutoMargin),
+            },
+          ]),
+        ) as Record<string, FitAdjustmentPreference>;
+
+        setAutoFitPreferences(normalized);
+      }
+    } catch {
+      // Ignore malformed local state and fall back to defaults.
+    }
+
+    setAutoFitPreferencesReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !autoFitPreferencesReady) {
+      return;
+    }
+
+    window.localStorage.setItem(
+      AUTO_FIT_PREFS_STORAGE_KEY,
+      JSON.stringify(autoFitPreferences),
+    );
+  }, [autoFitPreferences, autoFitPreferencesReady]);
+
+  useEffect(() => {
     setWorkspaceState(workspace);
     setActiveResume(initialResume);
     setMarkdown(initialResume.markdown);
@@ -186,8 +252,11 @@ export function CvStudio({
     setRenameDraftValue(initialResume.title);
     setMenuOpen(false);
     setIsRenamingDraft(false);
+    setFitInterventionNotice(null);
     setNotice({ kind: "idle" });
     setRemoteSyncState({ kind: "idle" });
+    lastAutoMarginAdjustmentRef.current = null;
+    lastAutoPageSizeAdjustmentRef.current = null;
   }, [
     initialEditorPath,
     initialPublicPath,
@@ -510,21 +579,63 @@ export function CvStudio({
   }, [fontsReady, markdown]);
 
   useEffect(() => {
-    if (resumeDocument.style.pageSize !== "letter" || !fitState.overflow) {
+    if (
+      !autoFitPreferencesReady ||
+      !fontsReady ||
+      fitAdjustmentPreference.disableAutoMargin ||
+      resumeDocument.style.pageMargin <= TIGHTEST_PAGE_MARGIN + 0.001 ||
+      fitState.scale > AUTO_MARGIN_THRESHOLD
+    ) {
       return;
     }
 
-    setMarkdown((current) => updateMarkdownPageSize(current, "legal"));
-    setPageSizeNotice("This draft was too long for one page on letter, so it was auto-switched to legal.");
-  }, [fitState.overflow, resumeDocument.style.pageSize]);
+    const fromMargin = resumeDocument.style.pageMargin;
+    lastAutoMarginAdjustmentRef.current = {
+      from: fromMargin,
+      to: TIGHTEST_PAGE_MARGIN,
+    };
+    setMarkdown((current) => updateMarkdownPageMargin(current, TIGHTEST_PAGE_MARGIN));
+    setFitInterventionNotice({
+      kind: "margin",
+      from: fromMargin,
+      to: TIGHTEST_PAGE_MARGIN,
+    });
+  }, [
+    fitAdjustmentPreference.disableAutoMargin,
+    fitState.scale,
+    autoFitPreferencesReady,
+    fontsReady,
+    resumeDocument.style.pageMargin,
+  ]);
 
   useEffect(() => {
-    if (resumeDocument.style.pageSize !== "letter") {
+    if (
+      !autoFitPreferencesReady ||
+      !fontsReady ||
+      fitAdjustmentPreference.disableAutoLegal ||
+      resumeDocument.style.pageSize !== "letter" ||
+      fitState.scale > AUTO_LEGAL_THRESHOLD
+    ) {
       return;
     }
 
-    setPageSizeNotice(null);
-  }, [resumeDocument.style.pageSize]);
+    lastAutoPageSizeAdjustmentRef.current = {
+      from: "letter",
+      to: "legal",
+    };
+    setMarkdown((current) => updateMarkdownPageSize(current, "legal"));
+    setFitInterventionNotice({
+      kind: "legal",
+      from: "letter",
+      to: "legal",
+    });
+  }, [
+    fitAdjustmentPreference.disableAutoLegal,
+    fitState.scale,
+    autoFitPreferencesReady,
+    fontsReady,
+    resumeDocument.style.pageSize,
+  ]);
 
   useLayoutEffect(() => {
     updatePreviewScale();
@@ -581,6 +692,93 @@ export function CvStudio({
     }
 
     setShowStylePrefs((current) => !current);
+  };
+
+  const updateFitAdjustmentPreference = (
+    updater: (current: FitAdjustmentPreference) => FitAdjustmentPreference,
+  ) => {
+    setAutoFitPreferences((current) => ({
+      ...current,
+      [activeResume.id]: updater(
+        current[activeResume.id] ?? DEFAULT_FIT_ADJUSTMENT_PREFERENCE,
+      ),
+    }));
+  };
+
+  const handlePageMarginChange = (pageMargin: number) => {
+    const lastAutoMarginAdjustment = lastAutoMarginAdjustmentRef.current;
+
+    if (
+      lastAutoMarginAdjustment &&
+      Math.abs(pageMargin - lastAutoMarginAdjustment.from) < 0.001
+    ) {
+      updateFitAdjustmentPreference((current) => ({
+        ...current,
+        disableAutoMargin: true,
+      }));
+    }
+
+    lastAutoMarginAdjustmentRef.current = null;
+    setFitInterventionNotice((current) =>
+      current?.kind === "margin" ? null : current,
+    );
+    setMarkdown((current) => updateMarkdownPageMargin(current, pageMargin));
+  };
+
+  const handlePageSizeChange = (pageSize: ResumePageSize) => {
+    const lastAutoPageSizeAdjustment = lastAutoPageSizeAdjustmentRef.current;
+
+    if (
+      lastAutoPageSizeAdjustment &&
+      pageSize === lastAutoPageSizeAdjustment.from
+    ) {
+      updateFitAdjustmentPreference((current) => ({
+        ...current,
+        disableAutoLegal: true,
+      }));
+    }
+
+    lastAutoPageSizeAdjustmentRef.current = null;
+    setFitInterventionNotice((current) =>
+      current?.kind === "legal" ? null : current,
+    );
+    setMarkdown((current) => updateMarkdownPageSize(current, pageSize));
+  };
+
+  const restorePreviousAutoMargin = () => {
+    const lastAutoMarginAdjustment = lastAutoMarginAdjustmentRef.current;
+
+    if (!lastAutoMarginAdjustment) {
+      return;
+    }
+
+    updateFitAdjustmentPreference((current) => ({
+      ...current,
+      disableAutoMargin: true,
+    }));
+    setFitInterventionNotice(null);
+    setMarkdown((current) =>
+      updateMarkdownPageMargin(current, lastAutoMarginAdjustment.from),
+    );
+    lastAutoMarginAdjustmentRef.current = null;
+  };
+
+  const restorePreviousAutoPageSize = () => {
+    const lastAutoPageSizeAdjustment = lastAutoPageSizeAdjustmentRef.current;
+
+    if (!lastAutoPageSizeAdjustment) {
+      return;
+    }
+
+    updateFitAdjustmentPreference((current) => ({
+      ...current,
+      disableAutoLegal: true,
+    }));
+    setFitInterventionNotice(null);
+    setMarkdown((current) =>
+      updateMarkdownPageSize(current, lastAutoPageSizeAdjustment.from),
+    );
+    lastAutoPageSizeAdjustmentRef.current = null;
   };
 
   const selectResume = async (resumeId: string) => {
@@ -1127,15 +1325,8 @@ export function CvStudio({
                         headerAlignment,
                       })));
                     }}
-                    onPageMarginChange={(pageMargin) => {
-                      setMarkdown((current) => updateMarkdownStyle(current, (style) => ({
-                        ...style,
-                        pageMargin,
-                      })));
-                    }}
-                    onPageSizeChange={(pageSize) => {
-                      setMarkdown((current) => updateMarkdownPageSize(current, pageSize));
-                    }}
+                    onPageMarginChange={handlePageMarginChange}
+                    onPageSizeChange={handlePageSizeChange}
                     onPresetChange={(stylePreset) => {
                       setMarkdown((current) => applyStylePreset(current, stylePreset));
                     }}
@@ -1216,16 +1407,52 @@ export function CvStudio({
               </div>
             </div>
 
-            {pageSizeNotice || fitState.aggressive || fitState.overflow ? (
+            {fitInterventionNotice || fitState.aggressive || fitState.overflow || shouldWarnAboutContentLength ? (
               <div
                 className="app-chrome mb-3 hidden px-1 text-[0.77rem] text-slate-500 lg:block"
                 style={{ width: `${pageMetrics.pageWidth * previewScale}px` }}
               >
-                {pageSizeNotice
-                  ? pageSizeNotice
-                  : fitState.overflow
-                    ? "This draft is still too long for one page at the minimum fit size."
-                    : "Aggressive fit is active for this page size."}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  {fitInterventionNotice?.kind === "margin" ? (
+                    <>
+                      <span>
+                        Tightened the page margin from {formatMarginLabel(fitInterventionNotice.from)} to {formatMarginLabel(fitInterventionNotice.to)} to preserve readability.
+                      </span>
+                      <button
+                        className={textActionLinkClass}
+                        onClick={restorePreviousAutoMargin}
+                        type="button"
+                      >
+                        Switch back
+                      </button>
+                    </>
+                  ) : null}
+                  {fitInterventionNotice?.kind === "legal" ? (
+                    <>
+                      <span>
+                        Switched this draft from {fitInterventionNotice.from} to {fitInterventionNotice.to} so it can stay readable on one page.
+                      </span>
+                      <button
+                        className={textActionLinkClass}
+                        onClick={restorePreviousAutoPageSize}
+                        type="button"
+                      >
+                        Switch back
+                      </button>
+                    </>
+                  ) : null}
+                  {!fitInterventionNotice && fitState.overflow ? (
+                    <span>This draft is still too long for one page at the minimum fit size.</span>
+                  ) : null}
+                  {!fitInterventionNotice && !fitState.overflow && fitState.aggressive ? (
+                    <span>Aggressive fit is active for this page size.</span>
+                  ) : null}
+                  {shouldWarnAboutContentLength ? (
+                    <span className="text-amber-700">
+                      This is getting very dense for a one-page resume. Consider cutting it down.
+                    </span>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 
@@ -1251,6 +1478,7 @@ export function CvStudio({
                     contentBoundsRef={contentBoundsRef}
                     document={resumeDocument}
                     fitScale={fitState.scale}
+                    interactive={true}
                     ref={contentRef}
                     showPageGuides={showPageGuides}
                     typeScale={typeScale}
@@ -1293,6 +1521,7 @@ export function CvStudio({
                       contentBoundsRef={mobileDesktopPreviewBoundsRef}
                       document={resumeDocument}
                       fitScale={fitState.scale}
+                      interactive={true}
                       ref={mobileDesktopPreviewContentRef}
                       showPageGuides={showPageGuides}
                       typeScale={typeScale}
@@ -1542,6 +1771,22 @@ function ResumeMenu({
         </button>
       </MenuSection>
 
+      <MenuSection title="Product">
+        <Link
+          className={menuButtonClass}
+          href="/documentation"
+        >
+          Documentation
+        </Link>
+        <Link
+          className={menuButtonClass}
+          href="/api/v1/openapi.json"
+          target="_blank"
+        >
+          OpenAPI spec
+        </Link>
+      </MenuSection>
+
       <MenuSection title="Advanced">
         <button
           className={menuButtonClass}
@@ -1555,76 +1800,6 @@ function ResumeMenu({
     </div>
   );
 }
-
-const ResumePreview = forwardRef<HTMLDivElement, {
-  contentBoundsRef: RefObject<HTMLDivElement | null>;
-  document: ResumeDocument;
-  fitScale: number;
-  showPageGuides: boolean;
-  typeScale: ReturnType<typeof resolveResumeTypography>;
-}>(function ResumePreview(
-  {
-    contentBoundsRef,
-    document,
-    fitScale,
-    showPageGuides,
-    typeScale,
-  },
-  ref,
-) {
-  const pageMetrics = getPageMetrics(document.style);
-
-  return (
-    <article
-      className="cv-document"
-      style={{
-        fontFamily: fontFamilyForChoice(document.style.bodyFont),
-        height: `${pageMetrics.pageHeight}px`,
-      } as CSSProperties}
-    >
-      {showPageGuides ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-        >
-          <div
-            className="absolute border border-dashed border-emerald-500/70 bg-emerald-500/4"
-            style={{
-              bottom: `${pageMetrics.paddingBottom}px`,
-              left: `${pageMetrics.paddingX}px`,
-              right: `${pageMetrics.paddingX}px`,
-              top: `${pageMetrics.paddingTop}px`,
-            } as CSSProperties}
-          />
-        </div>
-      ) : null}
-      <div
-        className="h-full w-full"
-        style={{
-          paddingBottom: `${pageMetrics.paddingBottom}px`,
-          paddingLeft: `${pageMetrics.paddingX}px`,
-          paddingRight: `${pageMetrics.paddingX}px`,
-          paddingTop: `${pageMetrics.paddingTop}px`,
-        } as CSSProperties}
-      >
-        <div
-          ref={contentBoundsRef}
-          style={{
-            height: `${pageMetrics.contentHeight}px`,
-            width: `${pageMetrics.contentWidth}px`,
-          } as CSSProperties}
-        >
-          <ResumeDocumentContent
-            document={document}
-            fitScale={fitScale}
-            ref={ref}
-            typeScale={typeScale}
-          />
-        </div>
-      </div>
-    </article>
-  );
-});
 
 function readTypography(nodes: {
   body: HTMLElement | null;
@@ -1785,6 +1960,13 @@ function updateMarkdownPageSize(markdown: string, pageSize: ResumePageSize) {
       pageSize,
     }),
   });
+}
+
+function updateMarkdownPageMargin(markdown: string, pageMargin: number) {
+  return updateMarkdownStyle(markdown, (style) => ({
+    ...style,
+    pageMargin,
+  }));
 }
 
 function FitStyleProbes({
@@ -1985,4 +2167,8 @@ function describeRemoteSyncState(
   }
 
   return "Saved";
+}
+
+function formatMarginLabel(pageMargin: number) {
+  return `${pageMargin.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1")}"`;
 }

@@ -19,7 +19,7 @@ export function PublicResumeFooterActions() {
         <span aria-hidden="true" className="text-slate-300">·</span>
         <Link
           className="cursor-pointer underline-offset-4 transition hover:text-slate-950 hover:underline"
-          href="/"
+          href="/new"
         >
           Create your own
         </Link>

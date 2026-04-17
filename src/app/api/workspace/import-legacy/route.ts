@@ -4,7 +4,10 @@ import {
   readWorkspaceCookieFromRequest,
   writeWorkspaceCookie,
 } from "@/app/_lib/workspace-cookie";
-import { handleResumeStoreError } from "@/app/api/resumes/_lib";
+import {
+  assertWorkspaceRateLimit,
+  handleResumeStoreError,
+} from "@/app/api/resumes/_lib";
 
 function parseImportLegacyBody(body: unknown) {
   if (!body || typeof body !== "object") {
@@ -36,6 +39,13 @@ function parseImportLegacyBody(body: unknown) {
 
 export async function POST(request: NextRequest) {
   try {
+    const workspaceId = readWorkspaceCookieFromRequest(request);
+    await assertWorkspaceRateLimit({
+      action: "workspace:import_legacy",
+      request,
+      workspaceId,
+    });
+
     const body = parseImportLegacyBody(await request.json());
 
     if (!body) {
@@ -48,7 +58,7 @@ export async function POST(request: NextRequest) {
     const payload = await importLegacyWorkspaceDrafts({
       activeDraftName: body.activeDraftName,
       drafts: body.drafts,
-      workspaceId: readWorkspaceCookieFromRequest(request),
+      workspaceId,
     });
 
     const response = NextResponse.json(payload, { status: 201 });

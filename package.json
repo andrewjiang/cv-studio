@@ -5,15 +5,24 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:restart": "node scripts/dev.mjs --restart",
+    "db:migrate": "node scripts/migrate.mjs",
     "build": "next build",
+    "check:prod": "node scripts/check-production-readiness.mjs",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:account": "node scripts/verify-account-claim.mjs",
+    "test:pdf": "node scripts/verify-pdf-renderer.mjs",
+    "test:pdf:visual": "TINYCV_PDF_TEST_VISUAL=1 node scripts/verify-pdf-renderer.mjs"
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.5",
+    "better-auth": "^1.6.5",
     "next": "16.2.3",
+    "pdf-lib": "^1.17.1",
+    "pg": "^8.20.0",
     "postgres": "^3.4.9",
+    "puppeteer-core": "^24.41.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
@@ -22,10 +31,13 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.4"

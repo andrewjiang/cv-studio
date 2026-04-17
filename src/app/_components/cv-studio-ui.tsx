@@ -28,7 +28,7 @@ const PAGE_MARGIN_OPTIONS: Array<{ label: string; value: string }> = [
 ];
 
 export const primaryActionButtonClass =
-  "inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--accent)] px-5 text-[0.92rem] font-semibold text-white transition hover:border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] disabled:cursor-wait disabled:opacity-85";
+  "inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--accent)] px-5 text-[0.92rem] font-semibold !text-white transition hover:border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] disabled:cursor-wait disabled:opacity-85";
 
 export const iconActionButtonClass =
   "flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-black/10 bg-white/92 text-slate-700 transition hover:border-black/20 hover:bg-white";

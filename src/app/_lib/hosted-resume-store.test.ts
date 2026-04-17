@@ -5,8 +5,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   attachHostedResume,
   createWorkspaceBootstrap,
+  getPublishedResumeBySlug,
   importLegacyWorkspaceDrafts,
+  publishWorkspaceResume,
+  renameWorkspaceResume,
 } from "@/app/_lib/hosted-resume-store";
+import { FRIENDLY_RESUME_SLUG_PATTERN } from "@/app/_lib/resume-slugs";
 
 describe("hosted-resume-store", () => {
   let tempDir = "";
@@ -30,7 +34,41 @@ describe("hosted-resume-store", () => {
     expect(payload.workspace.currentResumeId).toBe(payload.resume.id);
     expect(payload.workspace.resumes).toHaveLength(1);
     expect(payload.resume.templateKey).toBe("engineer");
+    expect(payload.resume.slug).toMatch(FRIENDLY_RESUME_SLUG_PATTERN);
+    expect(payload.resume.slug).not.toContain("-");
+    expect(payload.publicPath).toBe(`/${payload.resume.slug}`);
     expect(payload.editorPath).toContain(`/studio/${payload.resume.id}?token=`);
+  });
+
+  it("keeps the public slug stable when a resume is renamed", async () => {
+    const payload = await createWorkspaceBootstrap({ templateKey: "designer" });
+    const originalSlug = payload.resume.slug;
+
+    const renamed = await renameWorkspaceResume({
+      resumeId: payload.resume.id,
+      title: "Jamie Lee Portfolio Resume",
+      workspaceId: payload.workspace.workspaceId,
+    });
+
+    expect(renamed?.resume.title).toBe("Jamie Lee Portfolio Resume");
+    expect(renamed?.resume.slug).toBe(originalSlug);
+    expect(renamed?.publicPath).toBe(`/${originalSlug}`);
+  });
+
+  it("resolves published camel-case slugs case-insensitively", async () => {
+    const payload = await createWorkspaceBootstrap({ templateKey: "founder" });
+
+    await publishWorkspaceResume({
+      fitScale: payload.resume.fitScale,
+      markdown: payload.resume.markdown,
+      resumeId: payload.resume.id,
+      workspaceId: payload.workspace.workspaceId,
+    });
+
+    const publicResume = await getPublishedResumeBySlug(payload.resume.slug.toLowerCase());
+
+    expect(publicResume?.id).toBe(payload.resume.id);
+    expect(publicResume?.slug).toBe(payload.resume.slug);
   });
 
   it("dedupes identical legacy drafts inside one workspace", async () => {

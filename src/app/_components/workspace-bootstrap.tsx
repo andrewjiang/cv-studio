@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ResumeTemplateChooser } from "@/app/_components/resume-template-chooser";
 import {
   DRAFTS_STORAGE_KEY,
@@ -14,12 +13,39 @@ const LEGACY_IMPORT_MARKER = "tinycv:legacy-imported";
 
 export function WorkspaceBootstrap({
   allowLegacyImport,
+  initialTemplateKey = null,
 }: {
   allowLegacyImport: boolean;
+  initialTemplateKey?: TemplateKey | null;
 }) {
-  const router = useRouter();
   const [busyTemplateKey, setBusyTemplateKey] = useState<TemplateKey | null>(null);
   const [message, setMessage] = useState<string | null>(allowLegacyImport ? "Checking for existing local drafts..." : null);
+  const attemptedInitialTemplateRef = useRef(false);
+
+  const createFromTemplate = useCallback(async (templateKey: TemplateKey) => {
+    setBusyTemplateKey(templateKey);
+    setMessage(null);
+
+    try {
+      const response = await fetch("/api/workspace/bootstrap", {
+        body: JSON.stringify({ templateKey }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const payload = await response.json() as HostedResumeResponse & { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Unable to create a new resume.");
+      }
+
+      window.location.replace(`/studio/${payload.resume.id}`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to create a new resume.");
+      setBusyTemplateKey(null);
+    }
+  }, []);
 
   useEffect(() => {
     if (!allowLegacyImport) {
@@ -63,7 +89,7 @@ export function WorkspaceBootstrap({
         window.localStorage.removeItem(LEGACY_MARKDOWN_STORAGE_KEY);
 
         if (!cancelled && payload.currentResumeId) {
-          router.replace(`/studio/${payload.currentResumeId}`);
+          window.location.replace(`/studio/${payload.currentResumeId}`);
         }
       } catch (error) {
         if (!cancelled) {
@@ -75,32 +101,16 @@ export function WorkspaceBootstrap({
     return () => {
       cancelled = true;
     };
-  }, [allowLegacyImport, router]);
+  }, [allowLegacyImport]);
 
-  const createFromTemplate = async (templateKey: TemplateKey) => {
-    setBusyTemplateKey(templateKey);
-    setMessage(null);
-
-    try {
-      const response = await fetch("/api/workspace/bootstrap", {
-        body: JSON.stringify({ templateKey }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-      });
-      const payload = await response.json() as HostedResumeResponse & { error?: string };
-
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Unable to create a new resume.");
-      }
-
-      router.replace(`/studio/${payload.resume.id}`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to create a new resume.");
-      setBusyTemplateKey(null);
+  useEffect(() => {
+    if (!initialTemplateKey || attemptedInitialTemplateRef.current) {
+      return;
     }
-  };
+
+    attemptedInitialTemplateRef.current = true;
+    void createFromTemplate(initialTemplateKey);
+  }, [createFromTemplate, initialTemplateKey]);
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fbf8f3_0%,#f4efe8_100%)] px-4 py-6 text-slate-900 sm:px-6 lg:px-8 lg:py-10">
@@ -117,7 +127,7 @@ export function WorkspaceBootstrap({
             eyebrow={null}
             onSelect={createFromTemplate}
             subtitle="Choose a strong starting point. You can rewrite the content and restyle everything after."
-            title="Choose your first resume template."
+            title="Choose your starting point."
           />
 
           {message ? (

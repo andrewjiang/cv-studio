@@ -7,6 +7,7 @@ import {
 } from "@/app/_lib/hosted-resume-store";
 import { readWorkspaceCookieFromRequest } from "@/app/_lib/workspace-cookie";
 import {
+  assertWorkspaceRateLimit,
   buildResumeResponse,
   handleResumeStoreError,
   parseResumeMutationBody,
@@ -37,6 +38,12 @@ export async function GET(
       return workspaceId;
     }
 
+    await assertWorkspaceRateLimit({
+      action: "workspace:save",
+      request,
+      workspaceId,
+    });
+
     const { resumeId } = await context.params;
     const payload = await getStudioBootstrap({ resumeId, workspaceId });
 
@@ -60,6 +67,12 @@ export async function PUT(
     if (workspaceId instanceof NextResponse) {
       return workspaceId;
     }
+
+    await assertWorkspaceRateLimit({
+      action: "workspace:rename",
+      request,
+      workspaceId,
+    });
 
     const { resumeId } = await context.params;
     const body = parseResumeMutationBody(await request.json());
@@ -98,6 +111,12 @@ export async function PATCH(
     if (workspaceId instanceof NextResponse) {
       return workspaceId;
     }
+
+    await assertWorkspaceRateLimit({
+      action: "workspace:delete",
+      request,
+      workspaceId,
+    });
 
     const { resumeId } = await context.params;
     const body = parseResumeRenameBody(await request.json());

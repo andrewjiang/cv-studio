@@ -5,6 +5,7 @@ import {
   writeWorkspaceCookie,
 } from "@/app/_lib/workspace-cookie";
 import {
+  assertWorkspaceRateLimit,
   buildResumeResponse,
   handleResumeStoreError,
   parseAttachResumeBody,
@@ -15,6 +16,13 @@ export async function POST(
   context: RouteContext<"/api/resumes/[resumeId]/attach">,
 ) {
   try {
+    const workspaceId = readWorkspaceCookieFromRequest(request);
+    await assertWorkspaceRateLimit({
+      action: "workspace:attach",
+      request,
+      workspaceId,
+    });
+
     const { resumeId } = await context.params;
     const body = parseAttachResumeBody(await request.json());
 
@@ -28,7 +36,7 @@ export async function POST(
     const payload = await attachHostedResume({
       resumeId,
       token: body.token,
-      workspaceId: readWorkspaceCookieFromRequest(request),
+      workspaceId,
     });
 
     if (!payload) {
