@@ -14,7 +14,7 @@ It also ships with a developer platform:
 - Async PDF jobs
 - One-time edit claim links for handing a draft back to a user
 
-Live app: https://cvstudio-chi.vercel.app
+Live app: https://cvstudio-brown.vercel.app
 
 ![Tiny CV desktop editor](docs/cv-studio-desktop.png)
 

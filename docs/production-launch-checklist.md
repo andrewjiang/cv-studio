@@ -6,7 +6,8 @@ This is the operational checklist for the next launch wave: get Tiny CV running 
 
 ### 1. Vercel
 
-- Create or choose the production Vercel project.
+- Production project: `lockinbot/cvstudio`.
+- Current production URL: `https://cvstudio-brown.vercel.app`.
 - Add the production domain when ready.
 - Use Pro if you want cron recovery more than once per day. Hobby supports cron, but only once daily.
 - Enable Fluid Compute if available for the project.
