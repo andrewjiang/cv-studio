@@ -49,7 +49,7 @@ export async function createBillingCheckoutSession(input: {
   userId: string;
 }) {
   const stripe = getStripeClient();
-  const priceId = getStripePriceId(input.planKey);
+  const priceId = await getStripePriceId(stripe, input.planKey);
   const customerId = await getOrCreateStripeCustomer({
     email: input.email,
     name: input.name,
@@ -79,6 +79,10 @@ export async function createBillingCheckoutSession(input: {
     payment_intent_data: mode === "payment" ? { metadata } : undefined,
     subscription_data: mode === "subscription" ? { metadata } : undefined,
     success_url: `${appUrl}/account?billing=success`,
+  }).catch((error: unknown) => {
+    throw new BillingProviderError(error instanceof Error
+      ? error.message
+      : "Stripe checkout session creation failed.");
   });
 
   if (!session.url) {
@@ -196,15 +200,45 @@ function getBillingSql() {
   return billingSql;
 }
 
-function getStripePriceId(planKey: CheckoutPlanKey) {
+async function getStripePriceId(stripe: Stripe, planKey: CheckoutPlanKey) {
   const envKey = getStripePriceEnvKey(planKey);
-  const priceId = process.env[envKey]?.trim();
+  const configuredId = process.env[envKey]?.trim();
 
-  if (!priceId) {
+  if (!configuredId) {
     throw new BillingConfigurationError(`${envKey} is required for Stripe billing.`);
   }
 
-  return priceId;
+  if (configuredId.startsWith("price_")) {
+    return configuredId;
+  }
+
+  if (!configuredId.startsWith("prod_")) {
+    throw new BillingConfigurationError(`${envKey} must be a Stripe price_ or product prod_ id.`);
+  }
+
+  const product = await stripe.products.retrieve(configuredId, {
+    expand: ["default_price"],
+  }).catch((error: unknown) => {
+    throw new BillingProviderError(error instanceof Error
+      ? error.message
+      : `Could not resolve ${envKey} product default price.`);
+  });
+  const defaultPrice = product.default_price;
+
+  if (typeof defaultPrice === "string" && defaultPrice.startsWith("price_")) {
+    return defaultPrice;
+  }
+
+  if (
+    defaultPrice &&
+    typeof defaultPrice === "object" &&
+    "id" in defaultPrice &&
+    typeof defaultPrice.id === "string"
+  ) {
+    return defaultPrice.id;
+  }
+
+  throw new BillingConfigurationError(`${envKey} product does not have a default Stripe price.`);
 }
 
 async function getOrCreateStripeCustomer(input: {
