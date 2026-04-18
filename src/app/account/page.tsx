@@ -4,6 +4,7 @@ import {
   AccountAuthPanel,
   AccountClaimButton,
   AccountSignOutButton,
+  BillingCheckoutButton,
 } from "@/app/_components/account-client-actions";
 import { auth } from "@/app/_lib/auth";
 import { getAccountDashboard } from "@/app/_lib/account-store";
@@ -200,8 +201,18 @@ function PlanStatusCard({
       </div>
 
       {plan.key === "free" ? (
-        <div className="mt-5 rounded-2xl border border-[#065f46]/15 bg-[#ecfdf5] px-4 py-3 text-sm font-semibold leading-6 text-[#064e3b]">
-          Payments are the next slice: Founder Pass first, then annual Pro.
+        <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-[#065f46]/15 bg-[#ecfdf5] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold leading-6 text-[#064e3b]">
+            Founder Pass is $100 lifetime for the first 100 paid users. Annual Pro is $40/year.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <BillingCheckoutButton planKey="founder">
+              Buy Founder Pass
+            </BillingCheckoutButton>
+            <BillingCheckoutButton planKey="pro" variant="secondary">
+              Start Annual Pro
+            </BillingCheckoutButton>
+          </div>
         </div>
       ) : null}
     </section>

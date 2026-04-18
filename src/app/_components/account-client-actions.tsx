@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import type { CheckoutPlanKey } from "@/app/_lib/billing-core";
 import { authClient } from "@/app/_lib/auth-client";
 
 export function AccountAuthPanel({
@@ -257,6 +258,67 @@ export function AccountSignOutButton() {
     >
       {pending ? "Signing out..." : "Sign out"}
     </button>
+  );
+}
+
+export function BillingCheckoutButton({
+  children,
+  planKey,
+  variant = "primary",
+}: {
+  children: React.ReactNode;
+  planKey: CheckoutPlanKey;
+  variant?: "primary" | "secondary";
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function startCheckout() {
+    setError(null);
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/billing/checkout", {
+        body: JSON.stringify({ planKey }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        checkoutUrl?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.checkoutUrl) {
+        setError(payload.error || "Could not start checkout.");
+        return;
+      }
+
+      window.location.href = payload.checkoutUrl;
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        className={variant === "primary"
+          ? "rounded-full bg-[#065f46] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#044e3a] disabled:cursor-not-allowed disabled:opacity-55"
+          : "rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-55"}
+        disabled={pending}
+        onClick={startCheckout}
+        type="button"
+      >
+        {pending ? "Opening checkout..." : children}
+      </button>
+      {error ? (
+        <p className="mt-2 max-w-xs text-sm font-semibold leading-5 text-red-700">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

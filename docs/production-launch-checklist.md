@@ -97,16 +97,34 @@ Set provider credentials only when ready:
 - `GITHUB_CLIENT_ID`
 - `GITHUB_CLIENT_SECRET`
 
-### 6. Future Wave Payments
+### 6. Stripe Payments
 
-Do not wire Stripe until accounts and entitlements exist.
+Stripe checkout is wired for signed-in users.
 
-Prepare:
+Create test-mode products/prices first:
 
-- Stripe account
 - Founder Pass product, one-time `$100`
 - Annual Pro product, `$40/year`
-- webhook endpoint secret once the route exists
+
+Set:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_FOUNDER_PRICE_ID`
+- `STRIPE_PRO_ANNUAL_PRICE_ID`
+- `STRIPE_WEBHOOK_SECRET`
+
+Webhook endpoint:
+
+```text
+https://your-production-domain/api/billing/stripe/webhook
+```
+
+Subscribe to:
+
+- `checkout.session.completed`
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
 
 ### 7. Future Wave Subdomains
 
