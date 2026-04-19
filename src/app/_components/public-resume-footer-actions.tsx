@@ -2,7 +2,25 @@
 
 import Link from "next/link";
 
-export function PublicResumeFooterActions() {
+export function PublicResumeFooterActions({
+  showBranding,
+}: {
+  showBranding: boolean;
+}) {
+  if (!showBranding) {
+    return (
+      <footer className="app-chrome mt-6 flex items-center justify-center pb-2 text-center lg:mt-8 lg:pb-0 print:hidden">
+        <button
+          className="cursor-pointer text-[0.92rem] font-medium text-slate-600 underline-offset-4 transition hover:text-slate-950 hover:underline"
+          onClick={() => window.print()}
+          type="button"
+        >
+          Download PDF
+        </button>
+      </footer>
+    );
+  }
+
   return (
     <footer className="app-chrome mt-6 flex flex-col items-center justify-center gap-2 pb-2 text-center lg:mt-8 lg:pb-0 print:hidden">
       <p className="text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-slate-500">

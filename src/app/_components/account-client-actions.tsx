@@ -322,6 +322,53 @@ export function BillingCheckoutButton({
   );
 }
 
+export function BillingPortalButton() {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function openPortal() {
+    setError(null);
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/billing/portal", {
+        method: "POST",
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        error?: string;
+        portalUrl?: string;
+      };
+
+      if (!response.ok || !payload.portalUrl) {
+        setError(payload.error || "Could not open billing portal.");
+        return;
+      }
+
+      window.location.href = payload.portalUrl;
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-55"
+        disabled={pending}
+        onClick={openPortal}
+        type="button"
+      >
+        {pending ? "Opening billing..." : "Manage billing"}
+      </button>
+      {error ? (
+        <p className="mt-2 max-w-xs text-sm font-semibold leading-5 text-red-700">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 async function claimWorkspace() {
   await fetch("/api/account/claim-workspace", {
     method: "POST",

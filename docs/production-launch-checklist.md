@@ -126,6 +126,11 @@ Subscribe to:
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
 
+Configure Stripe Customer Portal if subscription management should be available from `/account`:
+
+- Settings -> Billing -> Customer portal
+- enable payment method updates, invoice history, and subscription cancellation/change behavior
+
 ### 7. Future Wave Subdomains
 
 For `name.tiny.cv`, prepare:
@@ -155,6 +160,13 @@ Smoke-test API PDF rendering against a running deployment:
 ```bash
 TINYCV_ACCOUNT_TEST_BASE_URL=https://your-production-domain \
 pnpm test:account
+
+TINYCV_BILLING_TEST_BASE_URL=https://your-production-domain \
+pnpm test:billing
+
+TINYCV_BRANDING_TEST_BASE_URL=https://your-production-domain \
+DATABASE_URL=postgresql://... \
+pnpm test:branding
 
 TINYCV_PDF_TEST_BASE_URL=https://your-production-domain \
 TINYCV_API_KEY=tcv_live_... \
@@ -207,7 +219,11 @@ Before sharing publicly:
 - `/` loads the landing page.
 - `/new` creates a resume.
 - `/account` allows account creation and sign in.
+- `/account?billing=success` shows a clear checkout confirmation.
 - `POST /api/account/claim-workspace` attaches anonymous drafts to the signed-in user.
+- `POST /api/billing/checkout` creates Founder Pass and Annual Pro checkout sessions.
+- Paid account-owned public resumes hide Tiny CV branding.
+- Subscription accounts can open Stripe Customer Portal from `/account`.
 - `/account/resumes/:resumeId/open` reattaches an account-owned draft to the current browser and opens Studio.
 - `/studio/[resumeId]` saves and publishes.
 - `/:slug` renders the public page.

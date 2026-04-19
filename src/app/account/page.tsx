@@ -5,6 +5,7 @@ import {
   AccountClaimButton,
   AccountSignOutButton,
   BillingCheckoutButton,
+  BillingPortalButton,
 } from "@/app/_components/account-client-actions";
 import { auth } from "@/app/_lib/auth";
 import { getAccountDashboard } from "@/app/_lib/account-store";
@@ -15,7 +16,12 @@ import { readWorkspaceCookie } from "@/app/_lib/workspace-cookie";
 
 export const dynamic = "force-dynamic";
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ billing?: string }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -84,6 +90,11 @@ export default async function AccountPage() {
 
       <div className="mt-8 space-y-8">
         <AccountClaimButton hasWorkspaceResumes={hasWorkspaceResumes} />
+
+        <BillingStatusNotice
+          billingStatus={resolvedSearchParams.billing}
+          entitlementResolution={entitlementResolution}
+        />
 
         <PlanStatusCard entitlementResolution={entitlementResolution} />
 
@@ -156,6 +167,44 @@ export default async function AccountPage() {
   );
 }
 
+function BillingStatusNotice({
+  billingStatus,
+  entitlementResolution,
+}: {
+  billingStatus?: string;
+  entitlementResolution: EntitlementResolution;
+}) {
+  if (billingStatus === "success") {
+    const paidPlanActive = entitlementResolution.plan.key !== "free";
+
+    return (
+      <div className="rounded-[1.5rem] border border-[#065f46]/15 bg-[#ecfdf5] p-5">
+        <h2 className="text-base font-bold text-slate-950">
+          {paidPlanActive ? "Payment complete." : "Payment received."}
+        </h2>
+        <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
+          {paidPlanActive
+            ? `${entitlementResolution.plan.label} is active on this account.`
+            : "Stripe is confirming the payment. Refresh this page in a moment if the plan has not changed yet."}
+        </p>
+      </div>
+    );
+  }
+
+  if (billingStatus === "cancelled") {
+    return (
+      <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5">
+        <h2 className="text-base font-bold text-slate-950">Checkout cancelled.</h2>
+        <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
+          No payment was taken. You can restart checkout when you are ready.
+        </p>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function PlanStatusCard({
   entitlementResolution,
 }: {
@@ -213,6 +262,13 @@ function PlanStatusCard({
               Start Annual Pro
             </BillingCheckoutButton>
           </div>
+        </div>
+      ) : source.source === "subscription" ? (
+        <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-black/8 bg-[#fbf7f0] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold leading-6 text-slate-600">
+            Manage payment methods, invoices, and subscription changes in Stripe.
+          </p>
+          <BillingPortalButton />
         </div>
       ) : null}
     </section>

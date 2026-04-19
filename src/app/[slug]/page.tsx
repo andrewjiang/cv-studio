@@ -7,6 +7,7 @@ import {
   getPublishedResumeBySlug,
   HostedResumeStoreUnavailableError,
 } from "@/app/_lib/hosted-resume-store";
+import { canRemoveBrandingForResume } from "@/app/_lib/entitlements";
 import {
   parseCvMarkdown,
   resolveMobileResumeTypography,
@@ -42,9 +43,12 @@ export async function generateMetadata({
   }
 
   const document = parseCvMarkdown(resume.markdown);
+  const hideBranding = await canRemoveBrandingForResume(resume.id);
 
   return {
-    description: `${document.name}'s resume, published with Tiny CV.`,
+    description: hideBranding
+      ? `${document.name}'s resume.`
+      : `${document.name}'s resume, published with Tiny CV.`,
     title: `${document.name} | Resume`,
   };
 }
@@ -80,6 +84,7 @@ export default async function PublicResumePage({
   const desktopTypeScale = resolveResumeTypography(document.style);
   const mobileTypeScale = resolveMobileResumeTypography(document.style);
   const isPrintView = print === "1" || print === "true";
+  const hideBranding = await canRemoveBrandingForResume(resume.id);
 
   if (isPrintView) {
     return (
@@ -173,7 +178,7 @@ export default async function PublicResumePage({
           </div>
         </div>
 
-        <PublicResumeFooterActions />
+        <PublicResumeFooterActions showBranding={!hideBranding} />
       </div>
 
       <style media="print">{`@page { size: ${document.style.pageSize}; margin: 0; }`}</style>

@@ -95,6 +95,30 @@ export async function createBillingCheckoutSession(input: {
   };
 }
 
+export async function createBillingPortalSession(input: {
+  userId: string;
+}) {
+  const stripe = getStripeClient();
+  const customerId = await getStripeCustomerIdForUser(input.userId);
+
+  if (!customerId) {
+    throw new BillingValidationError("No Stripe customer exists for this account yet.");
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: `${getAppUrl()}/account`,
+  }).catch((error: unknown) => {
+    throw new BillingProviderError(error instanceof Error
+      ? error.message
+      : "Stripe billing portal session creation failed.");
+  });
+
+  return {
+    portalUrl: session.url,
+  };
+}
+
 export function constructStripeWebhookEvent(input: {
   payload: string;
   signature: string | null;
@@ -291,6 +315,18 @@ async function getOrCreateStripeCustomer(input: {
   }
 
   return upserted.stripe_customer_id;
+}
+
+async function getStripeCustomerIdForUser(userId: string) {
+  const sql = getBillingSql();
+  const [existing] = await sql<BillingCustomerRow[]>`
+    select user_id, stripe_customer_id
+    from billing_customers
+    where user_id = ${userId}
+    limit 1
+  `;
+
+  return existing?.stripe_customer_id ?? null;
 }
 
 async function handleCheckoutSessionCompleted(

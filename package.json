@@ -12,6 +12,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:account": "node scripts/verify-account-claim.mjs",
+    "test:branding": "node scripts/verify-paid-branding.mjs",
+    "test:billing": "node scripts/verify-billing-checkout.mjs",
     "test:pdf": "node scripts/verify-pdf-renderer.mjs",
     "test:pdf:visual": "TINYCV_PDF_TEST_VISUAL=1 node scripts/verify-pdf-renderer.mjs"
   },

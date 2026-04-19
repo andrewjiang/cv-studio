@@ -19,6 +19,10 @@ type AccountPlanGrantRow = {
   plan_key: string;
 };
 
+type BrandingEntitlementRow = {
+  resume_id: string;
+};
+
 let entitlementSql: postgres.Sql | null = null;
 
 export async function getUserEntitlements(userId: string): Promise<EntitlementResolution> {
@@ -85,6 +89,42 @@ export async function getUserEntitlements(userId: string): Promise<EntitlementRe
   }
 
   return resolveEntitlements({});
+}
+
+export async function canRemoveBrandingForResume(resumeId: string) {
+  if (!process.env.DATABASE_URL) {
+    return false;
+  }
+
+  const sql = getEntitlementSql();
+  const [row] = await sql<BrandingEntitlementRow[]>`
+    select membership.resume_id
+    from user_resume_memberships membership
+    where membership.resume_id = ${resumeId}
+      and membership.deleted_at is null
+      and (
+        exists (
+          select 1
+          from account_plan_grants grant_row
+          where grant_row.user_id = membership.user_id
+            and grant_row.plan_key in ('pro', 'founder')
+            and grant_row.revoked_at is null
+            and grant_row.starts_at <= now()
+            and (grant_row.expires_at is null or grant_row.expires_at > now())
+        )
+        or exists (
+          select 1
+          from billing_subscriptions subscription
+          where subscription.user_id = membership.user_id
+            and subscription.plan_key in ('pro', 'founder')
+            and subscription.status in ('active', 'trialing')
+            and (subscription.current_period_end is null or subscription.current_period_end > now())
+        )
+      )
+    limit 1
+  `;
+
+  return Boolean(row);
 }
 
 function getEntitlementSql() {
