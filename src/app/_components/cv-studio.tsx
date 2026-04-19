@@ -1771,6 +1771,15 @@ function ResumeMenu({
         </button>
       </MenuSection>
 
+      <MenuSection title="Account">
+        <Link
+          className={menuButtonClass}
+          href="/account"
+        >
+          Account settings
+        </Link>
+      </MenuSection>
+
       <MenuSection title="Product">
         <Link
           className={menuButtonClass}

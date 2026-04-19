@@ -221,7 +221,7 @@ export function AccountClaimButton({
         <div>
           <h2 className="text-base font-bold text-slate-950">Claim this browser&apos;s drafts</h2>
           <p className="mt-1 text-sm font-medium text-slate-600">
-            Attach the resumes from this anonymous workspace to your account.
+            Attach the resumes from this browser to your account.
           </p>
         </div>
         <button
