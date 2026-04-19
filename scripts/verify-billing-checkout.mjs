@@ -11,6 +11,7 @@ const baseUrl = normalizeOrigin(
 const jar = createCookieJar();
 
 async function main() {
+  await assertLandingPricingVisible();
   await assertCheckoutRejectedWhenSignedOut();
 
   const runId = randomUUID().slice(0, 8);
@@ -25,11 +26,33 @@ async function main() {
 
   assert(signedUp.user?.id, "Sign up did not return a user id.");
 
+  await assertAccountPricingVisible();
   await assertInvalidPlanRejected();
   await assertCheckoutCreated("founder");
   await assertCheckoutCreated("pro");
 
   log(`Created user: ${signedUp.user.id}`);
+}
+
+async function assertLandingPricingVisible() {
+  const response = await rawRequest("/", {
+    useCookies: false,
+  });
+  const html = await response.text();
+
+  assert(response.ok, `Landing page returned ${response.status}.`);
+  assert(html.includes("Founder spots left"), "Landing page did not render Founder Pass availability.");
+  log("Landing Founder Pass availability rendered.");
+}
+
+async function assertAccountPricingVisible() {
+  const response = await rawRequest("/account");
+  const html = await response.text();
+
+  assert(response.ok, `Account page returned ${response.status}.`);
+  assert(html.includes("Founder Pass:"), "Account page did not render Founder Pass launch state.");
+  assert(html.includes("spots left"), "Account page did not render Founder Pass remaining count.");
+  log("Founder Pass launch state rendered.");
 }
 
 async function assertCheckoutRejectedWhenSignedOut() {

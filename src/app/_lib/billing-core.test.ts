@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  getFounderPassLimit,
+  getFounderPassRemaining,
   getCheckoutMode,
   getStripePriceEnvKey,
   inferCheckoutPlanFromPriceId,
@@ -51,5 +53,19 @@ describe("billing-core", () => {
       priceId: "price_other",
       proAnnualPriceId: "price_pro",
     })).toBeNull();
+  });
+
+  it("normalizes the founder pass limit", () => {
+    expect(getFounderPassLimit()).toBe(100);
+    expect(getFounderPassLimit("20")).toBe(20);
+    expect(getFounderPassLimit("20.9")).toBe(20);
+    expect(getFounderPassLimit("0")).toBe(100);
+    expect(getFounderPassLimit("nope")).toBe(100);
+  });
+
+  it("computes founder pass availability without going negative", () => {
+    expect(getFounderPassRemaining({ limit: 100, sold: 11 })).toBe(89);
+    expect(getFounderPassRemaining({ limit: 100, sold: 100 })).toBe(0);
+    expect(getFounderPassRemaining({ limit: 100, sold: 120 })).toBe(0);
   });
 });

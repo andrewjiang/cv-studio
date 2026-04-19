@@ -113,6 +113,10 @@ Set:
 - `STRIPE_PRO_ANNUAL_PRICE_ID`
 - `STRIPE_WEBHOOK_SECRET`
 
+Optional:
+
+- `TINYCV_FOUNDER_PASS_LIMIT=100`
+
 Webhook endpoint:
 
 ```text
@@ -222,7 +226,9 @@ Before sharing publicly:
 - `/account?billing=success` shows a clear checkout confirmation.
 - `POST /api/account/claim-workspace` attaches anonymous drafts to the signed-in user.
 - `POST /api/billing/checkout` creates Founder Pass and Annual Pro checkout sessions.
+- Founder Pass availability renders on `/` and `/account`, and checkout rejects new Founder purchases after the configured limit.
 - Paid account-owned public resumes hide Tiny CV branding.
+- `usage_events` records signup/sign-in, account claim, checkout start/complete, workspace publish, API publish, and PDF job events.
 - Subscription accounts can open Stripe Customer Portal from `/account`.
 - `/account/resumes/:resumeId/open` reattaches an account-owned draft to the current browser and opens Studio.
 - `/studio/[resumeId]` saves and publishes.
@@ -231,3 +237,4 @@ Before sharing publicly:
 - `/api/v1/openapi.json` loads.
 - `pnpm test:pdf` passes against production.
 - Vercel logs show no repeated function failures.
+- X launch checklist is reviewed: `docs/x-launch-checklist.md`.

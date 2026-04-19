@@ -46,6 +46,7 @@ export function AccountAuthPanel({
         return;
       }
 
+      await recordAccountEvent(mode === "sign-up" ? "account.sign_up" : "account.sign_in");
       await claimWorkspace();
       router.refresh();
     } finally {
@@ -263,10 +264,14 @@ export function AccountSignOutButton() {
 
 export function BillingCheckoutButton({
   children,
+  disabled = false,
+  disabledReason,
   planKey,
   variant = "primary",
 }: {
   children: React.ReactNode;
+  disabled?: boolean;
+  disabledReason?: string;
   planKey: CheckoutPlanKey;
   variant?: "primary" | "secondary";
 }) {
@@ -307,12 +312,17 @@ export function BillingCheckoutButton({
         className={variant === "primary"
           ? "rounded-full bg-[#065f46] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#044e3a] disabled:cursor-not-allowed disabled:opacity-55"
           : "rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-55"}
-        disabled={pending}
+        disabled={pending || disabled}
         onClick={startCheckout}
         type="button"
       >
         {pending ? "Opening checkout..." : children}
       </button>
+      {disabled && disabledReason ? (
+        <p className="mt-2 max-w-xs text-sm font-semibold leading-5 text-slate-600">
+          {disabledReason}
+        </p>
+      ) : null}
       {error ? (
         <p className="mt-2 max-w-xs text-sm font-semibold leading-5 text-red-700">
           {error}
@@ -371,6 +381,21 @@ export function BillingPortalButton() {
 
 async function claimWorkspace() {
   await fetch("/api/account/claim-workspace", {
+    method: "POST",
+  }).catch(() => null);
+}
+
+async function recordAccountEvent(action: "account.sign_in" | "account.sign_up") {
+  await fetch("/api/analytics/events", {
+    body: JSON.stringify({
+      action,
+      metadata: {
+        surface: "account_page",
+      },
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
     method: "POST",
   }).catch(() => null);
 }

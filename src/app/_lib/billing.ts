@@ -4,18 +4,32 @@ import postgres from "postgres";
 import Stripe from "stripe";
 import {
   getCheckoutMode,
+  getFounderPassLimit,
+  getFounderPassRemaining,
   getStripePriceEnvKey,
   inferCheckoutPlanFromPriceId,
   isCheckoutPlanKey,
   isStripeSubscriptionStatus,
   type CheckoutPlanKey,
 } from "@/app/_lib/billing-core";
+import {
+  recordUsageEvent,
+  type UsageEventInput,
+} from "@/app/_lib/usage-events";
 
 type SqlClient = postgres.Sql | postgres.TransactionSql;
 
 type BillingCustomerRow = {
   stripe_customer_id: string | null;
   user_id: string;
+};
+
+export type BillingLaunchState = {
+  founderPassAvailable: boolean;
+  founderPassLimit: number;
+  founderPassRemaining: number;
+  founderPassSold: number;
+  stripeMode: "live" | "test" | "unconfigured";
 };
 
 export class BillingConfigurationError extends Error {
@@ -49,6 +63,15 @@ export async function createBillingCheckoutSession(input: {
   userId: string;
 }) {
   const stripe = getStripeClient();
+
+  if (input.planKey === "founder") {
+    const launchState = await getBillingLaunchState();
+
+    if (!launchState.founderPassAvailable) {
+      throw new BillingValidationError("Founder Pass is sold out. Annual Pro is still available.");
+    }
+  }
+
   const priceId = await getStripePriceId(stripe, input.planKey);
   const customerId = await getOrCreateStripeCustomer({
     email: input.email,
@@ -89,9 +112,39 @@ export async function createBillingCheckoutSession(input: {
     throw new BillingProviderError("Stripe did not return a checkout URL.");
   }
 
+  await recordUsageEvent({
+    action: "billing.checkout_started",
+    metadata: {
+      checkout_mode: mode,
+      plan_key: input.planKey,
+      stripe_livemode: session.livemode,
+      stripe_session_id: session.id,
+    },
+    userId: input.userId,
+  });
+
   return {
     checkoutUrl: session.url,
     sessionId: session.id,
+  };
+}
+
+export async function getBillingLaunchState(): Promise<BillingLaunchState> {
+  const founderPassLimit = getFounderPassLimit();
+  const founderPassSold = process.env.DATABASE_URL
+    ? await getFounderPassSoldCount()
+    : 0;
+  const founderPassRemaining = getFounderPassRemaining({
+    limit: founderPassLimit,
+    sold: founderPassSold,
+  });
+
+  return {
+    founderPassAvailable: founderPassRemaining > 0,
+    founderPassLimit,
+    founderPassRemaining,
+    founderPassSold,
+    stripeMode: getStripeMode(),
   };
 }
 
@@ -147,7 +200,7 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
     ? await getCheckoutSessionSubscription(stripe, event.data.object as Stripe.Checkout.Session)
     : null;
 
-  return await sql.begin(async (tx) => {
+  const result = await sql.begin(async (tx) => {
     const [inserted] = await tx<{ id: string }[]>`
       insert into billing_webhook_events (
         id,
@@ -170,11 +223,14 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
       return {
         eventId: event.id,
         processed: false,
+        usageEvent: null,
       };
     }
 
+    let usageEvent: UsageEventInput | null = null;
+
     if (event.type === "checkout.session.completed") {
-      await handleCheckoutSessionCompleted(
+      usageEvent = await handleCheckoutSessionCompleted(
         tx,
         event.data.object as Stripe.Checkout.Session,
         expandedSubscription,
@@ -196,8 +252,18 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
     return {
       eventId: event.id,
       processed: true,
+      usageEvent,
     };
   });
+
+  if (result.usageEvent) {
+    await recordUsageEvent(result.usageEvent);
+  }
+
+  return {
+    eventId: result.eventId,
+    processed: result.processed,
+  };
 }
 
 function getStripeClient() {
@@ -333,13 +399,13 @@ async function handleCheckoutSessionCompleted(
   sql: SqlClient,
   session: Stripe.Checkout.Session,
   expandedSubscription: Stripe.Subscription | null,
-) {
+): Promise<UsageEventInput | null> {
   const metadata = session.metadata ?? {};
   const userId = metadata.userId || metadata.tinycvUserId;
   const planKey = metadata.planKey;
 
   if (!userId || !isCheckoutPlanKey(planKey)) {
-    return;
+    return null;
   }
 
   const customerId = getStripeCustomerId(session.customer);
@@ -354,12 +420,23 @@ async function handleCheckoutSessionCompleted(
       session,
       userId,
     });
-    return;
-  }
-
-  if (planKey === "pro" && expandedSubscription) {
+  } else if (planKey === "pro" && expandedSubscription) {
     await upsertStripeSubscription(sql, expandedSubscription);
   }
+
+  return {
+    action: "billing.checkout_completed",
+    metadata: {
+      checkout_mode: session.mode,
+      payment_status: session.payment_status,
+      plan_key: planKey,
+      stripe_customer_id: customerId,
+      stripe_livemode: session.livemode,
+      stripe_session_id: session.id,
+      stripe_subscription_id: typeof session.subscription === "string" ? session.subscription : null,
+    },
+    userId,
+  };
 }
 
 async function grantFounderPass(
@@ -507,6 +584,21 @@ async function findUserIdByStripeCustomer(sql: SqlClient, stripeCustomerId: stri
   return row?.user_id ?? null;
 }
 
+async function getFounderPassSoldCount() {
+  const sql = getBillingSql();
+  const [row] = await sql<{ count: number | string }[]>`
+    select count(*) as count
+    from account_plan_grants
+    where plan_key = 'founder'
+      and source = 'founder_pass'
+      and revoked_at is null
+      and starts_at <= now()
+      and (expires_at is null or expires_at > now())
+  `;
+
+  return Number(row?.count ?? 0);
+}
+
 async function getCheckoutSessionSubscription(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
@@ -562,4 +654,14 @@ function getAppUrl() {
     `http://localhost:${process.env.PORT || "3000"}`;
 
   return appUrl.replace(/\/+$/, "");
+}
+
+function getStripeMode(): BillingLaunchState["stripeMode"] {
+  const key = process.env.STRIPE_SECRET_KEY?.trim();
+
+  if (!key) {
+    return "unconfigured";
+  }
+
+  return key.startsWith("sk_live_") ? "live" : "test";
 }

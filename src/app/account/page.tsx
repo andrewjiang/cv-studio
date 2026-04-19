@@ -9,6 +9,10 @@ import {
 } from "@/app/_components/account-client-actions";
 import { auth } from "@/app/_lib/auth";
 import { getAccountDashboard } from "@/app/_lib/account-store";
+import {
+  getBillingLaunchState,
+  type BillingLaunchState,
+} from "@/app/_lib/billing";
 import { getUserEntitlements } from "@/app/_lib/entitlements";
 import type { EntitlementResolution } from "@/app/_lib/entitlements-core";
 import { getWorkspace } from "@/app/_lib/hosted-resume-store";
@@ -67,6 +71,7 @@ export default async function AccountPage({
 
   const dashboard = await getAccountDashboard(session.user.id);
   const entitlementResolution = await getUserEntitlements(session.user.id);
+  const billingLaunchState = await getBillingLaunchState();
 
   return (
     <AccountShell>
@@ -96,7 +101,11 @@ export default async function AccountPage({
           entitlementResolution={entitlementResolution}
         />
 
-        <PlanStatusCard entitlementResolution={entitlementResolution} />
+        <PlanStatusCard
+          billingLaunchState={billingLaunchState}
+          entitlementResolution={entitlementResolution}
+          hasWorkspaceResumes={hasWorkspaceResumes}
+        />
 
         <section>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -206,9 +215,13 @@ function BillingStatusNotice({
 }
 
 function PlanStatusCard({
+  billingLaunchState,
   entitlementResolution,
+  hasWorkspaceResumes,
 }: {
+  billingLaunchState: BillingLaunchState;
   entitlementResolution: EntitlementResolution;
+  hasWorkspaceResumes: boolean;
 }) {
   const { entitlements, plan, source } = entitlementResolution;
 
@@ -231,6 +244,17 @@ function PlanStatusCard({
           <p className="mt-4 text-sm font-bold text-slate-700">
             {formatEntitlementSource(source)}
           </p>
+          {plan.key !== "free" ? (
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#065f46]">
+              Branding removal applies to public resumes attached to this account
+              {hasWorkspaceResumes ? " after you claim this browser's drafts." : "."}
+            </p>
+          ) : null}
+          {billingLaunchState.stripeMode === "test" ? (
+            <p className="mt-3 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-amber-800">
+              Stripe test mode
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[30rem]">
@@ -250,12 +274,21 @@ function PlanStatusCard({
       </div>
 
       {plan.key === "free" ? (
-        <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-[#065f46]/15 bg-[#ecfdf5] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold leading-6 text-[#064e3b]">
-            Founder Pass is $100 lifetime for the first 100 paid users. Annual Pro is $40/year.
-          </p>
+        <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-[#065f46]/15 bg-[#ecfdf5] p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-bold text-[#064e3b]">
+              Founder Pass: {billingLaunchState.founderPassRemaining} of {billingLaunchState.founderPassLimit} spots left.
+            </p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-[#064e3b]/80">
+              $100 lifetime for early users. Annual Pro is $40/year and stays available.
+            </p>
+          </div>
           <div className="flex flex-wrap gap-3">
-            <BillingCheckoutButton planKey="founder">
+            <BillingCheckoutButton
+              disabled={!billingLaunchState.founderPassAvailable}
+              disabledReason="Founder Pass is sold out. Annual Pro is still available."
+              planKey="founder"
+            >
               Buy Founder Pass
             </BillingCheckoutButton>
             <BillingCheckoutButton planKey="pro" variant="secondary">

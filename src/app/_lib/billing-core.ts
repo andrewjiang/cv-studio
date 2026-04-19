@@ -23,6 +23,7 @@ const STRIPE_SUBSCRIPTION_STATUSES = new Set<StripeSubscriptionStatus>([
   "trialing",
   "unpaid",
 ]);
+const DEFAULT_FOUNDER_PASS_LIMIT = 100;
 
 export function isCheckoutPlanKey(value: unknown): value is CheckoutPlanKey {
   return typeof value === "string" && CHECKOUT_PLAN_KEYS.has(value as CheckoutPlanKey);
@@ -56,4 +57,25 @@ export function inferCheckoutPlanFromPriceId(input: {
   }
 
   return null;
+}
+
+export function getFounderPassLimit(value = process.env.TINYCV_FOUNDER_PASS_LIMIT): number {
+  if (!value) {
+    return DEFAULT_FOUNDER_PASS_LIMIT;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return DEFAULT_FOUNDER_PASS_LIMIT;
+  }
+
+  return Math.floor(parsed);
+}
+
+export function getFounderPassRemaining(input: {
+  limit?: number;
+  sold: number;
+}) {
+  return Math.max(0, (input.limit ?? DEFAULT_FOUNDER_PASS_LIMIT) - input.sold);
 }

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { publishWorkspaceResume } from "@/app/_lib/hosted-resume-store";
+import { recordUsageEvent } from "@/app/_lib/usage-events";
 import { readWorkspaceCookieFromRequest } from "@/app/_lib/workspace-cookie";
 import {
   assertWorkspaceRateLimit,
@@ -48,6 +49,15 @@ export async function POST(
     if (!payload) {
       return NextResponse.json({ error: "Resume not found." }, { status: 404 });
     }
+
+    await recordUsageEvent({
+      action: "workspace.resume_published",
+      metadata: {
+        resume_id: resumeId,
+        slug: payload.resume.slug,
+        workspace_id: workspaceId,
+      },
+    });
 
     return NextResponse.json(buildResumeResponse(request, payload));
   } catch (error) {

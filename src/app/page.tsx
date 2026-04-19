@@ -1,4 +1,5 @@
 import { TinyCvLandingPage } from "@/app/_components/tinycv-landing-page";
+import { getBillingLaunchState } from "@/app/_lib/billing";
 import { getWorkspace } from "@/app/_lib/hosted-resume-store";
 import { readWorkspaceCookie } from "@/app/_lib/workspace-cookie";
 
@@ -10,6 +11,12 @@ export default async function Home() {
   const continueEditingHref = workspace?.currentResumeId
     ? `/studio/${workspace.currentResumeId}`
     : null;
+  const billingLaunchState = await getBillingLaunchState();
 
-  return <TinyCvLandingPage continueEditingHref={continueEditingHref} />;
+  return (
+    <TinyCvLandingPage
+      billingLaunchState={billingLaunchState}
+      continueEditingHref={continueEditingHref}
+    />
+  );
 }

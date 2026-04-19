@@ -41,6 +41,9 @@ import {
   generateResumePdf,
   getPdfRenderOrigin,
 } from "@/app/_lib/resume-pdf";
+import {
+  recordUsageEvent,
+} from "@/app/_lib/usage-events";
 
 type SqlClient = postgres.Sql | postgres.TransactionSql;
 
@@ -619,6 +622,15 @@ export async function createProjectResumeDraft(input: {
     projectId: input.projectId,
     type: "resume.created",
   });
+  await recordUsageEvent({
+    action: "api.resume_created",
+    metadata: {
+      input_format: payload.record.input_format,
+      resume_id: payload.record.resume_id,
+      template_key: payload.record.template_key,
+    },
+    projectId: input.projectId,
+  });
 
   return payload;
 }
@@ -757,6 +769,15 @@ export async function updateProjectResumeDraft(input: {
     projectId: input.projectId,
     type: "resume.updated",
   });
+  await recordUsageEvent({
+    action: "api.resume_updated",
+    metadata: {
+      input_format: payload.record.input_format,
+      resume_id: payload.record.resume_id,
+      template_key: payload.record.template_key,
+    },
+    projectId: input.projectId,
+  });
 
   return payload;
 }
@@ -817,6 +838,15 @@ export async function publishProjectResume(input: {
     },
     projectId: input.projectId,
     type: "resume.published",
+  });
+  await recordUsageEvent({
+    action: "api.resume_published",
+    metadata: {
+      public_url: payload.record.public_url,
+      resume_id: payload.record.resume_id,
+      template_key: payload.record.template_key,
+    },
+    projectId: input.projectId,
   });
 
   return payload;
@@ -891,6 +921,18 @@ export async function createProjectPdfJob(input: {
         ${now}
       )
     `;
+
+  });
+
+  await recordUsageEvent({
+    action: "api.pdf_job_requested",
+    idempotencyKey: input.idempotencyKey ?? null,
+    metadata: {
+      job_id: jobId,
+      requested_page_size: requestedPageSize,
+      resume_id: input.resumeId,
+    },
+    projectId: input.projectId,
   });
 
   return {
@@ -1205,6 +1247,15 @@ async function renderClaimedPdfJob(row: PdfJobRow) {
         projectId: row.project_id,
         type: "resume.pdf.failed",
       });
+      await recordUsageEvent({
+        action: "api.pdf_job_failed",
+        metadata: {
+          error_code: failedRow.error_code,
+          job_id: failedRow.id,
+          resume_id: failedRow.resume_id,
+        },
+        projectId: row.project_id,
+      });
     }
 
     return failedRow ?? row;
@@ -1250,6 +1301,14 @@ async function renderClaimedPdfJob(row: PdfJobRow) {
         projectId: row.project_id,
         type: "resume.pdf.ready",
       });
+      await recordUsageEvent({
+        action: "api.pdf_job_completed",
+        metadata: {
+          job_id: completedRow.id,
+          resume_id: completedRow.resume_id,
+        },
+        projectId: row.project_id,
+      });
     }
 
     return completedRow ?? row;
@@ -1283,6 +1342,15 @@ async function renderClaimedPdfJob(row: PdfJobRow) {
         },
         projectId: row.project_id,
         type: "resume.pdf.failed",
+      });
+      await recordUsageEvent({
+        action: "api.pdf_job_failed",
+        metadata: {
+          error_code: failedRow.error_code,
+          job_id: failedRow.id,
+          resume_id: failedRow.resume_id,
+        },
+        projectId: row.project_id,
       });
     }
 

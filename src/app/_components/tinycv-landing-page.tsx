@@ -64,9 +64,16 @@ Help me create a complete one-page resume in Tiny CV. Interview me for missing d
 
 Do not invent employers, dates, credentials, metrics, or links. Ask when something is missing.`;
 
+type LandingBillingLaunchState = {
+  founderPassLimit: number;
+  founderPassRemaining: number;
+};
+
 export function TinyCvLandingPage({
+  billingLaunchState,
   continueEditingHref,
 }: {
+  billingLaunchState: LandingBillingLaunchState;
   continueEditingHref: string | null;
 }) {
   const primaryHref = continueEditingHref ?? "/new";
@@ -234,7 +241,10 @@ export function TinyCvLandingPage({
                   Built for the whole job hunt.
                 </h2>
                 <p className="mt-5 max-w-xl text-[1.02rem] leading-8 font-medium text-white/72">
-                  Free stays useful. Pro is for people who want hosted versions, a cleaner public identity, and fewer rough edges between editing, sharing, and sending.
+                  Free stays useful. Paid plans are for people who want hosted versions, cleaner public pages, and fewer rough edges between editing, sharing, and sending.
+                </p>
+                <p className="mt-5 font-mono text-[0.78rem] font-bold uppercase tracking-[0.18em] text-emerald-200">
+                  {billingLaunchState.founderPassRemaining} of {billingLaunchState.founderPassLimit} Founder spots left
                 </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
