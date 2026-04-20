@@ -11,10 +11,8 @@ import {
 import { CopyIcon } from "@/app/_components/icons";
 
 export function AccountAuthPanel({
-  hasWorkspaceResumes,
   socialProviders,
 }: {
-  hasWorkspaceResumes: boolean;
   socialProviders: {
     github: boolean;
     google: boolean;
@@ -76,21 +74,7 @@ export function AccountAuthPanel({
 
   return (
     <div className="rounded-[2rem] border border-black/8 bg-white/82 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] sm:p-8">
-      <div>
-        <p className="text-[0.72rem] font-bold uppercase tracking-[0.22em] text-[#065f46]">
-          {mode === "sign-up" ? "Create account" : "Sign in"}
-        </p>
-        <h2 className="mt-3 text-[1.6rem] font-semibold tracking-[-0.04em] text-slate-950">
-          {mode === "sign-up" ? "Start saving your resumes." : "Welcome back."}
-        </h2>
-        <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-          {mode === "sign-up"
-            ? "Create an account to sync drafts, manage publishing, and keep every resume in one place."
-            : "Sign in to access your drafts, published links, and billing settings."}
-        </p>
-      </div>
-
-      <div className="mt-6 flex rounded-full border border-black/10 bg-[#f6f0e8] p-1 text-sm font-bold">
+      <div className="flex rounded-full border border-black/10 bg-[#f6f0e8] p-1 text-sm font-bold">
         <button
           className={`flex-1 rounded-full px-4 py-2 transition ${mode === "sign-in" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500"}`}
           onClick={() => setMode("sign-in")}
@@ -107,13 +91,9 @@ export function AccountAuthPanel({
         </button>
       </div>
 
-      {hasWorkspaceResumes ? (
-        <div className="mt-5 rounded-[1.25rem] border border-[#065f46]/12 bg-[#ecf7f2] px-4 py-3">
-          <p className="text-sm font-semibold leading-6 text-[#064e3b]">
-            After sign in, Tiny CV will attach this browser&apos;s drafts to your account.
-          </p>
-        </div>
-      ) : null}
+      <p className="mt-4 text-sm font-medium leading-6 text-slate-500">
+        Save drafts across devices, manage publishing, and keep everything in one place.
+      </p>
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         {mode === "sign-up" ? (
