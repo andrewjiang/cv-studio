@@ -412,9 +412,9 @@ export function SpinnerIcon() {
   );
 }
 
-export function CheckIcon() {
+export function CheckIcon({ className }: { className?: string } = {}) {
   return (
-    <svg aria-hidden="true" className="h-[1rem] w-[1rem]" fill="none" viewBox="0 0 24 24">
+    <svg aria-hidden="true" className={className ?? "h-[1rem] w-[1rem]"} fill="none" viewBox="0 0 24 24">
       <path
         d="m5.5 12.5 4.25 4.25L18.5 8"
         stroke="currentColor"
@@ -422,6 +422,25 @@ export function CheckIcon() {
         strokeLinejoin="round"
         strokeWidth="1.9"
       />
+    </svg>
+  );
+}
+
+export function CopyIcon({ className }: { className?: string } = {}) {
+  return (
+    <svg aria-hidden="true" className={className ?? "h-[1rem] w-[1rem]"} fill="none" viewBox="0 0 24 24">
+      <rect x="8.5" y="8.5" width="11" height="11" rx="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M5.5 15.5h-1a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+export function GlobeIcon({ className }: { className?: string } = {}) {
+  return (
+    <svg aria-hidden="true" className={className ?? "h-[1rem] w-[1rem]"} fill="none" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M3.6 9h16.8M3.6 15h16.8" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M12 3a13.5 13.5 0 0 0 0 18 13.5 13.5 0 0 0 0-18Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
     </svg>
   );
 }

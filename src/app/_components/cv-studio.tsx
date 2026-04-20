@@ -68,6 +68,8 @@ import type {
 } from "@/app/_lib/hosted-resume-types";
 import { getResumeTemplate } from "@/app/_lib/resume-templates";
 import { UserMenu } from "./user-menu";
+import { authClient } from "@/app/_lib/auth-client";
+import { UnauthenticatedPublishModal } from "./unauthenticated-publish-modal";
 
 type StudioMode = "edit" | "preview" | "publish";
 type MobilePreviewVariant = "mobile" | "desktop";
@@ -114,12 +116,14 @@ export function CvStudio({
   workspace: WorkspacePayload;
 }) {
   const router = useRouter();
+  const { data: session } = authClient.useSession();
   const [mode, setMode] = useState<StudioMode>("edit");
   const [markdown, setMarkdown] = useState(initialResume.markdown);
   const [fontsReady, setFontsReady] = useState(false);
   const [showStylePrefs, setShowStylePrefs] = useState(false);
   const [showPageGuides, setShowPageGuides] = useState(false);
   const [showTemplateChooser, setShowTemplateChooser] = useState(false);
+  const [showUnauthenticatedPublishModal, setShowUnauthenticatedPublishModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isRenamingDraft, setIsRenamingDraft] = useState(false);
   const [renameDraftValue, setRenameDraftValue] = useState(initialResume.title);
@@ -353,6 +357,8 @@ export function CvStudio({
     syncResult: "published" | "saved",
     requestMarkdown?: string,
   ) => {
+    const wasAlreadyPublished = activeResumeRef.current.isPublished;
+    
     setWorkspaceState(payload.workspace);
     setActiveResume(payload.resume);
     setEditorLink(payload.editorUrl);
@@ -363,6 +369,10 @@ export function CvStudio({
         ? { kind: "success", message: "Published. Share link is ready." }
         : { kind: "success", message: "Changes saved." },
     );
+
+    if (syncResult === "published" && !wasAlreadyPublished && !session) {
+      setShowUnauthenticatedPublishModal(true);
+    }
 
     if (
       requestMarkdown === undefined ||
@@ -1598,6 +1608,15 @@ export function CvStudio({
             />
           </div>
         </div>
+      ) : null}
+
+      {showUnauthenticatedPublishModal ? (
+        <UnauthenticatedPublishModal
+          document={resumeDocument}
+          fitScale={fitState.scale}
+          onClose={() => setShowUnauthenticatedPublishModal(false)}
+          publicUrl={publicLink}
+        />
       ) : null}
 
       <style media="print">{`@page { size: ${resumeDocument.style.pageSize}; margin: 0; }`}</style>

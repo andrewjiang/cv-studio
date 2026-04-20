@@ -28,8 +28,8 @@ export function AppHeader({
           </p>
         </Link>
 
-        <div className="flex items-center gap-5 sm:gap-8">
-          <nav className="hidden items-center gap-7 text-[0.92rem] font-semibold text-slate-600 md:flex">
+        <div className="flex items-center gap-6 sm:gap-10">
+          <nav className="hidden items-center gap-6 text-[0.92rem] font-semibold text-slate-600 md:flex">
             <Link className="transition hover:text-slate-950" href="/#examples">
               Templates
             </Link>
@@ -38,10 +38,10 @@ export function AppHeader({
             </Link>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 sm:gap-6">
             {showSignedInEditorLink ? (
               <Link
-                className="hidden text-[0.92rem] font-semibold text-slate-600 transition hover:text-slate-950 sm:inline-flex"
+                className="hidden whitespace-nowrap text-[0.92rem] font-semibold text-slate-600 transition hover:text-slate-950 sm:inline-flex"
                 href={continueEditingHref!}
               >
                 Open editor
