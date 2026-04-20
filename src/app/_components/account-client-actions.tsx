@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import type { CheckoutPlanKey } from "@/app/_lib/billing-core";
 import { authClient } from "@/app/_lib/auth-client";
+import {
+  brandPrimaryButtonClass,
+  brandSecondaryButtonClass,
+} from "@/app/_components/button-classes";
 import { CopyIcon } from "@/app/_components/icons";
 
 export function AccountAuthPanel({
@@ -71,8 +75,22 @@ export function AccountAuthPanel({
   }
 
   return (
-    <div className="rounded-[2rem] border border-black/8 bg-white/75 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] sm:p-8">
-      <div className="flex rounded-full border border-black/10 bg-[#f6f0e8] p-1 text-sm font-bold">
+    <div className="rounded-[2rem] border border-black/8 bg-white/82 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] sm:p-8">
+      <div>
+        <p className="text-[0.72rem] font-bold uppercase tracking-[0.22em] text-[#065f46]">
+          {mode === "sign-up" ? "Create account" : "Sign in"}
+        </p>
+        <h2 className="mt-3 text-[1.6rem] font-semibold tracking-[-0.04em] text-slate-950">
+          {mode === "sign-up" ? "Start saving your resumes." : "Welcome back."}
+        </h2>
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+          {mode === "sign-up"
+            ? "Create an account to sync drafts, manage publishing, and keep every resume in one place."
+            : "Sign in to access your drafts, published links, and billing settings."}
+        </p>
+      </div>
+
+      <div className="mt-6 flex rounded-full border border-black/10 bg-[#f6f0e8] p-1 text-sm font-bold">
         <button
           className={`flex-1 rounded-full px-4 py-2 transition ${mode === "sign-in" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500"}`}
           onClick={() => setMode("sign-in")}
@@ -89,12 +107,20 @@ export function AccountAuthPanel({
         </button>
       </div>
 
+      {hasWorkspaceResumes ? (
+        <div className="mt-5 rounded-[1.25rem] border border-[#065f46]/12 bg-[#ecf7f2] px-4 py-3">
+          <p className="text-sm font-semibold leading-6 text-[#064e3b]">
+            After sign in, Tiny CV will attach this browser&apos;s drafts to your account.
+          </p>
+        </div>
+      ) : null}
+
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         {mode === "sign-up" ? (
           <label className="block text-sm font-bold text-slate-700">
             Name
             <input
-              className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base text-slate-950 outline-none transition focus:border-[#065f46]"
+              className="mt-2 w-full rounded-2xl border border-black/10 bg-[#fcfaf6] px-4 py-3 text-base text-slate-950 outline-none transition focus:border-[#065f46] focus:bg-white"
               onChange={(event) => setName(event.target.value)}
               placeholder="Avery Brooks"
               type="text"
@@ -107,7 +133,7 @@ export function AccountAuthPanel({
           Email
           <input
             autoComplete="email"
-            className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base text-slate-950 outline-none transition focus:border-[#065f46]"
+            className="mt-2 w-full rounded-2xl border border-black/10 bg-[#fcfaf6] px-4 py-3 text-base text-slate-950 outline-none transition focus:border-[#065f46] focus:bg-white"
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
             required
@@ -120,7 +146,7 @@ export function AccountAuthPanel({
           Password
           <input
             autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-            className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base text-slate-950 outline-none transition focus:border-[#065f46]"
+            className="mt-2 w-full rounded-2xl border border-black/10 bg-[#fcfaf6] px-4 py-3 text-base text-slate-950 outline-none transition focus:border-[#065f46] focus:bg-white"
             minLength={8}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="At least 8 characters"
@@ -137,7 +163,7 @@ export function AccountAuthPanel({
         ) : null}
 
         <button
-          className="w-full rounded-full bg-[#065f46] px-5 py-3.5 text-base font-bold text-white transition hover:bg-[#044e3a] disabled:cursor-not-allowed disabled:opacity-55"
+          className={`${brandPrimaryButtonClass} w-full px-5 py-3.5 text-base`}
           disabled={pending}
           type="submit"
         >
@@ -147,9 +173,12 @@ export function AccountAuthPanel({
 
       {socialProviders.github || socialProviders.google ? (
         <div className="mt-6 space-y-3 border-t border-black/8 pt-6">
+          <p className="text-center text-[0.72rem] font-bold uppercase tracking-[0.2em] text-slate-400">
+            Or continue with
+          </p>
           {socialProviders.google ? (
             <button
-              className="w-full rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-50"
+              className={`${brandSecondaryButtonClass} w-full px-5 py-3 text-sm`}
               disabled={pending}
               onClick={() => handleSocialSignIn("google")}
               type="button"
@@ -159,7 +188,7 @@ export function AccountAuthPanel({
           ) : null}
           {socialProviders.github ? (
             <button
-              className="w-full rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-50"
+              className={`${brandSecondaryButtonClass} w-full px-5 py-3 text-sm`}
               disabled={pending}
               onClick={() => handleSocialSignIn("github")}
               type="button"
@@ -168,12 +197,6 @@ export function AccountAuthPanel({
             </button>
           ) : null}
         </div>
-      ) : null}
-
-      {hasWorkspaceResumes ? (
-        <p className="mt-5 text-sm font-medium leading-6 text-slate-500">
-          After sign in, Tiny CV will attach this browser&apos;s drafts to your account.
-        </p>
       ) : null}
     </div>
   );
@@ -226,7 +249,7 @@ export function AccountClaimButton({
           </p>
         </div>
         <button
-          className="rounded-full bg-[#065f46] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#044e3a] disabled:cursor-not-allowed disabled:opacity-55"
+          className={`${brandPrimaryButtonClass} px-5 py-3 text-sm`}
           disabled={pending}
           onClick={claimWorkspace}
           type="button"
@@ -253,7 +276,7 @@ export function AccountSignOutButton() {
 
   return (
     <button
-      className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-55"
+      className={`${brandSecondaryButtonClass} px-5 py-3 text-sm`}
       disabled={pending}
       onClick={signOut}
       type="button"
@@ -451,7 +474,7 @@ export function SubdomainClaimForm({
         <p className="text-sm font-semibold leading-5 text-red-700">{error}</p>
       ) : null}
       <button
-        className="rounded-full bg-[#065f46] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#044e3a] disabled:cursor-not-allowed disabled:opacity-55"
+        className={`${brandPrimaryButtonClass} px-5 py-3 text-sm`}
         disabled={pending}
         type="submit"
       >
@@ -509,8 +532,8 @@ export function BillingCheckoutButton({
     <div>
       <button
         className={variant === "primary"
-          ? "rounded-full bg-[#065f46] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#044e3a] disabled:cursor-not-allowed disabled:opacity-55"
-          : "rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-55"}
+          ? `${brandPrimaryButtonClass} px-5 py-3 text-sm`
+          : `${brandSecondaryButtonClass} px-5 py-3 text-sm`}
         disabled={pending || disabled}
         onClick={startCheckout}
         type="button"
@@ -562,7 +585,7 @@ export function BillingPortalButton() {
   return (
     <div>
       <button
-        className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-55"
+        className={`${brandSecondaryButtonClass} px-5 py-3 text-sm`}
         disabled={pending}
         onClick={openPortal}
         type="button"

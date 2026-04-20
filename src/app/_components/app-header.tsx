@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { authClient } from "@/app/_lib/auth-client";
+import { brandPrimaryButtonClass } from "./button-classes";
 import { UserMenu } from "./user-menu";
 
 export function AppHeader({
@@ -49,7 +50,7 @@ export function AppHeader({
 
             {showSignedOutCta ? (
               <Link
-                className="hidden items-center justify-center rounded-full bg-[#065f46] px-5 py-2 text-[0.92rem] font-bold text-white shadow-[0_2px_8px_rgba(6,95,70,0.12)] transition hover:bg-[#044e34] hover:shadow-[0_4px_12px_rgba(6,95,70,0.2)] active:scale-[0.98] sm:inline-flex"
+                className={`${brandPrimaryButtonClass} hidden px-5 py-2 text-[0.92rem] sm:inline-flex`}
                 href="/new"
               >
                 Start writing

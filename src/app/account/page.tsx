@@ -49,23 +49,29 @@ export default async function AccountPage({
   if (!session?.user?.id) {
     return (
       <AccountShell currentEditorHref={currentEditorHref}>
-        <div className="mx-auto max-w-5xl">
-          <div className="grid gap-8 lg:grid-cols-[1fr_24rem] lg:items-start">
+        <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-5xl items-start py-8 lg:items-center">
+          <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.1fr)_24rem] lg:items-center">
             <section className="rounded-[2rem] border border-black/8 bg-white/80 p-7 shadow-[0_16px_44px_rgba(15,23,42,0.05)] sm:p-10">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.22em] text-[#065f46]">
                 Account access
               </p>
               <h1 className="mt-5 max-w-xl text-[2.55rem] font-semibold leading-[1.02] tracking-[-0.05em] text-slate-950 sm:text-[3.4rem]">
-                Your resumes, everywhere you work.
+                Keep every resume in one place.
               </h1>
               <p className="mt-5 max-w-2xl text-[1rem] font-medium leading-7 text-slate-600">
-                Sign in to save drafts across devices, keep your published links together, and manage paid publishing features from one place.
+                Sign in to save drafts across devices, keep public links together, and manage publishing from one calm account dashboard.
               </p>
 
               <div className="mt-8 grid gap-3 text-sm font-bold text-slate-700 sm:grid-cols-3">
                 <AccountValue title="Sync across devices" />
                 <AccountValue title="Remove branding" />
                 <AccountValue title="Manage publishing" />
+              </div>
+
+              <div className="mt-8 rounded-[1.25rem] border border-black/8 bg-[#fcfaf6] px-5 py-4">
+                <p className="text-sm font-semibold leading-6 text-slate-600">
+                  The editor still works without an account. Signing in is for keeping your work together once you want drafts, links, and billing attached to you.
+                </p>
               </div>
             </section>
 
@@ -838,7 +844,7 @@ function AccountShell({
 
 function AccountValue({ title }: { title: string }) {
   return (
-    <div className="rounded-[1rem] border border-black/8 bg-white/70 px-4 py-3">
+    <div className="rounded-[1rem] border border-black/8 bg-white/70 px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm">
       {title}
     </div>
   );

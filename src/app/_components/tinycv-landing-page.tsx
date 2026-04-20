@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import desktopEditorShot from "../../../docs/cv-studio-desktop.png";
 import { AgentInstructionCopyButton } from "@/app/_components/agent-instruction-copy-button";
+import { brandPrimaryButtonClass } from "@/app/_components/button-classes";
 import { ResumeDocumentContent, ResumePreview, fontFamilyForChoice } from "@/app/_components/resume-content";
 import { AppHeader } from "./app-header";
 import { ArrowRightIcon, CheckIcon, GitHubIcon, LayoutIcon, FileTextIcon, GlobeIcon, CodeIcon } from "./icons";
@@ -759,7 +760,8 @@ function LandingPrimaryLink({
   return (
     <Link
       className={cx(
-        "inline-flex items-center justify-center rounded-full bg-[#065f46] px-5 py-3 text-[0.98rem] font-bold !text-white shadow-[0_4px_12px_rgba(6,95,70,0.15)] transition duration-200 hover:bg-[#044e34] hover:shadow-[0_6px_20px_rgba(6,95,70,0.2)] active:scale-[0.98]",
+        brandPrimaryButtonClass,
+        "px-5 py-3 text-[0.98rem]",
         className,
       )}
       href={href}
