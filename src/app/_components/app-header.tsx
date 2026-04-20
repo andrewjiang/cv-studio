@@ -13,7 +13,7 @@ export function AppHeader({
   isAccountPage?: boolean;
 }) {
   const { data: session, isPending } = authClient.useSession();
-  const showSignedOutCta = !isAccountPage && !isPending && !session;
+  const showSignedOutCta = !isPending && !session;
   const showSignedInEditorLink = !isAccountPage && Boolean(session && continueEditingHref);
 
   return (
@@ -48,6 +48,8 @@ export function AppHeader({
               </Link>
             ) : null}
 
+            <UserMenu />
+
             {showSignedOutCta ? (
               <Link
                 className={`${brandPrimaryButtonClass} hidden px-5 py-2 text-[0.92rem] sm:inline-flex`}
@@ -56,8 +58,6 @@ export function AppHeader({
                 Start writing
               </Link>
             ) : null}
-
-            <UserMenu />
           </div>
         </div>
       </div>
