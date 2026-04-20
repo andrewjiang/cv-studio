@@ -60,13 +60,14 @@ import {
   type ResumeStylePrefs,
   type ResumeStylePreset,
 } from "@/app/_lib/cv-markdown";
-import { getResumeTemplate } from "@/app/_lib/resume-templates";
 import type {
   HostedResumeEditorRecord,
   HostedResumeResponse,
   TemplateKey,
   WorkspacePayload,
 } from "@/app/_lib/hosted-resume-types";
+import { getResumeTemplate } from "@/app/_lib/resume-templates";
+import { UserMenu } from "./user-menu";
 
 type StudioMode = "edit" | "preview" | "publish";
 type MobilePreviewVariant = "mobile" | "desktop";
@@ -1178,6 +1179,10 @@ export function CvStudio({
                       showPageGuides={showPageGuides}
                     />
                   ) : null}
+                </div>
+
+                <div className="ml-2 border-l border-black/5 pl-4">
+                  <UserMenu />
                 </div>
               </div>
 

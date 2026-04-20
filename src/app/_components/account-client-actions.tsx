@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { CheckoutPlanKey } from "@/app/_lib/billing-core";
 import { authClient } from "@/app/_lib/auth-client";
+import { CopyIcon } from "@/app/_components/icons";
 
 export function AccountAuthPanel({
   hasWorkspaceResumes,
@@ -259,6 +260,204 @@ export function AccountSignOutButton() {
     >
       {pending ? "Signing out..." : "Sign out"}
     </button>
+  );
+}
+
+export function AccountBillingRefresh({
+  active = false,
+}: {
+  active?: boolean;
+}) {
+  const router = useRouter();
+  const [refreshCount, setRefreshCount] = useState(0);
+
+  useEffect(() => {
+    if (!active || refreshCount >= 4) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setRefreshCount((current) => current + 1);
+      router.refresh();
+    }, refreshCount === 0 ? 1800 : 3500);
+
+    return () => window.clearTimeout(timeout);
+  }, [active, refreshCount, router]);
+
+  return (
+    <button
+      className="rounded-full border border-[#065f46]/20 bg-white px-4 py-2 text-sm font-bold text-[#065f46] transition hover:bg-[#ecfdf5]"
+      onClick={() => router.refresh()}
+      type="button"
+    >
+      Refresh status
+    </button>
+  );
+}
+
+export function CopyAccountPublicLinkButton({
+  className,
+  label = "Copy link",
+  publicUrl,
+}: {
+  className?: string;
+  label?: string;
+  publicUrl: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyLink() {
+    const absoluteUrl = new URL(publicUrl, window.location.origin).toString();
+    await navigator.clipboard.writeText(absoluteUrl);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  return (
+    <button
+      className={className ?? "inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-slate-50"}
+      onClick={() => void copyLink()}
+      type="button"
+    >
+      <CopyIcon className="h-4 w-4" />
+      {copied ? "Copied" : label}
+    </button>
+  );
+}
+
+export function SetPrimaryResumeButton({
+  isPrimary = false,
+  resumeId,
+}: {
+  isPrimary?: boolean;
+  resumeId: string;
+}) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function setPrimary() {
+    setError(null);
+    setPending(true);
+
+    try {
+      const response = await fetch(`/api/account/resumes/${resumeId}/primary`, {
+        method: "POST",
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        setError(payload.error || "Could not update primary resume.");
+        return;
+      }
+
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (isPrimary) {
+    return (
+      <span className="rounded-full bg-[#065f46]/10 px-4 py-2.5 text-sm font-bold text-[#065f46]">
+        Primary
+      </span>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        className="rounded-full border border-[#065f46]/20 bg-[#ecfdf5] px-4 py-2.5 text-sm font-bold text-[#065f46] transition hover:bg-[#dff7ec] disabled:cursor-not-allowed disabled:opacity-55"
+        disabled={pending}
+        onClick={() => void setPrimary()}
+        type="button"
+      >
+        {pending ? "Updating..." : "Set as primary"}
+      </button>
+      {error ? (
+        <p className="mt-2 max-w-xs text-sm font-semibold leading-5 text-red-700">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function SubdomainClaimForm({
+  currentHostname,
+  resumeId,
+}: {
+  currentHostname?: string | null;
+  resumeId: string;
+}) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [subdomain, setSubdomain] = useState(
+    currentHostname ? currentHostname.replace(/\.tiny\.cv$/i, "") : "",
+  );
+
+  async function claimSubdomain(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/account/domains/subdomain", {
+        body: JSON.stringify({
+          resumeId,
+          subdomain,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        setError(payload.error || "Could not claim that subdomain.");
+        return;
+      }
+
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <form className="mt-4 space-y-3" onSubmit={(event) => void claimSubdomain(event)}>
+      <label className="block text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+        Tiny CV subdomain
+      </label>
+      <div className="flex overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm focus-within:border-[#065f46]/35">
+        <input
+          className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm font-bold text-slate-950 outline-none placeholder:text-slate-300"
+          onChange={(event) => setSubdomain(event.target.value)}
+          placeholder="andrew"
+          value={subdomain}
+        />
+        <span className="border-l border-black/8 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-500">
+          .tiny.cv
+        </span>
+      </div>
+      {error ? (
+        <p className="text-sm font-semibold leading-5 text-red-700">{error}</p>
+      ) : null}
+      <button
+        className="rounded-full bg-[#065f46] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#044e3a] disabled:cursor-not-allowed disabled:opacity-55"
+        disabled={pending}
+        type="submit"
+      >
+        {pending ? "Saving..." : currentHostname ? "Update subdomain" : "Claim subdomain"}
+      </button>
+    </form>
   );
 }
 

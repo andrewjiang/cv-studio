@@ -6,6 +6,7 @@ import Link from "next/link";
 import desktopEditorShot from "../../../docs/cv-studio-desktop.png";
 import { AgentInstructionCopyButton } from "@/app/_components/agent-instruction-copy-button";
 import { ResumeDocumentContent, ResumePreview, fontFamilyForChoice } from "@/app/_components/resume-content";
+import { AppHeader } from "./app-header";
 import { ArrowRightIcon, CheckIcon, GitHubIcon, LayoutIcon, FileTextIcon, GlobeIcon, CodeIcon } from "./icons";
 import { getPageMetrics } from "@/app/_lib/cv-fit";
 import { parseCvMarkdown, resolveMobileResumeTypography } from "@/app/_lib/cv-markdown";
@@ -81,7 +82,7 @@ export function TinyCvLandingPage({
 
   return (
     <main className="min-h-screen bg-[#fbf7f0] text-slate-900 selection:bg-[#065f46] selection:text-white overflow-x-clip" suppressHydrationWarning>
-      <LandingHeader primaryHref={primaryHref} primaryLabel={primaryLabel} />
+      <AppHeader continueEditingHref={continueEditingHref} />
 
       <div className="mx-auto max-w-[80rem] space-y-24 px-5 py-4 sm:px-8 sm:py-8 lg:px-12 lg:py-12">
         <section className="relative flex flex-col items-center text-center">
@@ -114,10 +115,11 @@ export function TinyCvLandingPage({
                 {primaryLabel}
               </LandingPrimaryLink>
               <Link
-                className="inline-flex w-full items-center justify-center rounded-full border border-black/10 bg-white/70 px-9 py-4 text-[1rem] font-bold text-slate-900 transition hover:bg-white sm:w-auto"
+                className="inline-flex items-center justify-center gap-1.5 text-[0.98rem] font-semibold text-slate-600 transition hover:text-slate-950"
                 href="#examples"
               >
-                View examples
+                Browse templates
+                <ArrowRightIcon className="h-3.5 w-3.5" />
               </Link>
             </div>
           </div>
@@ -333,58 +335,6 @@ export function TinyCvLandingPage({
             </div>
           </footer>
     </main>
-  );
-}
-
-function LandingHeader({
-  primaryHref,
-  primaryLabel,
-}: {
-  primaryHref: string;
-  primaryLabel: string;
-}) {
-  return (
-    <header className="border-b border-black/5 bg-[#fbf7f0]/80 backdrop-blur-md sticky top-0 z-50">
-      <div className="mx-auto max-w-[80rem] px-5 py-3 sm:px-8 lg:px-12 flex items-center justify-between">
-        <Link className="group flex items-center gap-2" href="/">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#065f46] text-white shadow-sm transition group-hover:scale-105">
-            <span className="text-[0.65rem] font-bold tracking-tight">CV</span>
-          </div>
-          <p className="text-[0.85rem] font-bold uppercase tracking-[0.28em] text-slate-950">
-            Tiny CV
-          </p>
-        </Link>
-
-        <div className="flex items-center gap-5 sm:gap-8">
-          <nav className="hidden items-center gap-7 text-[0.94rem] font-medium text-slate-600 md:flex">
-            <Link className="transition hover:text-slate-950" href="#product">
-              Product
-            </Link>
-            <Link className="transition hover:text-slate-950" href="#examples">
-              Examples
-            </Link>
-            <Link className="transition hover:text-slate-950" href="#pricing">
-              Pricing
-            </Link>
-            <Link className="transition hover:text-slate-950" href="#api">
-              Agents
-            </Link>
-            <Link className="transition hover:text-slate-950" href="/documentation">
-              API
-            </Link>
-            <Link className="transition hover:text-slate-950" href="/account">
-              Account
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <LandingPrimaryLink className="px-4 py-2.5 text-[0.9rem] sm:px-5 sm:py-3 sm:text-[0.98rem]" href={primaryHref}>
-              {primaryLabel}
-            </LandingPrimaryLink>
-          </div>
-        </div>
-      </div>
-    </header>
   );
 }
 
