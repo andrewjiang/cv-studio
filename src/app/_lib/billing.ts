@@ -32,6 +32,11 @@ export type BillingLaunchState = {
   stripeMode: "live" | "test" | "unconfigured";
 };
 
+export type AccountBillingManagementSummary = {
+  hasStripeCustomer: boolean;
+  portalAvailable: boolean;
+};
+
 export class BillingConfigurationError extends Error {
   constructor(message = "Tiny CV billing is not configured.") {
     super(message);
@@ -145,6 +150,22 @@ export async function getBillingLaunchState(): Promise<BillingLaunchState> {
     founderPassRemaining,
     founderPassSold,
     stripeMode: getStripeMode(),
+  };
+}
+
+export async function getAccountBillingManagementSummary(userId: string): Promise<AccountBillingManagementSummary> {
+  if (!process.env.DATABASE_URL) {
+    return {
+      hasStripeCustomer: false,
+      portalAvailable: false,
+    };
+  }
+
+  const customerId = await getStripeCustomerIdForUser(userId);
+
+  return {
+    hasStripeCustomer: Boolean(customerId),
+    portalAvailable: Boolean(customerId && process.env.STRIPE_SECRET_KEY?.trim()),
   };
 }
 

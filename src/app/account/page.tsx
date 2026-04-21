@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import {
   AccountAuthPanel,
+  AccountApiKeyCreateForm,
   AccountBillingRefresh,
   AccountSignOutButton,
   BillingCheckoutButton,
@@ -12,13 +13,19 @@ import {
 import { AccountShell } from "@/app/_components/account-shell";
 import { brandPrimaryButtonClass } from "@/app/_components/button-classes";
 import { CheckIcon } from "@/app/_components/icons";
+import {
+  getAccountDeveloperSettings,
+  type AccountDeveloperSettings,
+} from "@/app/_lib/account-developer-store";
 import { auth } from "@/app/_lib/auth";
 import {
   getAccountDashboard,
   type AccountDashboardPayload,
 } from "@/app/_lib/account-store";
 import {
+  getAccountBillingManagementSummary,
   getBillingLaunchState,
+  type AccountBillingManagementSummary,
   type BillingLaunchState,
 } from "@/app/_lib/billing";
 import { getUserEntitlements } from "@/app/_lib/entitlements";
@@ -64,6 +71,8 @@ export default async function AccountPage({
 
   const entitlementResolution = await getUserEntitlements(session.user.id);
   const dashboard = await getAccountDashboard(session.user.id, entitlementResolution);
+  const developerSettings = await getAccountDeveloperSettings(session.user.id);
+  const billingManagement = await getAccountBillingManagementSummary(session.user.id);
   const billingLaunchState = await getBillingLaunchState();
   const accountResumeIds = new Set(dashboard.resumes.map((resume) => resume.id));
   const hasUnclaimedWorkspaceResumes = Boolean(
@@ -101,9 +110,17 @@ export default async function AccountPage({
 
           <section className="scroll-mt-24" id="billing">
             <PlanStatusCard
+              billingManagement={billingManagement}
               billingLaunchState={billingLaunchState}
               entitlementResolution={entitlementResolution}
               hasWorkspaceResumes={hasUnclaimedWorkspaceResumes}
+            />
+          </section>
+
+          <section className="scroll-mt-24" id="api">
+            <DeveloperApiCard
+              developerSettings={developerSettings}
+              entitlementResolution={entitlementResolution}
             />
           </section>
 
@@ -131,6 +148,7 @@ function SettingsNav() {
           <NavItem href="/account/resumes" label="CVs" />
           <NavItem href="/account#publishing" label="Public profile" />
           <NavItem href="/account#billing" label="Billing" />
+          <NavItem href="/account#api" label="API" />
           <NavItem href="/account#settings" label="Settings" />
         </nav>
       </div>
@@ -478,10 +496,12 @@ function PublishingFeatureRow({
 }
 
 function PlanStatusCard({
+  billingManagement,
   billingLaunchState,
   entitlementResolution,
   hasWorkspaceResumes,
 }: {
+  billingManagement: AccountBillingManagementSummary;
   billingLaunchState: BillingLaunchState;
   entitlementResolution: EntitlementResolution;
   hasWorkspaceResumes: boolean;
@@ -561,17 +581,124 @@ function PlanStatusCard({
             </BillingCheckoutButton>
           </div>
         </div>
-      ) : source.source === "subscription" ? (
+      ) : billingManagement.portalAvailable ? (
         <div className="mt-7 flex flex-col gap-5 rounded-[1.35rem] border border-black/8 bg-[#fbf7f0] p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-xl">
             <h3 className="text-sm font-bold text-slate-950">Billing management</h3>
             <p className="mt-1 text-sm font-medium leading-6 text-slate-600">
-              Manage payment methods, invoices, and subscription changes in Stripe.
+              Manage payment methods, subscription changes, invoices, and receipts in Stripe.
             </p>
           </div>
           <BillingPortalButton />
         </div>
-      ) : null}
+      ) : (
+        <div className="mt-7 rounded-[1.35rem] border border-black/8 bg-[#fbf7f0] p-5">
+          <h3 className="text-sm font-bold text-slate-950">Billing management</h3>
+          <p className="mt-1 text-sm font-medium leading-6 text-slate-600">
+            {billingManagement.hasStripeCustomer
+              ? "Stripe billing is linked to this account, but the portal is not configured."
+              : "This plan does not have a Stripe billing portal yet."}
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DeveloperApiCard({
+  developerSettings,
+  entitlementResolution,
+}: {
+  developerSettings: AccountDeveloperSettings;
+  entitlementResolution: EntitlementResolution;
+}) {
+  const { entitlements } = entitlementResolution;
+
+  return (
+    <section className={ACCOUNT_PANEL_CLASS}>
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+        <div className="max-w-2xl">
+          <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#065f46]">
+            API
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+            Developer access
+          </h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+            Create Tiny CV drafts, publish links, and request PDFs from agents or apps.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+            href="/documentation"
+          >
+            Read docs
+          </Link>
+          <Link
+            className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+            href="/api/v1/openapi.json"
+          >
+            OpenAPI
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(20rem,1fr)]">
+        <div className="space-y-3">
+          <PublishingFeatureRow
+            detail={developerSettings.project
+              ? `Project slug: ${developerSettings.project.slug}`
+              : "Create a key to provision your account API project."}
+            label="Project"
+            value={developerSettings.project?.name ?? "Not created"}
+          />
+          <PublishingFeatureRow
+            detail="API keys are bearer tokens. The full secret is only shown once."
+            label="Keys"
+            value={`${developerSettings.apiKeys.length}`}
+          />
+          <PublishingFeatureRow
+            detail="Current monthly create allowance for agent and app usage."
+            label="API creates"
+            value={`${entitlements.monthlyApiCreates}/mo`}
+          />
+        </div>
+
+        <div className="rounded-[1.35rem] border border-black/8 bg-[#fbf7f0] p-5">
+          <h3 className="text-base font-bold text-slate-950">Create an API key</h3>
+          <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
+            Use it with the REST API or MCP endpoint. Keep it server-side.
+          </p>
+          <div className="mt-4">
+            <AccountApiKeyCreateForm />
+          </div>
+
+          {developerSettings.apiKeys.length > 0 ? (
+            <div className="mt-5 border-t border-black/8 pt-4">
+              <p className="text-sm font-bold text-slate-950">Existing keys</p>
+              <div className="mt-3 space-y-2">
+                {developerSettings.apiKeys.map((apiKey) => (
+                  <div
+                    className="flex flex-col gap-1 rounded-xl border border-black/8 bg-white/72 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+                    key={apiKey.id}
+                  >
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{apiKey.label}</p>
+                      <p className="mt-0.5 font-mono text-xs font-semibold text-slate-500">
+                        {apiKey.keyPrefix}...
+                      </p>
+                    </div>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                      {apiKey.lastUsedAt ? `Used ${formatShortDate(apiKey.lastUsedAt)}` : `Created ${formatShortDate(apiKey.createdAt)}`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
     </section>
   );
 }

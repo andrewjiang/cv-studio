@@ -328,6 +328,114 @@ export function CopyAccountPublicLinkButton({
   );
 }
 
+export function AccountApiKeyCreateForm() {
+  const router = useRouter();
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [keyLabel, setKeyLabel] = useState("Default API key");
+  const [newApiKey, setNewApiKey] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function createKey(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setCopied(false);
+    setNewApiKey(null);
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/account/api-keys", {
+        body: JSON.stringify({
+          label: keyLabel,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        apiKey?: {
+          key?: string;
+        };
+        error?: string;
+      };
+
+      if (!response.ok || !payload.apiKey?.key) {
+        setError(payload.error || "Could not create API key.");
+        return;
+      }
+
+      setNewApiKey(payload.apiKey.key);
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function copyKey() {
+    if (!newApiKey) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(newApiKey);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  return (
+    <div>
+      <form className="flex flex-col gap-3 sm:flex-row" onSubmit={createKey}>
+        <label className="sr-only" htmlFor="api-key-label">
+          API key label
+        </label>
+        <input
+          className="min-h-11 flex-1 rounded-2xl border border-black/10 bg-white px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#065f46]/35 focus:ring-2 focus:ring-[#065f46]/10"
+          id="api-key-label"
+          onChange={(event) => setKeyLabel(event.target.value)}
+          placeholder="Default API key"
+          type="text"
+          value={keyLabel}
+        />
+        <button
+          className={`${brandPrimaryButtonClass} min-h-11 px-5 text-sm`}
+          disabled={pending}
+          type="submit"
+        >
+          {pending ? "Creating..." : "Create API key"}
+        </button>
+      </form>
+
+      {newApiKey ? (
+        <div className="mt-4 rounded-[1.1rem] border border-[#065f46]/15 bg-[#ecfdf5] p-4">
+          <p className="text-sm font-bold text-slate-950">Copy this key now.</p>
+          <p className="mt-1 text-sm font-medium leading-5 text-slate-600">
+            Tiny CV only shows the full key once.
+          </p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <code className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-[#065f46]/10 bg-white/82 px-3 py-2.5 text-xs font-bold text-slate-800">
+              {newApiKey}
+            </code>
+            <button
+              className={`${brandSecondaryButtonClass} gap-2 px-4 py-2.5 text-sm`}
+              onClick={copyKey}
+              type="button"
+            >
+              <CopyIcon className="h-4 w-4" />
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {error ? (
+        <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function SetPrimaryResumeButton({
   isPrimary = false,
   resumeId,

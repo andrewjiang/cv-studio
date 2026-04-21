@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import {
   CopyAccountPublicLinkButton,
@@ -16,11 +14,18 @@ export function AccountResumeCard({
 }) {
   return (
     <div className="group relative flex flex-col rounded-[2rem] border border-black/[0.06] bg-white/75 p-4 antialiased shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:border-black/[0.1] hover:shadow-[0_16px_34px_rgba(15,23,42,0.09)]">
-      {resume.isPrimary && (
-        <div className="absolute left-4 top-4 z-30 animate-in fade-in zoom-in-90 delay-300 duration-500 fill-mode-both">
-          <span className="rounded-full border border-black/10 bg-white/92 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-700 shadow-sm">
-            Primary
-          </span>
+      {(resume.isPrimary || !resume.isPublished) && (
+        <div className="absolute left-4 top-4 z-30 flex flex-col gap-1.5 animate-in fade-in zoom-in-90 delay-300 duration-500 fill-mode-both">
+          {resume.isPrimary ? (
+            <span className="rounded-full border border-black/10 bg-white/92 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-700 shadow-sm">
+              Primary
+            </span>
+          ) : null}
+          {!resume.isPublished ? (
+            <span className="rounded-full border border-black/10 bg-white/92 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-600 shadow-sm">
+              Draft
+            </span>
+          ) : null}
         </div>
       )}
 
@@ -94,13 +99,14 @@ export function AccountResumeCard({
                 View public
               </a>
               <CopyAccountPublicLinkButton
+                className="inline-flex h-9 items-center gap-2 rounded-full border border-black/10 bg-white px-3 text-[0.78rem] font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
                 label="Copy public link"
                 publicUrl={resume.publicUrl}
               />
             </>
           ) : (
             <span className="inline-flex h-9 items-center rounded-full border border-black/8 bg-[#fbf7f0] px-3 text-[0.78rem] font-bold text-slate-500">
-              Draft
+              Publish before sharing
             </span>
           )}
         </div>

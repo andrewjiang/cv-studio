@@ -62,9 +62,20 @@ async function main() {
   assert(primary.primaryResumeId === bootstrapped.resume.id, "Primary resume id did not match the published resume.");
   assert(primary.publicUrl, "Primary response did not return a public URL.");
 
+  const apiKey = await request("/api/account/api-keys", {
+    body: {
+      label: "Dashboard smoke key",
+    },
+    method: "POST",
+  });
+  assert(apiKey.apiKey?.key?.startsWith("tcv_live_"), "Account API key creation did not return a live key.");
+  assert(apiKey.project?.id, "Account API key creation did not return a project.");
+
   const accountHtml = await fetchText("/account");
   assert(accountHtml.includes("Public profile"), "Dashboard did not render the publishing section.");
   assert(accountHtml.includes("Billing"), "Dashboard did not render billing.");
+  assert(accountHtml.includes("Developer access"), "Dashboard did not render developer API access.");
+  assert(accountHtml.includes("Dashboard smoke key"), "Dashboard did not render the created API key.");
   assert(accountHtml.includes("Primary"), "Dashboard did not mark the primary resume.");
   assert(accountHtml.includes(bootstrapped.resume.title), "Dashboard did not include the resume title.");
 
@@ -79,6 +90,7 @@ async function main() {
 
   log(`Created user: ${signedUp.user.id}`);
   log(`Primary resume: ${bootstrapped.resume.id}`);
+  log(`API project: ${apiKey.project.id}`);
   log(`Public URL: ${published.publicUrl}`);
 }
 
