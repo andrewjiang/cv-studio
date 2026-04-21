@@ -70,7 +70,6 @@ export default async function HostedStudioPage({
 
   return (
     <CvStudio
-      initialEditorPath={payload.editorPath}
       initialPublicPath={payload.publicPath}
       initialResume={payload.resume}
       workspace={payload.workspace}

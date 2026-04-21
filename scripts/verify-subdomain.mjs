@@ -125,7 +125,8 @@ async function main() {
 
     log(`Created user: ${signedUp.user.id}`);
     log(`Resume: ${bootstrapped.resume.id}`);
-    log(`Subdomain: https://${hostname}`);
+    log(`Verified temporary subdomain: https://${hostname}`);
+    log("This URL is expected to return 404 after the temporary Founder grant is revoked.");
   } finally {
     if (grantCreated) {
       await sql`

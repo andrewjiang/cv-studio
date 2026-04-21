@@ -63,10 +63,16 @@ async function main() {
   assert(primary.publicUrl, "Primary response did not return a public URL.");
 
   const accountHtml = await fetchText("/account");
-  assert(accountHtml.includes("Your resume library"), "Dashboard did not render the resume library.");
-  assert(accountHtml.includes("Public identity"), "Dashboard did not render the publishing section.");
+  assert(accountHtml.includes("Public profile"), "Dashboard did not render the publishing section.");
+  assert(accountHtml.includes("Billing"), "Dashboard did not render billing.");
   assert(accountHtml.includes("Primary"), "Dashboard did not mark the primary resume.");
   assert(accountHtml.includes(bootstrapped.resume.title), "Dashboard did not include the resume title.");
+
+  const libraryHtml = await fetchText("/account/resumes");
+  assert(libraryHtml.includes("CVs"), "CV library page did not render.");
+  assert(libraryHtml.includes("Copy public link"), "CV library did not render copy-link action.");
+  assert(libraryHtml.includes("Primary"), "CV library did not mark the primary resume.");
+  assert(libraryHtml.includes(bootstrapped.resume.title), "CV library did not include the resume title.");
 
   const publicHtml = await fetchText(published.publicUrl);
   assert(publicHtml.includes("Download PDF"), "Public resume did not render the public footer.");

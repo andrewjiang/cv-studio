@@ -47,7 +47,7 @@ export async function POST(
     });
 
     if (!payload) {
-      return NextResponse.json({ error: "Resume not found." }, { status: 404 });
+      return NextResponse.json({ error: "CV not found." }, { status: 404 });
     }
 
     await recordUsageEvent({

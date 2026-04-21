@@ -47,7 +47,9 @@ export function StylePreferenceControls({
   onPageSizeChange,
   onPresetChange,
   onShowHeaderDividerChange,
+  onShowPageGuidesChange,
   onShowSectionDividerChange,
+  showPageGuides,
   style,
 }: {
   onAccentToneChange: (accentTone: ResumeAccentTone) => void;
@@ -57,7 +59,9 @@ export function StylePreferenceControls({
   onPageSizeChange: (pageSize: ResumePageSize) => void;
   onPresetChange: (stylePreset: ResumeStylePreset) => void;
   onShowHeaderDividerChange: (showHeaderDivider: boolean) => void;
+  onShowPageGuidesChange: (showPageGuides: boolean) => void;
   onShowSectionDividerChange: (showSectionDivider: boolean) => void;
+  showPageGuides: boolean;
   style: ResumeStylePrefs;
 }) {
   return (
@@ -145,6 +149,17 @@ export function StylePreferenceControls({
               onChange={onShowSectionDividerChange}
             />
           </CheckboxGroupControl>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-black/5 pt-4">
+          <CheckboxControl
+            checked={showPageGuides}
+            label="Show page guides"
+            onChange={onShowPageGuidesChange}
+          />
+          <p className="text-[0.76rem] leading-5 text-slate-500">
+            Overlays page boundaries so you can see how content flows across the printed page.
+          </p>
         </div>
       </div>
     </div>
@@ -565,7 +580,7 @@ function describePreset(preset: ResumeStylePreset) {
     case "classic":
       return "Neutral, ATS-safe, and low-decoration.";
     case "creative":
-      return "Expressive but printable: centered header and richer accent.";
+      return "Expressive, centered header and richer accent.";
     case "minimal":
       return "Contemporary sans serif with restrained rules.";
     case "editorial":

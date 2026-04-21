@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import {
-  type ChangeEvent,
   type CSSProperties,
   type RefObject,
   useEffect,
@@ -20,7 +18,6 @@ import {
   DesktopIcon,
   DownloadIcon,
   iconActionButtonClass,
-  MenuIcon,
   MenuSection,
   menuButtonClass,
   MobileIcon,
@@ -32,6 +29,7 @@ import {
   textActionLinkClass,
   TuneIcon,
 } from "@/app/_components/cv-studio-ui";
+import { DotsHorizontalIcon } from "@/app/_components/icons";
 import {
   ResumeDocumentContent,
   ResumePreview,
@@ -68,8 +66,6 @@ import type {
 } from "@/app/_lib/hosted-resume-types";
 import { getResumeTemplate } from "@/app/_lib/resume-templates";
 import { UserMenu } from "./user-menu";
-import { authClient } from "@/app/_lib/auth-client";
-import { UnauthenticatedPublishModal } from "./unauthenticated-publish-modal";
 
 type StudioMode = "edit" | "preview" | "publish";
 type MobilePreviewVariant = "mobile" | "desktop";
@@ -105,25 +101,21 @@ const DEFAULT_FIT_ADJUSTMENT_PREFERENCE: FitAdjustmentPreference = {
 };
 
 export function CvStudio({
-  initialEditorPath,
   initialPublicPath,
   initialResume,
   workspace,
 }: {
-  initialEditorPath: string | null;
   initialPublicPath: string;
   initialResume: HostedResumeEditorRecord;
   workspace: WorkspacePayload;
 }) {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
   const [mode, setMode] = useState<StudioMode>("edit");
   const [markdown, setMarkdown] = useState(initialResume.markdown);
   const [fontsReady, setFontsReady] = useState(false);
   const [showStylePrefs, setShowStylePrefs] = useState(false);
   const [showPageGuides, setShowPageGuides] = useState(false);
   const [showTemplateChooser, setShowTemplateChooser] = useState(false);
-  const [showUnauthenticatedPublishModal, setShowUnauthenticatedPublishModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isRenamingDraft, setIsRenamingDraft] = useState(false);
   const [renameDraftValue, setRenameDraftValue] = useState(initialResume.title);
@@ -134,7 +126,6 @@ export function CvStudio({
   const [notice, setNotice] = useState<StudioNotice>({ kind: "idle" });
   const [workspaceState, setWorkspaceState] = useState(workspace);
   const [activeResume, setActiveResume] = useState(initialResume);
-  const [editorLink, setEditorLink] = useState<string | null>(initialEditorPath);
   const [publicLink, setPublicLink] = useState(initialPublicPath);
   const [templateBusyKey, setTemplateBusyKey] = useState<TemplateKey | null>(null);
   const [fitState, setFitState] = useState({ aggressive: false, overflow: false, scale: 1 });
@@ -163,7 +154,6 @@ export function CvStudio({
   const mobileDesktopPreviewContentRef = useRef<HTMLDivElement>(null);
   const skillsTermProbeRef = useRef<HTMLSpanElement>(null);
   const skillsValueProbeRef = useRef<HTMLSpanElement>(null);
-  const importInputRef = useRef<HTMLInputElement>(null);
   const desktopMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -252,7 +242,6 @@ export function CvStudio({
     setWorkspaceState(workspace);
     setActiveResume(initialResume);
     setMarkdown(initialResume.markdown);
-    setEditorLink(initialEditorPath);
     setPublicLink(initialPublicPath);
     setRenameDraftValue(initialResume.title);
     setMenuOpen(false);
@@ -263,7 +252,6 @@ export function CvStudio({
     lastAutoMarginAdjustmentRef.current = null;
     lastAutoPageSizeAdjustmentRef.current = null;
   }, [
-    initialEditorPath,
     initialPublicPath,
     initialResume,
     workspace,
@@ -357,11 +345,8 @@ export function CvStudio({
     syncResult: "published" | "saved",
     requestMarkdown?: string,
   ) => {
-    const wasAlreadyPublished = activeResumeRef.current.isPublished;
-    
     setWorkspaceState(payload.workspace);
     setActiveResume(payload.resume);
-    setEditorLink(payload.editorUrl);
     setPublicLink(payload.publicUrl);
     setRemoteSyncState({ kind: "idle" });
     setNotice(
@@ -369,10 +354,6 @@ export function CvStudio({
         ? { kind: "success", message: "Published. Share link is ready." }
         : { kind: "success", message: "Changes saved." },
     );
-
-    if (syncResult === "published" && !wasAlreadyPublished && !session) {
-      setShowUnauthenticatedPublishModal(true);
-    }
 
     if (
       requestMarkdown === undefined ||
@@ -914,72 +895,25 @@ export function CvStudio({
     }
   };
 
-  const importMarkdownFile = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const importedMarkdown = typeof reader.result === "string" ? reader.result : "";
-
-      if (!importedMarkdown.trim()) {
-        return;
-      }
-
-      void (async () => {
-        try {
-          const response = await fetch("/api/resumes", {
-            body: JSON.stringify({
-              markdown: importedMarkdown,
-              templateKey: guessTemplateKey(importedMarkdown),
-              title: file.name.replace(/\.(md|markdown|txt)$/i, "") || "Imported CV",
-            }),
-            headers: {
-              "Content-Type": "application/json",
-            },
-            method: "POST",
-          });
-          const payload = await response.json() as HostedResumeResponse & { error?: string };
-
-          if (!response.ok) {
-            throw new Error(payload.error ?? "Unable to import this markdown file.");
-          }
-
-          applyRemotePayload(payload, "saved");
-          setMenuOpen(false);
-          router.replace(`/studio/${payload.resume.id}`, { scroll: false });
-        } catch (error) {
-          setNotice({
-            kind: "error",
-            message: error instanceof Error ? error.message : "Unable to import this markdown file.",
-          });
-        } finally {
-          event.target.value = "";
-        }
-      })();
-    };
-
-    reader.readAsText(file);
-  };
-
   return (
     <main className="app-shell flex flex-1 flex-col">
-      <header className="app-chrome sticky top-0 z-20 border-b border-black/8 bg-white/84 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[108rem] flex-col gap-2 px-4 py-2.5 sm:px-5 lg:hidden">
-          <div className="min-w-0 text-center">
+      <header className="app-chrome sticky top-0 z-50 border-b border-black/5 bg-[#fbf7f0]/80 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-[108rem] flex-col gap-2 px-5 py-3 sm:px-8 lg:hidden">
+          <div className="flex items-center justify-between gap-3">
             <h1 className="text-[0.96rem] leading-none font-semibold uppercase tracking-[0.26em] text-[var(--accent-strong)]">
               TINY CV
             </h1>
+            <UserMenu />
           </div>
 
           <div className="flex items-center gap-2">
+            <span className="text-[0.66rem] font-bold uppercase tracking-[0.16em] text-slate-400">
+              Draft
+            </span>
             <div className="relative min-w-0 flex-1 rounded-[1rem] border border-black/10 bg-white/92 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
               <select
                 aria-label="Select draft"
-                className="h-10 w-full cursor-pointer appearance-none bg-transparent px-4 pr-11 text-[0.9rem] font-medium text-slate-800 outline-none"
+                className="h-10 w-full cursor-pointer appearance-none bg-transparent px-4 pr-11 text-[0.9rem] font-bold text-slate-800 outline-none"
                 onChange={(event) => {
                   if (event.target.value === "__new__") {
                     setShowTemplateChooser(true);
@@ -1006,29 +940,27 @@ export function CvStudio({
               <button
                 aria-expanded={menuOpen}
                 aria-haspopup="menu"
-                aria-label="More actions"
+                aria-label="Draft actions"
                 className={iconActionButtonClass}
                 onClick={() => {
                   setMenuOpen((current) => !current);
                   setIsRenamingDraft(false);
                   setRenameDraftValue(activeResume.title);
                 }}
-                title="More"
+                title="Draft actions"
                 type="button"
               >
-                <MenuIcon />
+                <DotsHorizontalIcon className="h-5 w-5" />
               </button>
               {menuOpen ? (
-                <ResumeMenu
+                <DraftActionsMenu
                   canDelete={workspaceState.resumes.length > 1}
-                  editorLink={editorLink}
-                  exportMarkdown={() => exportResume(activeResume)}
-                  importMarkdown={() => importInputRef.current?.click()}
-                  isPublished={activeResume.isPublished}
+                  exportMarkdown={() => {
+                    exportResume(activeResume);
+                    setMenuOpen(false);
+                  }}
                   isRenamingDraft={isRenamingDraft}
                   mobile
-                  onCopyEditorLink={() => void copyHostedLink(editorLink)}
-                  onCopyPublicLink={() => void copyHostedLink(publicLink)}
                   onDeleteDraft={() => void deleteCurrentResume()}
                   onRenameCancel={() => {
                     setIsRenamingDraft(false);
@@ -1044,17 +976,8 @@ export function CvStudio({
                     setMarkdown(getResumeTemplate(activeResume.templateKey).markdown);
                     setMenuOpen(false);
                   }}
-                  onTogglePageGuides={() => {
-                    setShowPageGuides((current) => !current);
-                    setMenuOpen(false);
-                  }}
-                  onTemplateChooser={() => {
-                    setShowTemplateChooser(true);
-                    setMenuOpen(false);
-                  }}
                   renameInputRef={renameInputRef}
                   renameValue={renameDraftValue}
-                  showPageGuides={showPageGuides}
                 />
               ) : null}
             </div>
@@ -1068,23 +991,23 @@ export function CvStudio({
           ) : null}
         </div>
 
-        <div className="mx-auto hidden w-full max-w-[108rem] flex-col gap-3 px-5 py-3 lg:flex lg:px-8">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-            <div className="min-w-0">
-              <h1 className="text-[1.05rem] leading-none font-semibold uppercase tracking-[0.32em] text-[var(--accent-strong)] sm:text-[1.28rem]">
+        <div className="mx-auto hidden w-full max-w-[108rem] flex-col gap-1.5 px-5 py-3 sm:px-8 lg:flex lg:px-12">
+          <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <h1 className="text-[1.05rem] leading-none font-semibold uppercase tracking-[0.32em] text-[var(--accent-strong)] sm:text-[1.22rem]">
                 TINY CV
               </h1>
-              <p className="mt-1.5 max-w-[28rem] text-[0.9rem] leading-5 text-slate-600 sm:text-[0.94rem]">
-                Markdown-first resume builder that always fits on one page
-              </p>
-            </div>
 
-            <div className="flex flex-col items-stretch gap-1.5 xl:min-w-[34rem] xl:items-end">
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <div className="relative min-w-[14.5rem] rounded-[1rem] border border-black/10 bg-white/92 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+              <span className="h-6 w-px bg-black/10" aria-hidden />
+
+              <div className="flex items-center gap-2.5">
+                <span className="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-slate-400">
+                  Draft
+                </span>
+                <div className="relative min-w-[14.5rem] rounded-[1rem] border border-black/10 bg-white/92 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition hover:border-black/20 hover:shadow-md">
                   <select
                     aria-label="Select draft"
-                    className="h-11 w-full cursor-pointer appearance-none bg-transparent px-4 pr-11 text-[0.92rem] font-medium text-slate-800 outline-none"
+                    className="h-11 w-full cursor-pointer appearance-none bg-transparent px-4 pr-11 text-[0.92rem] font-bold text-slate-800 outline-none"
                     onChange={(event) => {
                       if (event.target.value === "__new__") {
                         setShowTemplateChooser(true);
@@ -1107,60 +1030,31 @@ export function CvStudio({
                   </span>
                 </div>
 
-                <div className="rounded-full border border-black/10 bg-white/92 p-1 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
-                  <button
-                    className={modeButtonClass(mode === "edit")}
-                    onClick={() => setMode("edit")}
-                    type="button"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className={modeButtonClass(mode !== "edit")}
-                    onClick={() => setMode("preview")}
-                    type="button"
-                  >
-                    View
-                  </button>
-                </div>
-
-                <button
-                  className={primaryActionButtonClass}
-                  disabled={isPublishing}
-                  onClick={() => void mutateResume({ publish: true })}
-                  type="button"
-                >
-                  {isPublishing ? <SpinnerIcon /> : null}
-                  <span>{publishButtonLabel}</span>
-                </button>
-
                 <div className="relative" ref={desktopMenuRef}>
                   <button
                     aria-expanded={menuOpen}
                     aria-haspopup="menu"
-                    aria-label="More actions"
+                    aria-label="Draft actions"
                     className={iconActionButtonClass}
                     onClick={() => {
                       setMenuOpen((current) => !current);
                       setIsRenamingDraft(false);
                       setRenameDraftValue(activeResume.title);
                     }}
-                    title="More"
+                    title="Draft actions"
                     type="button"
                   >
-                    <MenuIcon />
+                    <DotsHorizontalIcon className="h-5 w-5" />
                   </button>
                   {menuOpen ? (
-                    <ResumeMenu
+                    <DraftActionsMenu
                       canDelete={workspaceState.resumes.length > 1}
-                      editorLink={editorLink}
-                      exportMarkdown={() => exportResume(activeResume)}
-                      importMarkdown={() => importInputRef.current?.click()}
-                      isPublished={activeResume.isPublished}
+                      exportMarkdown={() => {
+                        exportResume(activeResume);
+                        setMenuOpen(false);
+                      }}
                       isRenamingDraft={isRenamingDraft}
                       mobile={false}
-                      onCopyEditorLink={() => void copyHostedLink(editorLink)}
-                      onCopyPublicLink={() => void copyHostedLink(publicLink)}
                       onDeleteDraft={() => void deleteCurrentResume()}
                       onRenameCancel={() => {
                         setIsRenamingDraft(false);
@@ -1176,34 +1070,35 @@ export function CvStudio({
                         setMarkdown(getResumeTemplate(activeResume.templateKey).markdown);
                         setMenuOpen(false);
                       }}
-                      onTogglePageGuides={() => {
-                        setShowPageGuides((current) => !current);
-                        setMenuOpen(false);
-                      }}
-                      onTemplateChooser={() => {
-                        setShowTemplateChooser(true);
-                        setMenuOpen(false);
-                      }}
                       renameInputRef={renameInputRef}
                       renameValue={renameDraftValue}
-                      showPageGuides={showPageGuides}
                     />
                   ) : null}
                 </div>
-
-                <div className="ml-2 border-l border-black/5 pl-4">
-                  <UserMenu />
-                </div>
               </div>
+            </div>
 
-              {remoteSyncState.kind === "saving" || remoteSyncState.kind === "publishing" ? (
-                <div className="flex items-center justify-end gap-2 pr-1 text-right text-[0.8rem] leading-5 text-slate-500">
-                  <SpinnerIcon />
-                  <span>{describeRemoteSyncState(activeResume, remoteSyncState)}</span>
-                </div>
-              ) : null}
+            <div className="flex items-center gap-4">
+              <button
+                className={primaryActionButtonClass}
+                disabled={isPublishing}
+                onClick={() => void mutateResume({ publish: true })}
+                type="button"
+              >
+                {isPublishing ? <SpinnerIcon /> : null}
+                <span>{publishButtonLabel}</span>
+              </button>
+
+              <UserMenu />
             </div>
           </div>
+
+          {remoteSyncState.kind === "saving" || remoteSyncState.kind === "publishing" ? (
+            <div className="flex items-center justify-end gap-2 pr-1 text-right text-[0.8rem] leading-5 text-slate-500">
+              <SpinnerIcon />
+              <span>{describeRemoteSyncState(activeResume, remoteSyncState)}</span>
+            </div>
+          ) : null}
         </div>
       </header>
 
@@ -1351,12 +1246,14 @@ export function CvStudio({
                         showHeaderDivider,
                       })));
                     }}
+                    onShowPageGuidesChange={setShowPageGuides}
                     onShowSectionDividerChange={(showSectionDivider) => {
                       setMarkdown((current) => updateMarkdownStyle(current, (style) => ({
                         ...style,
                         showSectionDivider,
                       })));
                     }}
+                    showPageGuides={showPageGuides}
                     style={resumeDocument.style}
                   />
                 ) : null}
@@ -1610,76 +1507,44 @@ export function CvStudio({
         </div>
       ) : null}
 
-      {showUnauthenticatedPublishModal ? (
-        <UnauthenticatedPublishModal
-          document={resumeDocument}
-          fitScale={fitState.scale}
-          onClose={() => setShowUnauthenticatedPublishModal(false)}
-          publicUrl={publicLink}
-        />
-      ) : null}
-
       <style media="print">{`@page { size: ${resumeDocument.style.pageSize}; margin: 0; }`}</style>
-      <input
-        accept=".md,.markdown,.txt,text/markdown,text/plain"
-        className="hidden"
-        onChange={importMarkdownFile}
-        ref={importInputRef}
-        type="file"
-      />
     </main>
   );
 }
 
-function ResumeMenu({
+function DraftActionsMenu({
   canDelete,
-  editorLink,
   exportMarkdown,
-  importMarkdown,
-  isPublished,
   isRenamingDraft,
   mobile = false,
-  onCopyEditorLink,
-  onCopyPublicLink,
   onDeleteDraft,
   onRenameCancel,
   onRenameChange,
   onRenameCommit,
   onRenameStart,
   onResetTemplate,
-  onTemplateChooser,
-  onTogglePageGuides,
   renameInputRef,
   renameValue,
-  showPageGuides,
 }: {
   canDelete: boolean;
-  editorLink: string | null;
   exportMarkdown: () => void;
-  importMarkdown: () => void;
-  isPublished: boolean;
   isRenamingDraft: boolean;
   mobile?: boolean;
-  onCopyEditorLink: () => void;
-  onCopyPublicLink: () => void;
   onDeleteDraft: () => void;
   onRenameCancel: () => void;
   onRenameChange: (value: string) => void;
   onRenameCommit: () => void;
   onRenameStart: () => void;
   onResetTemplate: () => void;
-  onTemplateChooser: () => void;
-  onTogglePageGuides: () => void;
   renameInputRef: RefObject<HTMLInputElement | null>;
   renameValue: string;
-  showPageGuides: boolean;
 }) {
   return (
     <div
       className={
         mobile
-          ? "fixed inset-x-0 top-[5.55rem] z-30 px-4"
-          : "absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-[17.5rem]"
+          ? "fixed inset-x-0 top-[6.4rem] z-30 px-4"
+          : "absolute left-0 top-[calc(100%+0.5rem)] z-30 min-w-[16rem]"
       }
     >
       <div
@@ -1689,146 +1554,78 @@ function ResumeMenu({
             : "rounded-[1rem] border border-black/10 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)]"
         }
       >
-      <MenuSection title="Draft">
-        {isRenamingDraft ? (
-          <div className="px-3 py-2">
-            <label className="mb-2 block text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
-              Draft name
-            </label>
-            <input
-              className="h-10 w-full rounded-[0.75rem] border border-black/10 px-3 text-sm text-slate-900 outline-none focus:border-slate-400"
-              onChange={(event) => onRenameChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  onRenameCommit();
-                }
-                if (event.key === "Escape") {
-                  onRenameCancel();
-                }
-              }}
-              ref={renameInputRef}
-              value={renameValue}
-            />
-            <div className="mt-2 flex items-center justify-end gap-2">
-              <button
-                className="inline-flex cursor-pointer items-center justify-center rounded-[0.7rem] px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                onClick={onRenameCancel}
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                className="inline-flex cursor-pointer items-center justify-center rounded-[0.7rem] bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-                onClick={onRenameCommit}
-                type="button"
-              >
-                Save name
-              </button>
+        <MenuSection title="Draft">
+          {isRenamingDraft ? (
+            <div className="px-3 py-2">
+              <label className="mb-2 block text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Draft name
+              </label>
+              <input
+                className="h-10 w-full rounded-[0.75rem] border border-black/10 px-3 text-sm text-slate-900 outline-none focus:border-slate-400"
+                onChange={(event) => onRenameChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    onRenameCommit();
+                  }
+                  if (event.key === "Escape") {
+                    onRenameCancel();
+                  }
+                }}
+                ref={renameInputRef}
+                value={renameValue}
+              />
+              <div className="mt-2 flex items-center justify-end gap-2">
+                <button
+                  className="inline-flex cursor-pointer items-center justify-center rounded-[0.7rem] px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                  onClick={onRenameCancel}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="inline-flex cursor-pointer items-center justify-center rounded-[0.7rem] bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+                  onClick={onRenameCommit}
+                  type="button"
+                >
+                  Save name
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
+          ) : (
+            <button
+              className={menuButtonClass}
+              onClick={onRenameStart}
+              type="button"
+            >
+              Rename draft
+            </button>
+          )}
           <button
             className={menuButtonClass}
-            onClick={onRenameStart}
+            onClick={exportMarkdown}
             type="button"
           >
-            Rename draft
+            Export markdown
           </button>
-        )}
-        <button
-          className={menuButtonClass}
-          onClick={onTemplateChooser}
-          type="button"
-        >
-          New resume
-        </button>
-        <button
-          className={`${menuButtonClass} text-rose-700 hover:bg-rose-50`}
-          disabled={!canDelete}
-          onClick={onDeleteDraft}
-          type="button"
-        >
-          Delete draft
-        </button>
-        <button
-          className={`${menuButtonClass} text-rose-700 hover:bg-rose-50`}
-          onClick={onResetTemplate}
-          type="button"
-        >
-          Reset to starter template
-        </button>
-      </MenuSection>
+        </MenuSection>
 
-      <MenuSection title="Import / Export">
-        <button
-          className={menuButtonClass}
-          onClick={importMarkdown}
-          type="button"
-        >
-          Import markdown
-        </button>
-        <button
-          className={menuButtonClass}
-          onClick={exportMarkdown}
-          type="button"
-        >
-          Export markdown
-        </button>
-      </MenuSection>
-
-      <MenuSection title="Sharing">
-        <button
-          className={menuButtonClass}
-          disabled={!isPublished}
-          onClick={onCopyPublicLink}
-          type="button"
-        >
-          Copy public link
-        </button>
-        <button
-          className={menuButtonClass}
-          disabled={!editorLink}
-          onClick={onCopyEditorLink}
-          type="button"
-        >
-          Copy editor link
-        </button>
-      </MenuSection>
-
-      <MenuSection title="Account">
-        <Link
-          className={menuButtonClass}
-          href="/account"
-        >
-          Account settings
-        </Link>
-      </MenuSection>
-
-      <MenuSection title="Product">
-        <Link
-          className={menuButtonClass}
-          href="/documentation"
-        >
-          Documentation
-        </Link>
-        <Link
-          className={menuButtonClass}
-          href="/api/v1/openapi.json"
-          target="_blank"
-        >
-          OpenAPI spec
-        </Link>
-      </MenuSection>
-
-      <MenuSection title="Advanced">
-        <button
-          className={menuButtonClass}
-          onClick={onTogglePageGuides}
-          type="button"
-        >
-          {showPageGuides ? "Hide page guides" : "Show page guides"}
-        </button>
-      </MenuSection>
+        <MenuSection title="Danger zone">
+          <button
+            className={`${menuButtonClass} text-rose-700 hover:bg-rose-50`}
+            onClick={onResetTemplate}
+            type="button"
+          >
+            Reset to starter template
+          </button>
+          <button
+            className={`${menuButtonClass} text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent`}
+            disabled={!canDelete}
+            onClick={onDeleteDraft}
+            type="button"
+          >
+            Delete draft
+          </button>
+        </MenuSection>
       </div>
     </div>
   );
@@ -2139,25 +1936,6 @@ function exportResume(activeResume: HostedResumeEditorRecord) {
   anchor.download = `${slugifyTitle(activeResume.title)}.md`;
   anchor.click();
   window.URL.revokeObjectURL(url);
-}
-
-function guessTemplateKey(markdown: string): TemplateKey {
-  const document = parseCvMarkdown(markdown);
-  const descriptor = `${document.headline} ${document.sections.map((section) => section.title).join(" ")}`.toLowerCase();
-
-  if (descriptor.includes("design")) {
-    return "designer";
-  }
-
-  if (descriptor.includes("sales") || descriptor.includes("revenue") || descriptor.includes("account executive")) {
-    return "sales";
-  }
-
-  if (descriptor.includes("founder") || descriptor.includes("ceo")) {
-    return "founder";
-  }
-
-  return "engineer";
 }
 
 function slugifyTitle(value: string) {

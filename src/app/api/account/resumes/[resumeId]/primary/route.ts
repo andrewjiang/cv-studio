@@ -17,7 +17,7 @@ export async function POST(
 
   if (!session?.user?.id) {
     return NextResponse.json({
-      error: "Sign in before choosing a primary resume.",
+      error: "Sign in before choosing a primary CV.",
     }, { status: 401 });
   }
 

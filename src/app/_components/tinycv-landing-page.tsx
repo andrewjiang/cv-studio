@@ -625,17 +625,19 @@ export function LandingPaperPreview({
   className,
   cropHeightRatio = 1,
   fitScale = 1,
+  markdown,
   scale,
   templateKey,
 }: {
   className?: string;
   cropHeightRatio?: number;
   fitScale?: number;
+  markdown?: string;
   scale: number;
   templateKey: TemplateKey;
 }) {
   const template = getResumeTemplate(templateKey);
-  const document = parseCvMarkdown(template.markdown);
+  const document = parseCvMarkdown(markdown ?? template.markdown);
   const pageMetrics = getPageMetrics(document.style);
   const previewHeight = pageMetrics.pageHeight * scale * cropHeightRatio;
 

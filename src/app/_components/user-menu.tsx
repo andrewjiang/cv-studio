@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { authClient } from "@/app/_lib/auth-client";
 import {
-  CreditCardIcon,
+  CodeBracketIcon,
   FileTextIcon,
-  GlobeIcon,
   LayoutIcon,
   LogoutIcon,
   SettingsIcon,
@@ -33,7 +32,7 @@ export function UserMenu() {
   if (isPending || !session) {
     return (
       <Link
-        className="inline-flex items-center justify-center text-[0.92rem] font-semibold text-slate-600 transition hover:text-slate-950"
+        className="inline-flex h-11 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-[0.92rem] font-semibold text-slate-600 shadow-sm transition hover:border-black/20 hover:bg-slate-50 hover:text-slate-950"
         href="/account"
       >
         Sign in
@@ -42,7 +41,15 @@ export function UserMenu() {
   }
 
   const { user } = session;
-  const avatarInitial = (user.name || user.email || "T").trim().slice(0, 1).toUpperCase();
+  const initials = user.name
+    ? user.name
+        .split(/\s+/)
+        .map((part) => part[0])
+        .filter(Boolean)
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : (user.email || "T").trim().slice(0, 1).toUpperCase();
 
   async function handleSignOut() {
     await authClient.signOut();
@@ -52,72 +59,63 @@ export function UserMenu() {
   return (
     <div className="relative" ref={menuRef}>
       <button
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white shadow-sm transition hover:bg-slate-50 overflow-hidden"
-        onClick={() => setIsOpen(!isOpen)}
         aria-label="User menu"
+        className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-black/10 bg-white shadow-sm transition hover:border-black/20 hover:bg-slate-50"
+        onClick={() => setIsOpen(!isOpen)}
+        type="button"
       >
-        {avatarInitial ? (
-          <span className="text-[0.78rem] font-black text-slate-700">{avatarInitial}</span>
+        {initials ? (
+          <span className="text-[0.85rem] font-black text-slate-700">{initials}</span>
         ) : (
           <UserIcon className="h-5 w-5 text-slate-500" />
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-2xl border border-black/8 bg-white p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)] ring-1 ring-black/5 z-[60]">
-          <div className="px-3 py-2 border-b border-black/5 mb-1">
-            <p className="text-sm font-bold text-slate-950 truncate">{user.name}</p>
-            <p className="text-xs font-medium text-slate-500 truncate">{user.email}</p>
+        <div className="absolute right-0 z-[60] mt-2 w-60 origin-top-right rounded-2xl border border-black/8 bg-white p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)] ring-1 ring-black/5">
+          <div className="mb-1 border-b border-black/5 px-3 py-2">
+            <p className="truncate text-sm font-bold text-slate-950">{user.name}</p>
+            <p className="truncate text-xs font-medium text-slate-500">{user.email}</p>
           </div>
-          
-          <Link
-            className="flex w-full items-center gap-3 rounded-[0.8rem] px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
-            href="/account"
-            onClick={() => setIsOpen(false)}
-          >
-            <LayoutIcon className="h-4 w-4" />
-            Dashboard
-          </Link>
 
-          <Link
-            className="flex w-full items-center gap-3 rounded-[0.8rem] px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
-            href="/account#resumes"
-            onClick={() => setIsOpen(false)}
-          >
-            <FileTextIcon className="h-4 w-4" />
-            My resumes
-          </Link>
+          <MenuGroup>
+            <UserMenuLink
+              href="/account/resumes"
+              icon={<LayoutIcon className="h-4 w-4" />}
+              label="My CVs"
+              onNavigate={() => setIsOpen(false)}
+            />
+            <UserMenuLink
+              href="/account"
+              icon={<SettingsIcon className="h-4 w-4" />}
+              label="Account settings"
+              onNavigate={() => setIsOpen(false)}
+            />
+          </MenuGroup>
 
-          <Link
-            className="flex w-full items-center gap-3 rounded-[0.8rem] px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
-            href="/account#publishing"
-            onClick={() => setIsOpen(false)}
-          >
-            <GlobeIcon className="h-4 w-4" />
-            Publishing
-          </Link>
+          <MenuDivider />
 
-          <Link
-            className="flex w-full items-center gap-3 rounded-[0.8rem] px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
-            href="/account#billing"
-            onClick={() => setIsOpen(false)}
-          >
-            <CreditCardIcon className="h-4 w-4" />
-            Billing
-          </Link>
+          <MenuGroup>
+            <UserMenuLink
+              href="/documentation"
+              icon={<FileTextIcon className="h-4 w-4" />}
+              label="Documentation"
+              onNavigate={() => setIsOpen(false)}
+            />
+            <UserMenuLink
+              href="/documentation#api-reference"
+              icon={<CodeBracketIcon className="h-4 w-4" />}
+              label="API reference"
+              onNavigate={() => setIsOpen(false)}
+            />
+          </MenuGroup>
 
-          <Link
-            className="flex w-full items-center gap-3 rounded-[0.8rem] px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
-            href="/account#settings"
-            onClick={() => setIsOpen(false)}
-          >
-            <SettingsIcon className="h-4 w-4" />
-            Settings
-          </Link>
+          <MenuDivider />
 
           <button
-            className="mt-1 flex w-full items-center gap-3 rounded-[0.8rem] px-3 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50"
+            className="flex w-full items-center gap-3 rounded-[0.8rem] px-3 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50"
             onClick={handleSignOut}
+            type="button"
           >
             <LogoutIcon className="h-4 w-4" />
             Sign out
@@ -125,5 +123,36 @@ export function UserMenu() {
         </div>
       )}
     </div>
+  );
+}
+
+function MenuGroup({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col">{children}</div>;
+}
+
+function MenuDivider() {
+  return <div className="my-1 h-px bg-black/5" />;
+}
+
+function UserMenuLink({
+  href,
+  icon,
+  label,
+  onNavigate,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  onNavigate: () => void;
+}) {
+  return (
+    <Link
+      className="flex w-full items-center gap-3 rounded-[0.8rem] px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+      href={href}
+      onClick={onNavigate}
+    >
+      {icon}
+      {label}
+    </Link>
   );
 }

@@ -18,7 +18,7 @@ export function AppHeader({
 
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-[#fbf7f0]/80 backdrop-blur-md">
-      <div className="mx-auto max-w-[108rem] px-5 py-3 sm:px-8 lg:px-12 flex items-center justify-between">
+      <div className="mx-auto flex h-16 max-w-[108rem] items-center justify-between px-5 sm:px-8 lg:px-12">
         <Link className="group flex items-center gap-2" href="/">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#065f46] text-white shadow-sm transition group-hover:scale-105">
             <span className="text-[0.65rem] font-bold tracking-tight">CV</span>
@@ -41,7 +41,7 @@ export function AppHeader({
           <div className="flex items-center gap-4 sm:gap-6">
             {showSignedInEditorLink ? (
               <Link
-                className="hidden whitespace-nowrap text-[0.92rem] font-semibold text-slate-600 transition hover:text-slate-950 sm:inline-flex"
+                className="hidden h-11 items-center whitespace-nowrap text-[0.92rem] font-semibold text-slate-600 transition hover:text-slate-950 sm:inline-flex"
                 href={continueEditingHref!}
               >
                 Open editor
@@ -52,7 +52,7 @@ export function AppHeader({
 
             {showSignedOutCta ? (
               <Link
-                className={`${brandPrimaryButtonClass} hidden px-5 py-2 text-[0.92rem] sm:inline-flex`}
+                className={`${brandPrimaryButtonClass} hidden h-11 px-5 text-[0.92rem] sm:inline-flex`}
                 href="/new"
               >
                 Start writing

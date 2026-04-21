@@ -6,9 +6,7 @@ import { ResumePreview } from "./resume-content";
 import { 
   CheckIcon, 
   CopyIcon, 
-  GlobeIcon, 
-  iconActionButtonClass, 
-  primaryActionButtonClass 
+  GlobeIcon,
 } from "./cv-studio-ui";
 import { type ResumeDocument } from "@/app/_lib/cv-markdown";
 import { getPageMetrics } from "@/app/_lib/cv-fit";

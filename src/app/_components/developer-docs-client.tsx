@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Script from "next/script";
+import { brandPrimaryButtonClass } from "@/app/_components/button-classes";
 import { ArrowRightIcon } from "@/app/_components/icons";
 import {
   startTransition,
@@ -882,7 +883,7 @@ export function DeveloperDocsClient({
                                 "inline-flex w-full cursor-pointer items-center justify-center rounded-[0.95rem] px-4 py-3.5 text-[1rem] font-bold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60",
                                 isDark
                                   ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300"
-                                  : "bg-[#065f46] text-white hover:bg-[#044e34]",
+                                  : `${brandPrimaryButtonClass} !rounded-[0.95rem]`,
                               )}
                               disabled={isCreatingApiKey || (!allowCaptchaBypass && !isTurnstileEnabled) || !selfServeName.trim()}
                               onClick={createApiKey}
@@ -1146,7 +1147,7 @@ export function DeveloperDocsClient({
                           "inline-flex w-full cursor-pointer items-center justify-center rounded-full px-4 py-3.5 text-[1rem] font-bold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60",
                           isDark
                             ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300"
-                            : "bg-[#065f46] text-white hover:bg-[#044e34]",
+                            : brandPrimaryButtonClass,
                         )}
                         disabled={isRunning}
                         onClick={executeRequest}

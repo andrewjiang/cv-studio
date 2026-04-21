@@ -8,7 +8,7 @@ import {
   brandPrimaryButtonClass,
   brandSecondaryButtonClass,
 } from "@/app/_components/button-classes";
-import { CopyIcon } from "@/app/_components/icons";
+import { CopyIcon, StarIcon } from "@/app/_components/icons";
 
 export function AccountAuthPanel({
   socialProviders,
@@ -207,8 +207,8 @@ export function AccountClaimButton({
       }
 
       setMessage(payload.claimedCount > 0
-        ? `Added ${payload.claimedCount} resume${payload.claimedCount === 1 ? "" : "s"} to your account.`
-        : "No unclaimed resumes found in this browser.");
+        ? `Added ${payload.claimedCount} CV${payload.claimedCount === 1 ? "" : "s"} to your account.`
+        : "No unclaimed CVs found in this browser.");
       router.refresh();
     } finally {
       setPending(false);
@@ -225,7 +225,7 @@ export function AccountClaimButton({
         <div>
           <h2 className="text-base font-bold text-slate-950">Claim this browser&apos;s drafts</h2>
           <p className="mt-1 text-sm font-medium text-slate-600">
-            Attach the resumes from this browser to your account.
+            Attach the CVs from this browser to your account.
           </p>
         </div>
         <button
@@ -352,7 +352,7 @@ export function SetPrimaryResumeButton({
       };
 
       if (!response.ok) {
-        setError(payload.error || "Could not update primary resume.");
+        setError(payload.error || "Could not update primary CV.");
         return;
       }
 
@@ -531,6 +531,59 @@ export function BillingCheckoutButton({
         </p>
       ) : null}
     </div>
+  );
+}
+
+export function SetPrimaryResumeIconButton({
+  className,
+  disabled = false,
+  isPrimary = false,
+  resumeId,
+  title,
+}: {
+  className?: string;
+  disabled?: boolean;
+  isPrimary?: boolean;
+  resumeId: string;
+  title?: string;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+
+  async function setPrimary() {
+    setPending(true);
+
+    try {
+      const response = await fetch(`/api/account/resumes/${resumeId}/primary`, {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        router.refresh();
+      }
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (isPrimary) {
+    return (
+      <div className={`flex h-10 w-10 items-center justify-center rounded-full text-amber-500 ${className ?? ""}`} title="Primary resume">
+        <StarIcon className="h-5 w-5 fill-current" />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      className={`flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-50 hover:text-amber-500 disabled:opacity-50 ${className ?? ""}`}
+      disabled={pending || disabled}
+      onClick={() => void setPrimary()}
+      title={title ?? "Set as primary"}
+      type="button"
+    >
+      <StarIcon className={pending ? "h-5 w-5 animate-spin" : "h-5 w-5"} />
+    </button>
   );
 }
 

@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import type { ReactNode } from "react";
 import {
   AccountAuthPanel,
   AccountBillingRefresh,
@@ -8,16 +7,15 @@ import {
   BillingCheckoutButton,
   BillingPortalButton,
   CopyAccountPublicLinkButton,
-  SetPrimaryResumeButton,
   SubdomainClaimForm,
 } from "@/app/_components/account-client-actions";
-import { AppHeader } from "@/app/_components/app-header";
+import { AccountShell } from "@/app/_components/account-shell";
+import { brandPrimaryButtonClass } from "@/app/_components/button-classes";
 import { CheckIcon } from "@/app/_components/icons";
 import { auth } from "@/app/_lib/auth";
 import {
   getAccountDashboard,
   type AccountDashboardPayload,
-  type AccountResumeSummary,
 } from "@/app/_lib/account-store";
 import {
   getBillingLaunchState,
@@ -29,6 +27,8 @@ import { getWorkspace } from "@/app/_lib/hosted-resume-store";
 import { readWorkspaceCookie } from "@/app/_lib/workspace-cookie";
 
 export const dynamic = "force-dynamic";
+const ACCOUNT_PANEL_CLASS =
+  "rounded-[1.6rem] border border-black/6 bg-white/76 p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] sm:p-6";
 
 export default async function AccountPage({
   searchParams,
@@ -91,19 +91,12 @@ export default async function AccountPage({
             hasUnclaimedWorkspaceResumes={hasUnclaimedWorkspaceResumes}
           />
 
-          <section className="scroll-mt-24" id="resumes">
-            <ResumeList
-              currentResumeId={dashboard.currentResumeId}
-              resumes={dashboard.resumes}
-            />
-          </section>
-
           <section className="scroll-mt-24" id="publishing">
-          <PublishingIdentityCard
-            dashboard={dashboard}
-            entitlementResolution={entitlementResolution}
-            subdomainsEnabled={process.env.TINYCV_SUBDOMAINS_ENABLED === "true"}
-          />
+            <PublishingIdentityCard
+              dashboard={dashboard}
+              entitlementResolution={entitlementResolution}
+              subdomainsEnabled={process.env.TINYCV_SUBDOMAINS_ENABLED === "true"}
+            />
           </section>
 
           <section className="scroll-mt-24" id="billing">
@@ -134,11 +127,11 @@ function SettingsNav() {
           Account
         </p>
         <nav className="flex flex-col gap-1">
-          <NavItem href="#overview" label="Overview" />
-          <NavItem href="#resumes" label="Resumes" />
-          <NavItem href="#publishing" label="Publishing" />
-          <NavItem href="#billing" label="Billing" />
-          <NavItem href="#settings" label="Settings" />
+          <NavItem href="/account" label="Overview" />
+          <NavItem href="/account/resumes" label="CVs" />
+          <NavItem href="/account#publishing" label="Public profile" />
+          <NavItem href="/account#billing" label="Billing" />
+          <NavItem href="/account#settings" label="Settings" />
         </nav>
       </div>
     </aside>
@@ -147,12 +140,12 @@ function SettingsNav() {
 
 function NavItem({ href, label }: { href: string; label: string }) {
   return (
-    <a
+    <Link
       className="block rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-white/70 hover:text-slate-950 active:bg-white"
       href={href}
     >
       {label}
-    </a>
+    </Link>
   );
 }
 
@@ -178,29 +171,26 @@ function OverviewCard({
   });
 
   return (
-    <section
-      className="scroll-mt-24 rounded-[2rem] border border-black/8 bg-white/82 p-6 shadow-[0_16px_44px_rgba(15,23,42,0.05)] sm:p-8"
-      id="overview"
-    >
-      <div className="flex flex-col gap-7 xl:flex-row xl:items-start xl:justify-between">
+    <section className={`scroll-mt-24 ${ACCOUNT_PANEL_CLASS}`} id="overview">
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
         <div className="max-w-2xl">
           <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#065f46]">
-            Dashboard
+            Overview
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-4xl">
             {userName}
           </h1>
           <p className="mt-2 text-sm font-medium text-slate-500">{userEmail}</p>
-          <p className="mt-5 text-base font-medium leading-7 text-slate-600">
+          <p className="mt-4 text-sm font-medium leading-6 text-slate-600">
             {isPaid
-              ? "Branding removal is active on account-owned published resumes."
-              : "Public links include Tiny CV branding. Upgrade when you want a cleaner public identity."}
+              ? "Your paid publishing settings are active."
+              : "You are on Free. Upgrade to remove Tiny CV branding on public links."}
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[32rem]">
+        <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[30rem]">
           <OverviewMetric label="Plan" value={entitlementResolution.plan.label} />
-          <OverviewMetric label="Resumes" value={String(dashboard.resumes.length)} />
+          <OverviewMetric label="CVs" value={String(dashboard.resumes.length)} />
           <OverviewMetric
             label="Primary"
             value={dashboard.primaryResumeId ? "Selected" : "Not set"}
@@ -208,14 +198,14 @@ function OverviewCard({
         </div>
       </div>
 
-      <div className="mt-7 flex flex-col gap-3 border-t border-black/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-5 flex flex-col gap-3 border-t border-black/8 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-semibold leading-6 text-slate-500">
           {dashboard.publishing.primaryPublicUrl
-            ? `Primary public link: ${dashboard.publishing.primaryPublicUrl}`
-            : "Choose a published resume as your primary public identity."}
+            ? `Primary link: ${dashboard.publishing.primaryPublicUrl}`
+            : "Pick a published CV as your primary public link."}
         </p>
         <Link
-          className="inline-flex items-center justify-center rounded-full bg-[#065f46] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#044e3a]"
+          className={`${brandPrimaryButtonClass} px-5 py-3 text-sm`}
           href={primaryAction.href}
         >
           {primaryAction.label}
@@ -244,7 +234,7 @@ function getOverviewAction({
 
   return {
     href: currentEditorHref ?? "/new",
-    label: "Publish a resume",
+    label: "Publish a CV",
   };
 }
 
@@ -279,14 +269,14 @@ function BillingStatusNotice({
     }
 
     return (
-      <div className="rounded-[1.5rem] border border-[#065f46]/15 bg-[#ecfdf5] p-5">
+      <div className="rounded-[1.4rem] border border-[#065f46]/15 bg-[#ecfdf5] p-5">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-950">
               {entitlementResolution.plan.label} is active.
             </h2>
             <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
-              Your published account resumes now use paid publishing settings.
+              Paid publishing settings are now active on your account.
             </p>
           </div>
           {dashboard.publishing.primaryPublicUrl ? (
@@ -304,11 +294,11 @@ function BillingStatusNotice({
           />
           <PurchaseChecklistItem
             complete={dashboard.resumes.some((resume) => resume.isPublished)}
-            label="Publish a resume"
+            label="Publish a CV"
           />
           <PurchaseChecklistItem
             complete={Boolean(dashboard.primaryResumeId)}
-            label="Choose primary resume"
+            label="Choose primary CV"
           />
           <PurchaseChecklistItem
             complete={Boolean(dashboard.publishing.primaryPublicUrl)}
@@ -350,117 +340,6 @@ function PurchaseChecklistItem({
   );
 }
 
-function ResumeList({
-  currentResumeId,
-  resumes,
-}: {
-  currentResumeId: string | null;
-  resumes: AccountResumeSummary[];
-}) {
-  return (
-    <section className="rounded-[2rem] border border-black/8 bg-white/82 p-6 shadow-[0_16px_44px_rgba(15,23,42,0.05)] sm:p-8">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#065f46]">
-            Resumes
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-3xl">
-            Your resume library
-          </h2>
-          <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-            Save role-specific versions, publish the ones you need, and choose one as your primary link.
-          </p>
-        </div>
-        <Link
-          className="inline-flex items-center justify-center rounded-full bg-[#065f46] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#044e3a] active:scale-[0.98]"
-          href="/new"
-        >
-          New resume
-        </Link>
-      </div>
-
-      {resumes.length > 0 ? (
-        <div className="mt-6 divide-y divide-black/6 overflow-hidden rounded-[1.35rem] border border-black/8 bg-white/60">
-          {resumes.map((resume) => (
-            <ResumeRow
-              currentResumeId={currentResumeId}
-              key={resume.id}
-              resume={resume}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-6 rounded-[1.35rem] border border-dashed border-black/10 bg-black/[0.02] p-10 text-center">
-          <h3 className="text-lg font-bold text-slate-950">No account resumes yet.</h3>
-          <p className="mx-auto mt-3 max-w-sm text-sm font-medium leading-6 text-slate-500">
-            Start a new resume or claim the drafts already stored in this browser.
-          </p>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function ResumeRow({
-  currentResumeId,
-  resume,
-}: {
-  currentResumeId: string | null;
-  resume: AccountResumeSummary;
-}) {
-  return (
-    <div className="flex flex-col gap-5 p-5 xl:flex-row xl:items-center xl:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-lg font-bold text-slate-950">{resume.title}</h3>
-          {currentResumeId === resume.id ? <StatusPill label="Current" tone="green" /> : null}
-          {resume.isPrimary ? <StatusPill label="Primary" tone="gold" /> : null}
-          <StatusPill label={resume.isPublished ? "Published" : "Draft"} tone={resume.isPublished ? "green" : "slate"} />
-        </div>
-        <p className="mt-2 text-sm font-semibold text-slate-500">
-          {resume.publicUrl ? (
-            <>
-              <span className="font-medium text-slate-400">URL:</span> {resume.publicUrl}
-              <span className="mx-2 text-slate-300">/</span>
-            </>
-          ) : null}
-          <span className="font-medium text-slate-400">Template:</span> {formatTemplateKey(resume.templateKey)}
-          <span className="mx-2 text-slate-300">/</span>
-          <span className="font-medium text-slate-400">Updated:</span> {formatShortDate(resume.updatedAt)}
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        {resume.publicUrl ? (
-          <>
-            <Link
-              className="rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-slate-50"
-              href={resume.publicUrl}
-            >
-              View public
-            </Link>
-            <CopyAccountPublicLinkButton publicUrl={resume.publicUrl} />
-            <SetPrimaryResumeButton
-              isPrimary={resume.isPrimary}
-              resumeId={resume.id}
-            />
-          </>
-        ) : (
-          <span className="rounded-full border border-black/8 bg-[#fbf7f0] px-4 py-2.5 text-sm font-bold text-slate-500">
-            Publish before primary
-          </span>
-        )}
-        <Link
-          className="rounded-full bg-[#065f46] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#044e3a]"
-          href={`/account/resumes/${resume.id}/open`}
-        >
-          Open editor
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 function PublishingIdentityCard({
   dashboard,
   entitlementResolution,
@@ -476,17 +355,17 @@ function PublishingIdentityCard({
   const isPaid = entitlementResolution.plan.key !== "free";
 
   return (
-    <section className="rounded-[2rem] border border-black/8 bg-white/82 p-6 shadow-[0_16px_44px_rgba(15,23,42,0.05)] sm:p-8">
+    <section className={ACCOUNT_PANEL_CLASS}>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
           <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#065f46]">
-            Publishing
+            Public profile
           </p>
           <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-3xl">
-            Public identity
+            Link and domain
           </h2>
-          <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
-            Choose the published resume that represents your account. Your tiny.cv subdomain can point here too.
+          <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+            Set which published CV represents your account and manage domain options.
           </p>
         </div>
 
@@ -501,7 +380,7 @@ function PublishingIdentityCard({
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)]">
         <div className="rounded-[1.35rem] border border-black/8 bg-[#fbf7f0] p-5">
           <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-slate-400">
-            Primary resume
+            Primary CV
           </p>
           {primaryResume ? (
             <>
@@ -517,7 +396,7 @@ function PublishingIdentityCard({
                   View public
                 </Link>
                 <Link
-                  className="rounded-full bg-[#065f46] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#044e3a]"
+                  className={`${brandPrimaryButtonClass} px-4 py-2.5 text-sm`}
                   href={`/account/resumes/${primaryResume.id}/open`}
                 >
                   Open editor
@@ -526,9 +405,9 @@ function PublishingIdentityCard({
             </>
           ) : (
             <>
-              <h3 className="mt-3 text-xl font-bold text-slate-950">No primary resume selected.</h3>
+              <h3 className="mt-3 text-xl font-bold text-slate-950">No primary CV selected.</h3>
               <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-                Publish a resume, then set it as primary from your resume library.
+                Publish a CV, then set it as primary from your CV library.
               </p>
             </>
           )}
@@ -536,7 +415,7 @@ function PublishingIdentityCard({
 
         <div className="space-y-3">
           <PublishingFeatureRow
-            detail={isPaid ? "Active on account-owned public resumes." : "Upgrade to remove Tiny CV branding."}
+            detail={isPaid ? "Active on your account-owned public CVs." : "Upgrade to remove Tiny CV branding."}
             label="Branding"
             value={dashboard.publishing.brandingRemoved ? "Removed" : "Tiny CV"}
           />
@@ -545,8 +424,8 @@ function PublishingIdentityCard({
               ? !subdomainsEnabled
                 ? "Included in your plan. Setup unlocks after wildcard DNS is enabled."
                 : dashboard.publishing.subdomain.hostname
-                ? "Active and pointing at your selected published resume."
-                : "Claim one clean tiny.cv address for your public resume."
+                ? "Active and pointing at your selected published CV."
+                : "Claim one clean tiny.cv address for your public CV."
               : "Upgrade to claim a subdomain."}
             label="Subdomain"
             value={dashboard.publishing.subdomain.hostname ?? (dashboard.publishing.subdomain.included ? subdomainsEnabled ? "Included" : "Coming next" : "Not included")}
@@ -610,7 +489,7 @@ function PlanStatusCard({
   const { entitlements, plan, source } = entitlementResolution;
 
   return (
-    <section className="rounded-[2rem] border border-black/8 bg-white/82 p-6 shadow-[0_16px_44px_rgba(15,23,42,0.05)] sm:p-8">
+    <section className={ACCOUNT_PANEL_CLASS}>
       <div className="flex flex-col gap-7 xl:flex-row xl:items-start xl:justify-between">
         <div className="max-w-2xl">
           <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#065f46]">
@@ -626,16 +505,14 @@ function PlanStatusCard({
               </span>
             ) : null}
           </div>
-          <p className="mt-4 text-sm font-medium leading-6 text-slate-600">
-            {plan.marketingDescription}
-          </p>
+          <p className="mt-3 text-sm font-medium leading-6 text-slate-600">{plan.marketingDescription}</p>
           <div className="mt-5 flex items-center gap-2 text-sm font-bold text-[#065f46]">
             <CheckIcon className="h-4 w-4" />
             {formatEntitlementSource(source)}
           </div>
           {plan.key !== "free" ? (
             <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
-              Branding removal applies to public resumes attached to this account
+              Branding removal applies to public CVs attached to this account
               {hasWorkspaceResumes ? " after you claim this browser's drafts." : "."}
             </p>
           ) : null}
@@ -707,7 +584,7 @@ function SettingsCard({
   userName: string;
 }) {
   return (
-    <section className="rounded-[2rem] border border-black/8 bg-white/82 p-6 shadow-[0_16px_44px_rgba(15,23,42,0.05)] sm:p-8">
+    <section className={ACCOUNT_PANEL_CLASS}>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#065f46]">
@@ -746,26 +623,6 @@ function PlanMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusPill({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: "gold" | "green" | "slate";
-}) {
-  const toneClass = {
-    gold: "bg-amber-50 text-amber-800",
-    green: "bg-[#065f46]/10 text-[#065f46]",
-    slate: "bg-slate-100 text-slate-500",
-  }[tone];
-
-  return (
-    <span className={`rounded-full px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.14em] ${toneClass}`}>
-      {label}
-    </span>
-  );
-}
-
 function formatEntitlementSource(source: EntitlementResolution["source"]) {
   if (source.source === "grant") {
     return source.expiresAt
@@ -792,26 +649,4 @@ function formatShortDate(value: string) {
     month: "short",
     year: "numeric",
   }).format(new Date(value));
-}
-
-function formatTemplateKey(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function AccountShell({
-  children,
-  currentEditorHref,
-}: {
-  children: ReactNode;
-  currentEditorHref: string | null;
-}) {
-  return (
-    <main className="app-shell min-h-screen bg-[#f7f3ec] text-slate-900">
-      <AppHeader continueEditingHref={currentEditorHref} isAccountPage />
-
-      <div className="mx-auto w-full max-w-[108rem] px-4 py-5 sm:px-5 lg:px-8 lg:py-7">
-        {children}
-      </div>
-    </main>
-  );
 }

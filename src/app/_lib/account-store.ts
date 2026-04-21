@@ -23,6 +23,8 @@ type AccountResumeRow = {
   template_key: TemplateKey;
   title: string;
   updated_at: Date | string;
+  markdown: string;
+  fit_scale: number;
 };
 
 export type AccountResumeSummary = {
@@ -36,6 +38,8 @@ export type AccountResumeSummary = {
   templateKey: TemplateKey;
   title: string;
   updatedAt: string;
+  markdown: string;
+  fitScale: number;
 };
 
 export type AccountDomainSummary = {
@@ -63,14 +67,14 @@ export type AccountDashboardPayload = {
 };
 
 export class AccountResumeNotFoundError extends Error {
-  constructor(message = "Resume not found for this account.") {
+  constructor(message = "CV not found for this account.") {
     super(message);
     this.name = "AccountResumeNotFoundError";
   }
 }
 
 export class AccountResumeValidationError extends Error {
-  constructor(message = "This resume cannot be used for that account action.") {
+  constructor(message = "This CV cannot be used for that account action.") {
     super(message);
     this.name = "AccountResumeValidationError";
   }
@@ -270,7 +274,7 @@ export async function setPrimaryAccountResume(input: {
     }
 
     if (!resume.is_published) {
-      throw new AccountResumeValidationError("Publish this resume before making it primary.");
+      throw new AccountResumeValidationError("Publish this CV before making it primary.");
     }
 
     await tx`
@@ -363,6 +367,8 @@ async function getUserResumeRows(sql: SqlClient, userId: string) {
       r.template_key,
       r.updated_at,
       r.published_at,
+      r.markdown,
+      r.fit_scale,
       m.last_opened_at
     from user_resume_memberships m
     join resumes r on r.id = m.resume_id
@@ -466,6 +472,8 @@ function toAccountResumeSummary(
     templateKey: row.template_key,
     title: row.title,
     updatedAt: formatTimestamp(row.updated_at),
+    markdown: row.markdown,
+    fitScale: row.fit_scale,
   };
 }
 
