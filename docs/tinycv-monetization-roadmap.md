@@ -75,7 +75,7 @@ Free should keep:
 4. Agent compatibility
    - copy-paste agent instruction
    - MCP endpoint
-   - x402 pay-per-call endpoint
+   - x402/MPP pay-per-call endpoints
    - API for create, publish, and PDF
 
 5. Developer platform
@@ -116,9 +116,9 @@ type Entitlements = {
 };
 ```
 
-Stripe, admin grants, lifetime passes, coupons, and x402 receipts should all resolve into entitlements.
+Stripe, admin grants, lifetime passes, coupons, and later x402/MPP receipts can all resolve into entitlements.
 
-### Stripe for humans, x402 for agents
+### Stripe for humans, x402 and MPP for agents
 
 Stripe should power:
 
@@ -129,14 +129,14 @@ Stripe should power:
 - Customer Portal
 - subscription webhooks
 
-x402 should power:
+x402 and MPP should power:
 
 - no-account agent calls
 - pay-per-resume creation
 - pay-per-PDF generation
-- paid MCP tools
+- paid MCP tools later
 
-Do not make x402 the main human billing path.
+Do not make machine-payment protocols the main human billing path.
 
 ## Staged Plan
 
@@ -277,9 +277,10 @@ Build:
 
 - copy-paste agent instruction on the landing page and docs
 - MCP setup guide
-- x402 create-and-publish endpoint
-- x402 PDF endpoint
+- x402/MPP create-and-publish endpoint
+- x402/MPP PDF endpoint
 - examples for Claude, Cursor, and OpenAI-style agents
+- root `/openapi.json` discovery for AgentCash and MPPScan
 
 Positioning:
 
@@ -287,7 +288,8 @@ Positioning:
 
 Exit criteria:
 
-- an agent can create, publish, and return a Tiny CV link through a documented flow.
+- an agent can discover `/openapi.json`, create, publish, and return a Tiny CV link through a documented paid flow.
+- unpaid requests return protocol-correct `402` challenges and idempotent retries do not double-execute mutations.
 
 ### Phase 7: Developer platform, only if pulled
 

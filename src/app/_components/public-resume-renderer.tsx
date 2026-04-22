@@ -114,7 +114,7 @@ export async function PublicResumeRenderer({
           </div>
         </div>
 
-        <PublicResumeFooterActions showBranding={!hideBranding} />
+        <PublicResumeFooterActions pageWidth={pageMetrics.pageWidth} showBranding={!hideBranding} />
       </div>
 
       <style media="print">{`@page { size: ${document.style.pageSize}; margin: 0; }`}</style>

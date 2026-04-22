@@ -9,6 +9,7 @@ It also ships with a developer platform:
 - REST API under `/api/v1`
 - Remote MCP endpoint under `/api/v1/mcp`
 - Project API keys for agents and third-party products
+- Experimental no-account x402/MPP machine-payment endpoints for agent calls
 - Markdown-canonical resume creation with optional structured JSON input
 - Explicit draft -> publish flow
 - Async PDF jobs
@@ -115,6 +116,7 @@ Tiny CV now has a project-authenticated API-first platform for agents and integr
 - `GET /api/v1/templates/:key`
 - `GET /api/v1/spec/markdown`
 - `GET /api/v1/spec/json-schema`
+- `GET /openapi.json`
 - `GET /api/v1/openapi.json`
 - `POST /api/v1/projects/bootstrap`
 - `POST /api/v1/resumes/validate`
@@ -123,6 +125,8 @@ Tiny CV now has a project-authenticated API-first platform for agents and integr
 - `PATCH /api/v1/resumes/:resume_id`
 - `POST /api/v1/resumes/:resume_id/publish`
 - `POST /api/v1/resumes/:resume_id/pdf-jobs`
+- `POST /api/v1/paid/resumes`
+- `POST /api/v1/paid/resumes/:resume_id/pdf-jobs`
 - `GET /api/v1/pdf-jobs/:job_id`
 - `POST /api/v1/edit-claims/:claim_id/consume`
 - `POST /api/v1/mcp`
@@ -153,6 +157,24 @@ curl -X POST http://localhost:3000/api/v1/projects/bootstrap \
   -H "x-tinycv-bootstrap-secret: $TINYCV_PLATFORM_BOOTSTRAP_SECRET" \
   -d '{"name":"My Agent"}'
 ```
+
+### Machine payments
+
+Tiny CV also exposes an experimental no-account paid path for agents:
+
+- `POST /api/v1/paid/resumes` creates a resume from markdown or JSON, publishes it immediately, and returns the public URL. Default price: `$0.25`.
+- `POST /api/v1/paid/resumes/:resume_id/pdf-jobs` queues a PDF job for a paid, published resume. Default price: `$0.50`.
+
+Both routes require `Idempotency-Key`, validate request bodies before issuing payment challenges, and support x402 plus MPP. A first unpaid request returns `402` with x402 `PAYMENT-REQUIRED`, MPP `WWW-Authenticate: Payment`, and `Cache-Control: no-store`; retry with the protocol-specific payment header.
+
+Discovery is available at root `/openapi.json` for AgentCash and MPPScan, while `/api/v1/openapi.json` remains as the versioned alias:
+
+```bash
+npx -y @agentcash/discovery@latest discover https://your-origin.com
+npx -y @agentcash/discovery@latest check https://your-origin.com/api/v1/paid/resumes
+```
+
+Machine payments are disabled by default and do not affect Stripe billing, Pro entitlements, bearer-token endpoints, or MCP tools.
 
 ### MCP
 
@@ -239,6 +261,7 @@ TINYCV_PLATFORM_BOOTSTRAP_SECRET=change-me
 TINYCV_RUNTIME_SCHEMA_SYNC=false
 BETTER_AUTH_SECRET=change-me
 BETTER_AUTH_URL=http://localhost:3000
+TINYCV_MACHINE_PAYMENTS_ENABLED=false
 ```
 
 Without `DATABASE_URL`, Tiny CV uses a local file-backed store for development.
@@ -251,6 +274,8 @@ pnpm db:migrate
 ```
 
 Runtime schema sync is available for local development, but production should run explicit migrations instead.
+
+To enable machine payments, set `TINYCV_MACHINE_PAYMENTS_ENABLED=true` plus real x402 wallet and MPP Tempo configuration. Production readiness fails if this feature is enabled with missing secrets, placeholder addresses, testnet defaults, or runtime schema sync.
 
 Before deploying, verify production environment readiness:
 

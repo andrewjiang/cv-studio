@@ -153,6 +153,20 @@ export type CreateResumeRequest =
 
 export type UpdateResumeRequest = CreateResumeRequest;
 
+type PaidMarkdownResumeRequest = Omit<
+  Extract<CreateResumeRequest, { input_format: "markdown" }>,
+  "external_resume_id" | "webhook_url"
+>;
+
+type PaidJsonResumeRequest = Omit<
+  Extract<CreateResumeRequest, { input_format: "json" }>,
+  "external_resume_id" | "webhook_url"
+>;
+
+export type PaidCreateResumeRequest =
+  | PaidMarkdownResumeRequest
+  | PaidJsonResumeRequest;
+
 export type ApiResumeRecord = {
   client_reference_id: string | null;
   created_at: string;
@@ -178,6 +192,8 @@ export type PublishResumeRequest = {
 export type CreatePdfJobRequest = {
   webhook_url?: string;
 };
+
+export type PaidCreatePdfJobRequest = Record<string, never>;
 
 export type PdfJobStatus = "cancelled" | "completed" | "failed" | "processing" | "queued";
 
@@ -207,4 +223,12 @@ export type ApiErrorShape = {
     message: string;
     request_id: string;
   };
+};
+
+export type PaidCreateResumeResponse = {
+  payment: {
+    charged_amount_usd: string;
+    protocols_supported: ["x402", "mpp"];
+  };
+  resume: ApiResumeRecord;
 };

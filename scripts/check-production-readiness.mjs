@@ -94,6 +94,12 @@ if (env("TINYCV_RATE_LIMIT_DISABLED") === "true") {
   pass("rate-limit", "Rate limiting is enabled.");
 }
 
+if (isEnabled("TINYCV_MACHINE_PAYMENTS_ENABLED")) {
+  checkMachinePayments();
+} else {
+  pass("machine-payments", "Machine payments are disabled.");
+}
+
 printReport();
 
 const failed = checks.filter((check) => check.status === "fail");
@@ -125,6 +131,10 @@ function requireStrongSecret(name, minLength) {
 
 function env(name) {
   return process.env[name]?.trim() || "";
+}
+
+function isEnabled(name) {
+  return /^(1|true|yes|on)$/i.test(env(name));
 }
 
 function pass(id, message) {
@@ -165,4 +175,69 @@ function printReport() {
   for (const warning of warnings) {
     console.log(`[WARN] ${warning.message}`);
   }
+}
+
+function checkMachinePayments() {
+  const evmAddress = env("TINYCV_X402_EVM_ADDRESS");
+  const solanaAddress = env("TINYCV_X402_SOLANA_ADDRESS");
+  const x402Network = env("TINYCV_X402_NETWORK") || "eip155:84532";
+  const mppMethod = env("TINYCV_MPP_METHOD") || "tempo";
+  const mppIntent = env("TINYCV_MPP_INTENT") || "charge";
+  const mppTestnet = env("TINYCV_MPP_TEMPO_TESTNET") || "true";
+
+  if (!evmAddress && !solanaAddress) {
+    fail("machine-payments-x402-address", "Set TINYCV_X402_EVM_ADDRESS or TINYCV_X402_SOLANA_ADDRESS before enabling machine payments.");
+  } else if (isPlaceholder(evmAddress) || isPlaceholder(solanaAddress)) {
+    fail("machine-payments-x402-address", "Machine payment x402 addresses must not be placeholders.");
+  } else {
+    pass("machine-payments-x402-address", "Machine payment x402 address is configured.");
+  }
+
+  if (x402Network === "eip155:84532") {
+    fail("machine-payments-x402-network", "TINYCV_X402_NETWORK must not use the Base Sepolia testnet default in production.");
+  } else {
+    pass("machine-payments-x402-network", "Machine payment x402 network is production-configured.");
+  }
+
+  if (!env("MPP_SECRET_KEY")) {
+    fail("machine-payments-mpp-secret", "Set MPP_SECRET_KEY before enabling machine payments.");
+  } else {
+    requireStrongSecret("MPP_SECRET_KEY", 32);
+  }
+
+  if (mppMethod !== "tempo") {
+    fail("machine-payments-mpp-method", "TINYCV_MPP_METHOD must be tempo.");
+  } else {
+    pass("machine-payments-mpp-method", "MPP method is tempo.");
+  }
+
+  if (mppIntent !== "charge") {
+    fail("machine-payments-mpp-intent", "TINYCV_MPP_INTENT must be charge.");
+  } else {
+    pass("machine-payments-mpp-intent", "MPP intent is charge.");
+  }
+
+  if (!env("TINYCV_MPP_TEMPO_RECIPIENT")) {
+    fail("machine-payments-mpp-recipient", "Set TINYCV_MPP_TEMPO_RECIPIENT before enabling machine payments.");
+  } else if (isPlaceholder(env("TINYCV_MPP_TEMPO_RECIPIENT"))) {
+    fail("machine-payments-mpp-recipient", "TINYCV_MPP_TEMPO_RECIPIENT must not be a placeholder.");
+  } else {
+    pass("machine-payments-mpp-recipient", "MPP Tempo recipient is configured.");
+  }
+
+  if (!env("TINYCV_MPP_TEMPO_CURRENCY")) {
+    fail("machine-payments-mpp-currency", "Set TINYCV_MPP_TEMPO_CURRENCY before enabling machine payments.");
+  } else {
+    pass("machine-payments-mpp-currency", "MPP Tempo currency is configured.");
+  }
+
+  if (/^(1|true|yes|on)$/i.test(mppTestnet)) {
+    fail("machine-payments-mpp-testnet", "TINYCV_MPP_TEMPO_TESTNET must be false in production.");
+  } else {
+    pass("machine-payments-mpp-testnet", "MPP Tempo testnet mode is disabled.");
+  }
+}
+
+function isPlaceholder(value) {
+  return value && /^(change-me|replace-me|todo|placeholder|0x0+)$/i.test(value);
 }

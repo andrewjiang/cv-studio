@@ -259,6 +259,11 @@ export class DeveloperPlatformValidationError extends Error {
 let postgresClient: postgres.Sql | null = null;
 let schemaReadyPromise: Promise<void> | null = null;
 
+export async function ensureDeveloperPlatformStorage() {
+  const sql = getPostgresClient();
+  await ensureSchema(sql);
+}
+
 export async function bootstrapDeveloperProject(input: BootstrapProjectInput) {
   const sql = getPostgresClient();
   await ensureSchema(sql);
@@ -467,6 +472,48 @@ export async function reserveIdempotentProjectRequest(input: {
   );
 }
 
+export async function getCompletedIdempotentProjectRequest(input: {
+  idempotencyKey: string;
+  operation: string;
+  projectId: string;
+  requestHash: string;
+}) {
+  const sql = getPostgresClient();
+  await ensureSchema(sql);
+
+  const [existing] = await sql<IdempotencyRow[]>`
+    select *
+    from api_idempotency_keys
+    where project_id = ${input.projectId}
+      and operation = ${input.operation}
+      and idempotency_key = ${input.idempotencyKey}
+    limit 1
+  `;
+
+  if (!existing) {
+    return null;
+  }
+
+  if (!safeEquals(existing.request_hash, input.requestHash)) {
+    throw new DeveloperPlatformConflictError(
+      "idempotency_conflict",
+      "This idempotency key has already been used with a different request payload.",
+    );
+  }
+
+  if (existing.response_body !== null && existing.status_code !== null) {
+    return {
+      responseBody: existing.response_body,
+      statusCode: existing.status_code,
+    };
+  }
+
+  throw new DeveloperPlatformConflictError(
+    "idempotency_conflict",
+    "A request with this idempotency key is already in progress.",
+  );
+}
+
 export async function fulfillIdempotentProjectRequest(input: {
   idempotencyKey: string;
   operation: string;
@@ -493,7 +540,9 @@ export async function fulfillIdempotentProjectRequest(input: {
 }
 
 export async function createProjectResumeDraft(input: {
+  attachedVia?: string;
   body: CreateResumeRequest;
+  createdVia?: string;
   projectId: string;
 }) {
   const sql = getPostgresClient();
@@ -568,7 +617,7 @@ export async function createProjectResumeDraft(input: {
         false,
         ${hashToken(createLegacyEditorToken())},
         ${templateKey},
-        ${"api"},
+        ${input.createdVia ?? "api"},
         ${compiled.inputFormat},
         ${input.projectId},
         ${sql.json({ warnings: compiled.warnings })},
@@ -590,7 +639,7 @@ export async function createProjectResumeDraft(input: {
       ) values (
         ${input.projectId},
         ${resumeId},
-        ${"api_create"},
+        ${input.attachedVia ?? "api_create"},
         ${input.body.external_resume_id ?? null},
         ${input.body.client_reference_id ?? null},
         ${now},

@@ -1711,6 +1711,10 @@ function renderAuthLabel(auth: DeveloperEndpointDoc["auth"]) {
     return "Bootstrap secret";
   }
 
+  if (auth === "machine-payment") {
+    return "x402 or MPP";
+  }
+
   return "Bearer token";
 }
 
