@@ -184,10 +184,13 @@ export function TinyCvLandingPage({
                   className="mt-6 text-[2.6rem] leading-[0.95] font-bold tracking-[-0.04em] text-slate-950 sm:text-[3.2rem]"
                   style={{ fontFamily: "var(--font-display-newsreader)" }}
                 >
-                  Let your agent build the whole thing.
+                  Give your agent a finish line.
                 </h2>
                 <p className="mt-6 text-[1.05rem] leading-8 font-medium text-slate-600">
-                  Tiny CV gives agents the format, templates, validation, publishing, and export path they need to guide someone from rough background notes to a polished public CV.
+                  Agents can write the content. Tiny CV gives them the format, templates, validation, publishing, and export path to turn that content into a polished artifact.
+                </p>
+                <p className="mt-4 text-[0.98rem] leading-7 font-semibold text-slate-700">
+                  Use bearer API keys for durable integrations. Use x402 or MPP Agent Finish when an agent needs one paid, no-account call for a hosted resume, claim link, and PDF job.
                 </p>
                 <div className="mt-10 flex flex-wrap gap-4">
                   <LandingPrimaryLink href="/documentation">
@@ -195,7 +198,7 @@ export function TinyCvLandingPage({
                   </LandingPrimaryLink>
                   <Link
                     className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-7 py-3.5 text-[0.98rem] font-bold text-slate-950 transition hover:bg-slate-50"
-                    href="/api/v1/openapi.json"
+                    href="/openapi.json"
                   >
                     View OpenAPI
                   </Link>
@@ -215,7 +218,7 @@ export function TinyCvLandingPage({
                   Built for the whole job hunt.
                 </h2>
                 <p className="mt-5 max-w-xl text-[1.02rem] leading-8 font-medium text-white/72">
-                  Free stays useful. Paid plans are for people who want hosted versions, cleaner public pages, and fewer rough edges between editing, sharing, and sending.
+                  Free stays useful. Paid plans are for people who want durable professional identity, cleaner public pages, and fewer rough edges between editing, sharing, and sending.
                 </p>
                 <p className="mt-5 font-mono text-[0.78rem] font-bold uppercase tracking-[0.18em] text-emerald-200">
                   {billingLaunchState.founderPassRemaining} of {billingLaunchState.founderPassLimit} Founder spots left
@@ -223,12 +226,12 @@ export function TinyCvLandingPage({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <PricingCard
-                  body="For the first 100 paid users: lifetime hosting, branding removal, and early access to Pro publishing features."
+                  body="For the first 100 paid users: permanently claim your Tiny CV identity, remove branding, and keep lifetime access to premium publishing features."
                   price="$100"
                   title="Founder Pass"
                 />
                 <PricingCard
-                  body="Hosted versions, cleaner public pages, and Pro limits for people actively applying."
+                  body="Premium themes, cleaner public pages, higher export limits, and one active premium URL while you are applying."
                   price="$40/year"
                   title="Annual Pro"
                 />

@@ -8,7 +8,7 @@ Use this after production smoke tests pass and before posting publicly.
 - `/new` creates a resume from a template.
 - `/account` supports sign up, sign in, workspace claiming, checkout, and plan status.
 - `/developers` and `/documentation` load without errors.
-- `/api/v1/openapi.json` loads.
+- `/openapi.json` and `/api/v1/openapi.json` load.
 
 ## Paid Plans
 
@@ -33,6 +33,6 @@ TINYCV_PDF_TEST_BASE_URL=https://your-production-domain TINYCV_API_KEY=tcv_live_
 
 - Lead with the one-page markdown builder.
 - Mention public links and PDFs.
-- Mention Founder Pass only once, with the first-100 framing.
+- Mention Founder Pass only once as permanent Tiny CV identity for the first 100 users.
 - Link directly to the production domain.
-- Keep the agent/API story as a secondary note or reply, not the main post.
+- Keep Agent Finish and the API story as a secondary note or reply, not the main post.

@@ -103,8 +103,8 @@ Stripe checkout is wired for signed-in users.
 
 Create test-mode products/prices first:
 
-- Founder Pass product, one-time `$100`
-- Annual Pro product, `$40/year`
+- Founder Pass product, one-time `$100`, for permanent premium Tiny CV identity
+- Annual Pro product, `$40/year`, for active premium publishing and higher limits
 
 Set:
 
@@ -234,6 +234,7 @@ Before sharing publicly:
 - `/studio/[resumeId]` saves and publishes.
 - `/:slug` renders the public page.
 - `/developers` loads.
+- `/openapi.json` loads and includes `/api/v1/paid/agent-finish`.
 - `/api/v1/openapi.json` loads.
 - `pnpm test:pdf` passes against production.
 - Vercel logs show no repeated function failures.

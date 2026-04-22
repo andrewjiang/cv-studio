@@ -79,7 +79,7 @@ const CATEGORY_TITLES: Record<DeveloperEndpointDoc["category"], string> = {
 };
 
 const CATEGORY_DESCRIPTIONS: Record<DeveloperEndpointDoc["category"], string> = {
-  Agent: "Remote tool access for agents that want Tiny CV as infrastructure.",
+  Agent: "Bearer-token project integrations and no-account paid Agent Finish calls.",
   Core: "Validate input, create drafts, update them, and publish public URLs.",
   Export: "Artifacts, claim links, and export-related flows.",
   "Getting Started": "Start in the docs for self-serve access, or use the protected bootstrap flow for managed provisioning.",

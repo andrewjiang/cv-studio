@@ -10,18 +10,21 @@ vi.mock("@/app/_lib/cv-fit", async (importOriginal) => {
 });
 
 import { compileResumeInput, validateResumeInput } from "@/app/_lib/developer-resume-input";
+import { STRONG_AGENT_RESUME_MARKDOWN } from "@/app/_lib/resume-examples";
 
 describe("developer-resume-input", () => {
   it("validates markdown input and returns normalized markdown", () => {
     const result = validateResumeInput({
       input_format: "markdown",
-      markdown: "# Alex Morgan\nFounder & Product Engineer\nSan Francisco, CA",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN,
       template_key: "founder",
     });
 
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
-    expect(result.normalized_markdown).toContain("# Alex Morgan");
+    expect(result.normalized_markdown).toContain("# Jordan Lee");
+    expect(result.normalized_markdown).toContain("Northstar Labs");
+    expect(result.normalized_markdown).toContain("time-to-first-publish");
     expect(result.inferred_template_key).toBe("founder");
   });
 

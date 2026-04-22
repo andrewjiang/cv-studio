@@ -60,7 +60,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     interval: "none",
     key: "free",
     label: "Free",
-    marketingDescription: "Markdown editing, public links, PDF export, and Tiny CV branding.",
+    marketingDescription: "Markdown editing, standard public links, PDF export, and Tiny CV branding.",
   },
   pro: {
     entitlements: {
@@ -76,7 +76,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     interval: "year",
     key: "pro",
     label: "Annual Pro",
-    marketingDescription: "Hosted versions, cleaner public identity, Pro limits, and AI credits when editing ships.",
+    marketingDescription: "Premium themes, cleaner public pages, one active premium URL, Pro limits, and AI credits when editing ships.",
   },
   founder: {
     entitlements: {
@@ -92,7 +92,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     interval: "lifetime",
     key: "founder",
     label: "Founder Pass",
-    marketingDescription: "Lifetime hosting, branding removal, and early access to Pro publishing features.",
+    marketingDescription: "Permanent Tiny CV identity, lifetime premium publishing, branding removal, and early access to future Pro features.",
   },
 };
 

@@ -9,7 +9,7 @@ It also ships with a developer platform:
 - REST API under `/api/v1`
 - Remote MCP endpoint under `/api/v1/mcp`
 - Project API keys for agents and third-party products
-- Experimental no-account x402/MPP machine-payment endpoints for agent calls
+- Experimental no-account x402/MPP Agent Finish endpoints for one-off agent calls
 - Markdown-canonical resume creation with optional structured JSON input
 - Explicit draft -> publish flow
 - Async PDF jobs
@@ -102,6 +102,13 @@ Email/password auth is enabled by default. Google and GitHub sign-in are enabled
 
 Tiny CV now has a project-authenticated API-first platform for agents and integrations.
 
+The API surface has two intentionally different entry points:
+
+- Bearer-token API keys are for developers and products that want durable projects, webhook identity, usage history, and repeat integrations.
+- x402/MPP paid endpoints are for no-account agent execution when an autonomous agent needs to complete one paid task immediately.
+
+Neither API path grants permanent premium URL ownership. The premium `name.tiny.cv` identity belongs to paid human plans.
+
 ### Core model
 
 1. Validate markdown or structured JSON input.
@@ -125,6 +132,7 @@ Tiny CV now has a project-authenticated API-first platform for agents and integr
 - `PATCH /api/v1/resumes/:resume_id`
 - `POST /api/v1/resumes/:resume_id/publish`
 - `POST /api/v1/resumes/:resume_id/pdf-jobs`
+- `POST /api/v1/paid/agent-finish`
 - `POST /api/v1/paid/resumes`
 - `POST /api/v1/paid/resumes/:resume_id/pdf-jobs`
 - `GET /api/v1/pdf-jobs/:job_id`
@@ -160,17 +168,21 @@ curl -X POST http://localhost:3000/api/v1/projects/bootstrap \
 
 ### Machine payments
 
-Tiny CV also exposes an experimental no-account paid path for agents:
+Tiny CV also exposes an experimental no-account paid path for agents. This is best thought of as Agent Finish: the agent brings resume content, Tiny CV turns it into a claimable hosted artifact.
 
+- `POST /api/v1/paid/agent-finish` creates and publishes a standard hosted resume, returns a claimable edit link, queues a PDF job, and returns a payment receipt. Default price: `$1.00`.
 - `POST /api/v1/paid/resumes` creates a resume from markdown or JSON, publishes it immediately, and returns the public URL. Default price: `$0.25`.
 - `POST /api/v1/paid/resumes/:resume_id/pdf-jobs` queues a PDF job for a paid, published resume. Default price: `$0.50`.
 
-Both routes require `Idempotency-Key`, validate request bodies before issuing payment challenges, and support x402 plus MPP. A first unpaid request returns `402` with x402 `PAYMENT-REQUIRED`, MPP `WWW-Authenticate: Payment`, and `Cache-Control: no-store`; retry with the protocol-specific payment header.
+All paid machine routes require `Idempotency-Key`, validate request bodies before issuing payment challenges, and support x402 plus MPP. A first unpaid request returns `402` with x402 `PAYMENT-REQUIRED`, MPP `WWW-Authenticate: Payment`, and `Cache-Control: no-store`; retry with the protocol-specific payment header.
+
+Machine-payment outputs use standard Tiny CV public URLs and claim links. They do not reserve premium `*.tiny.cv` names, do not grant Pro or Founder Pass entitlements, and do not support paid webhooks.
 
 Discovery is available at root `/openapi.json` for AgentCash and MPPScan, while `/api/v1/openapi.json` remains as the versioned alias:
 
 ```bash
 npx -y @agentcash/discovery@latest discover https://your-origin.com
+npx -y @agentcash/discovery@latest check https://your-origin.com/api/v1/paid/agent-finish
 npx -y @agentcash/discovery@latest check https://your-origin.com/api/v1/paid/resumes
 ```
 

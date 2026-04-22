@@ -1,4 +1,11 @@
 import { RESUME_JSON_SCHEMA } from "@/app/_lib/developer-resume-input";
+import {
+  STRONG_AGENT_RESUME_HEADLINE,
+  STRONG_AGENT_RESUME_MARKDOWN,
+  STRONG_AGENT_RESUME_MARKDOWN_PREVIEW,
+  STRONG_AGENT_RESUME_NAME,
+  STRONG_AGENT_RESUME_TITLE,
+} from "@/app/_lib/resume-examples";
 
 export type DeveloperEndpointDoc = {
   auth: "bearer" | "bootstrap-secret" | "machine-payment" | "none";
@@ -19,7 +26,7 @@ export type DeveloperEndpointDoc = {
 
 export const DEVELOPER_QUICKSTART = [
   {
-    copy: "Use the documentation page to create a project and reveal your first live API key.",
+    copy: "Use the documentation page to create a project and reveal your first live API key. This is the best path for durable integrations.",
     title: "Get a key",
   },
   {
@@ -161,10 +168,10 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
     description: "Create a Tiny CV draft from markdown or JSON. Returns the canonical markdown that Tiny CV stored. Send Idempotency-Key so retries do not create duplicates.",
     exampleRequestBody: {
       input_format: "markdown",
-      markdown: "# Alex Morgan\nFounder & Product Engineer\nSan Francisco, CA | [alex@example.com](mailto:alex@example.com)\n\n## Summary\nProduct-minded builder.\n",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN,
       return_edit_claim_url: true,
       template_key: "founder",
-      title: "Alex Morgan Resume",
+      title: STRONG_AGENT_RESUME_TITLE,
       webhook_url: "https://example.com/tinycv/webhooks",
     },
     exampleResponse: {
@@ -172,14 +179,14 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
       editor_claim_url: "https://tinycv.app/claim/claim_123?token=tcv_claim_xxx",
       external_resume_id: null,
       input_format: "markdown",
-      markdown: "# Alex Morgan\nFounder & Product Engineer\n...",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN_PREVIEW,
       pdf_url: null,
       public_url: null,
       published_at: null,
       resume_id: "res_123",
       status: "draft",
       template_key: "founder",
-      title: "Alex Morgan Resume",
+      title: STRONG_AGENT_RESUME_TITLE,
       updated_at: "2026-04-15T10:14:00.000Z",
     },
     idempotent: true,
@@ -191,18 +198,21 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "machine-payment",
     category: "Agent",
-    description: "No-account paid path for agents. Submit valid markdown or JSON with Idempotency-Key, receive a 402 challenge, then retry with either x402 PAYMENT-SIGNATURE or MPP Authorization: Payment. The resume is published immediately and paid webhooks are intentionally not supported.",
+    description: "Lower-level no-account paid path for agents. Submit valid markdown or JSON with Idempotency-Key, receive a 402 challenge, then retry with either x402 PAYMENT-SIGNATURE or MPP Authorization: Payment. The resume is published immediately with a standard public URL and a claimable edit link by default. Premium *.tiny.cv URL ownership is not included.",
     exampleRequestBody: {
       client_reference_id: "agent-run-2026-04-21",
       input_format: "markdown",
-      markdown: "# Alex Morgan\nFounder & Product Engineer\nSan Francisco, CA | [alex@example.com](mailto:alex@example.com)\n\n## Summary\nProduct-minded builder.\n",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN,
       return_edit_claim_url: true,
       template_key: "founder",
-      title: "Alex Morgan Resume",
+      title: STRONG_AGENT_RESUME_TITLE,
     },
     exampleResponse: {
       payment: {
+        benefits: ["standard_hosted_url", "claimable_edit_link", "payment_receipt"],
         charged_amount_usd: "0.250000",
+        premium_url_included: false,
+        product: "agent_publish",
         protocols_supported: ["x402", "mpp"],
       },
       resume: {
@@ -210,14 +220,14 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
         editor_claim_url: "https://tinycv.app/claim/claim_124?token=tcv_claim_xxx",
         external_resume_id: null,
         input_format: "markdown",
-        markdown: "# Alex Morgan\nFounder & Product Engineer\n...",
+        markdown: STRONG_AGENT_RESUME_MARKDOWN_PREVIEW,
         pdf_url: null,
         public_url: "https://tinycv.app/SteadyBlueHeron",
         published_at: "2026-04-15T10:20:00.000Z",
         resume_id: "res_paid_123",
         status: "published",
         template_key: "founder",
-        title: "Alex Morgan Resume",
+        title: STRONG_AGENT_RESUME_TITLE,
         updated_at: "2026-04-15T10:20:00.000Z",
       },
     },
@@ -225,7 +235,63 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
     method: "POST",
     path: "/api/v1/paid/resumes",
     slug: "paid-create-resume",
-    summary: "Create and publish with x402 or MPP",
+    summary: "Paid publish with x402 or MPP",
+  },
+  {
+    auth: "machine-payment",
+    category: "Agent",
+    description: "Recommended one-off paid path for autonomous agents. One x402 or MPP payment turns resume markdown or JSON into a Tiny CV package: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Agent Finish always creates a claim link. This does not reserve a premium *.tiny.cv URL; that remains a human Founder Pass benefit.",
+    exampleRequestBody: {
+      client_reference_id: "agent-run-2026-04-21",
+      input_format: "markdown",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN,
+      template_key: "founder",
+      title: STRONG_AGENT_RESUME_TITLE,
+    },
+    exampleResponse: {
+      claim: {
+        editor_claim_url: "https://tinycv.app/claim/claim_124?token=tcv_claim_xxx",
+        founder_pass_required_for_premium_url: true,
+        premium_url_included: false,
+      },
+      payment: {
+        benefits: ["standard_hosted_url", "claimable_edit_link", "queued_pdf_export", "payment_receipt"],
+        charged_amount_usd: "1.000000",
+        premium_url_included: false,
+        product: "agent_finish",
+        protocols_supported: ["x402", "mpp"],
+      },
+      pdf_job: {
+        completed_at: null,
+        error_code: null,
+        error_message: null,
+        job_id: "job_paid_123",
+        pdf_url: null,
+        requested_at: "2026-04-15T10:21:00.000Z",
+        resume_id: "res_paid_123",
+        status: "queued",
+      },
+      resume: {
+        created_at: "2026-04-15T10:20:00.000Z",
+        editor_claim_url: "https://tinycv.app/claim/claim_124?token=tcv_claim_xxx",
+        external_resume_id: null,
+        input_format: "markdown",
+        markdown: STRONG_AGENT_RESUME_MARKDOWN_PREVIEW,
+        pdf_url: null,
+        public_url: "https://tinycv.app/SteadyBlueHeron",
+        published_at: "2026-04-15T10:20:00.000Z",
+        resume_id: "res_paid_123",
+        status: "published",
+        template_key: "founder",
+        title: STRONG_AGENT_RESUME_TITLE,
+        updated_at: "2026-04-15T10:20:00.000Z",
+      },
+    },
+    idempotent: true,
+    method: "POST",
+    path: "/api/v1/paid/agent-finish",
+    slug: "paid-agent-finish",
+    summary: "Agent Finish with x402 or MPP",
   },
   {
     auth: "bearer",
@@ -234,14 +300,14 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
     exampleResponse: {
       created_at: "2026-04-15T10:14:00.000Z",
       input_format: "markdown",
-      markdown: "# Alex Morgan\nFounder & Product Engineer\n...",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN_PREVIEW,
       pdf_url: null,
       public_url: null,
       published_at: null,
       resume_id: "res_123",
       status: "draft",
       template_key: "founder",
-      title: "Alex Morgan Resume",
+      title: STRONG_AGENT_RESUME_TITLE,
       updated_at: "2026-04-15T10:14:00.000Z",
     },
     method: "GET",
@@ -259,12 +325,29 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
     exampleRequestBody: {
       input_format: "json",
       resume: {
-        headline: "Founder & Product Engineer",
-        name: "Alex Morgan",
+        headline: STRONG_AGENT_RESUME_HEADLINE,
+        name: STRONG_AGENT_RESUME_NAME,
         sections: [
           {
-            paragraphs: ["Founder who ships products and owns the narrative."],
+            paragraphs: [
+              "Product engineer who turns ambiguous customer problems into reliable, revenue-facing software.",
+            ],
             type: "summary",
+          },
+          {
+            entries: [
+              {
+                bullets: [
+                  "Reduced time-to-first-publish from 38 minutes to 7 minutes for new teams.",
+                ],
+                meta_left: "San Francisco, CA",
+                meta_right: "2022 - Present",
+                title: "Principal Product Engineer",
+                title_extras: ["Northstar Labs"],
+              },
+            ],
+            title: "Experience",
+            type: "entries",
           },
         ],
       },
@@ -275,14 +358,14 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
     exampleResponse: {
       created_at: "2026-04-15T10:14:00.000Z",
       input_format: "json",
-      markdown: "# Alex Morgan\nFounder & Product Engineer\n...",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN_PREVIEW,
       pdf_url: null,
       public_url: null,
       published_at: null,
       resume_id: "res_123",
       status: "draft",
       template_key: "founder",
-      title: "Alex Morgan Resume",
+      title: STRONG_AGENT_RESUME_TITLE,
       updated_at: "2026-04-15T10:18:00.000Z",
     },
     idempotent: true,
@@ -306,14 +389,14 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
       created_at: "2026-04-15T10:14:00.000Z",
       editor_claim_url: "https://tinycv.app/claim/claim_124?token=tcv_claim_xxx",
       input_format: "markdown",
-      markdown: "# Alex Morgan\nFounder & Product Engineer\n...",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN_PREVIEW,
       pdf_url: null,
       public_url: "https://tinycv.app/SteadyBlueHeron",
       published_at: "2026-04-15T10:20:00.000Z",
       resume_id: "res_123",
       status: "published",
       template_key: "founder",
-      title: "Alex Morgan Resume",
+      title: STRONG_AGENT_RESUME_TITLE,
       updated_at: "2026-04-15T10:20:00.000Z",
     },
     idempotent: true,
@@ -354,7 +437,7 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "machine-payment",
     category: "Agent",
-    description: "No-account paid path for PDF generation. Only resumes created through the paid machine-payment project are accepted. Submit an empty JSON object with Idempotency-Key, receive a 402 challenge, then retry with x402 or MPP payment credentials.",
+    description: "Lower-level no-account paid path for PDF generation. Only resumes created through the paid machine-payment project are accepted. Submit an empty JSON object with Idempotency-Key, receive a 402 challenge, then retry with x402 or MPP payment credentials. Use Agent Finish if you want create, publish, claim link, and queued PDF in one paid operation.",
     exampleRequestBody: {},
     exampleResponse: {
       completed_at: null,
@@ -614,8 +697,9 @@ export function buildLlmsManifest(origin: string) {
     "",
     `- [llms-full.txt](${origin}/llms-full.txt): single-file Tiny CV docs bundle.`,
     `- [Templates](${origin}/api/v1/templates): list built-in templates.`,
-    `- [Paid create + publish](${origin}/api/v1/paid/resumes): no-account x402 or MPP endpoint for creating a public resume.`,
-    `- [Paid PDF jobs](${origin}/api/v1/paid/resumes/{resume_id}/pdf-jobs): no-account x402 or MPP endpoint for PDF generation.`,
+    `- [Agent Finish](${origin}/api/v1/paid/agent-finish): no-account x402 or MPP endpoint for a standard hosted resume, claim link, queued PDF job, and receipt.`,
+    `- [Paid create + publish](${origin}/api/v1/paid/resumes): lower-level no-account x402 or MPP endpoint for creating a standard public resume.`,
+    `- [Paid PDF jobs](${origin}/api/v1/paid/resumes/{resume_id}/pdf-jobs): lower-level no-account x402 or MPP endpoint for PDF generation.`,
     `- [MCP tools + resources](${origin}/api/v1/mcp): tools, prompts, and resources for agents.`,
   ];
 

@@ -1,13 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { parseIdempotencyKey } from "@/app/_lib/developer-platform-auth";
 import {
+  createProjectPdfJob,
   createProjectResumeDraft,
   DeveloperPlatformConflictError,
   DeveloperPlatformValidationError,
   getCompletedIdempotentProjectRequest,
   publishProjectResume,
 } from "@/app/_lib/developer-platform-store";
-import type { CreateResumeRequest, PaidCreateResumeResponse } from "@/app/_lib/developer-platform-types";
+import type {
+  CreateResumeRequest,
+  PaidAgentFinishResponse,
+} from "@/app/_lib/developer-platform-types";
 import {
   assertMachinePaymentsConfigured,
   ensureMachinePaymentStorage,
@@ -24,6 +28,7 @@ import {
   createApiRequestId,
   handleDeveloperPlatformError,
   scheduleDeveloperPlatformBackgroundWork,
+  withAbsolutePdfJobUrls,
   withAbsoluteResumeUrls,
 } from "@/app/api/v1/_lib";
 
@@ -48,7 +53,7 @@ export async function POST(request: NextRequest) {
     const body = normalizePaidCreateResumeRequest(await parseJsonBody(request));
     const requestHash = stableRequestHash(body);
     const route = {
-      ...getMachinePaymentRouteDefinition(MACHINE_PAYMENT_ROUTE_KEYS.CREATE_AND_PUBLISH_RESUME, config),
+      ...getMachinePaymentRouteDefinition(MACHINE_PAYMENT_ROUTE_KEYS.AGENT_FINISH, config),
       operation: `${request.method}:${request.nextUrl.pathname}`,
     };
 
@@ -66,25 +71,34 @@ export async function POST(request: NextRequest) {
     }
 
     let executed = false;
+    let receiptPdfJobId: string | null = null;
     let receiptResumeId: string | null = null;
     const response = await requireMachinePayment({
       handler: async () => {
         const mutation = await runPaidIdempotentMutation({
           buildResponseBody(result) {
+            const resume = withAbsoluteResumeUrls(request.nextUrl.origin, result.resume.record);
             const responseBody = {
+              claim: {
+                editor_claim_url: resume.editor_claim_url ?? null,
+                founder_pass_required_for_premium_url: true,
+                premium_url_included: false,
+              },
               payment: {
                 benefits: [
                   "standard_hosted_url",
                   "claimable_edit_link",
+                  "queued_pdf_export",
                   "payment_receipt",
                 ],
                 charged_amount_usd: route.priceUsd,
                 premium_url_included: false,
-                product: "agent_publish",
+                product: "agent_finish",
                 protocols_supported: [...MACHINE_PAYMENT_PROTOCOLS] as ["x402", "mpp"],
               },
-              resume: withAbsoluteResumeUrls(request.nextUrl.origin, result.record),
-            } satisfies PaidCreateResumeResponse;
+              pdf_job: withAbsolutePdfJobUrls(request.nextUrl.origin, result.pdfJob),
+              resume,
+            } satisfies PaidAgentFinishResponse;
 
             return responseBody;
           },
@@ -94,14 +108,14 @@ export async function POST(request: NextRequest) {
               return_edit_claim_url: false,
             } as CreateResumeRequest;
             const draft = await createProjectResumeDraft({
-              attachedVia: "machine_payment_create",
+              attachedVia: "machine_payment_agent_finish",
               body: draftBody,
               createdVia: "machine_payment",
               projectId: config.projectId,
             });
             const published = await publishProjectResume({
               body: {
-                return_edit_claim_url: body.return_edit_claim_url ?? true,
+                return_edit_claim_url: true,
               },
               projectId: config.projectId,
               resumeId: draft.record.resume_id,
@@ -111,12 +125,27 @@ export async function POST(request: NextRequest) {
               throw new Error("Created paid resume could not be published.");
             }
 
+            const pdfJob = await createProjectPdfJob({
+              body: {},
+              idempotencyKey,
+              projectId: config.projectId,
+              resumeId: published.record.resume_id,
+            });
+
+            if (!pdfJob) {
+              throw new Error("Created paid resume could not queue a PDF job.");
+            }
+
             executed = true;
+            receiptPdfJobId = pdfJob.job_id;
             receiptResumeId = published.record.resume_id;
 
             return {
-              result: published,
-              status: 201,
+              result: {
+                pdfJob,
+                resume: published,
+              },
+              status: 202,
             };
           },
           idempotencyKey,
@@ -135,7 +164,7 @@ export async function POST(request: NextRequest) {
         return nextResponse;
       },
       idempotencyKey,
-      receiptResourceIds: () => ({ resumeId: receiptResumeId }),
+      receiptResourceIds: () => ({ pdfJobId: receiptPdfJobId, resumeId: receiptResumeId }),
       request,
       requestHash,
       route,

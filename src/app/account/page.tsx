@@ -443,7 +443,7 @@ function PlanStatusCard({
               Founder Pass: {billingLaunchState.founderPassRemaining} of {billingLaunchState.founderPassLimit} spots left.
             </p>
             <p className="mt-1 text-sm font-medium leading-6 text-[#064e3b]/80">
-              One-time $100 for lifetime access. Annual Pro is $40/year. Paid plans remove branding and unlock Pro limits.
+              One-time $100 to permanently claim your Tiny CV identity. Annual Pro is $40/year for premium themes, cleaner sharing, and active Pro limits.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
