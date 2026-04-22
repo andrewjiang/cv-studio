@@ -138,7 +138,7 @@ function mockBrowserPage(input: {
 
   const page = {
     goto: vi.fn(),
-    evaluate: vi.fn(async (callback: () => unknown) => callback()),
+    evaluate: vi.fn(async (callback: (...args: unknown[]) => unknown, ...args: unknown[]) => callback(...args)),
     setExtraHTTPHeaders: vi.fn(async (nextHeaders: Record<string, string>) => {
       Object.assign(headers, nextHeaders);
     }),
@@ -152,9 +152,9 @@ function mockBrowserPage(input: {
     });
   };
 
-  page.evaluate.mockImplementation(async (callback: () => unknown) => {
+  page.evaluate.mockImplementation(async (callback: (...args: unknown[]) => unknown, ...args: unknown[]) => {
     try {
-      return await callback();
+      return await callback(...args);
     } finally {
       if (page.evaluate.mock.calls.length >= 2) {
         restore();
