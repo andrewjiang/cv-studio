@@ -9,6 +9,13 @@ import {
 } from "next/font/google";
 import "./globals.css";
 
+const appDescription = "Write in markdown, preview on paper, publish a clean CV link, and export a PDF.";
+const appUrl =
+  process.env.TINYCV_APP_URL?.trim() ||
+  process.env.NEXT_PUBLIC_TINYCV_APP_URL?.trim() ||
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+  "https://tiny.cv";
+
 const uiSans = Source_Sans_3({
   variable: "--font-ui-sans",
   subsets: ["latin"],
@@ -42,12 +49,60 @@ const uiMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tiny CV",
-  description: "Markdown-first resume builder that always fits on one page.",
+  alternates: {
+    canonical: "/",
+  },
+  applicationName: "Tiny CV",
+  authors: [{ name: "Tiny CV" }],
+  category: "productivity",
+  creator: "Tiny CV",
+  description: appDescription,
+  keywords: [
+    "resume builder",
+    "CV builder",
+    "markdown resume",
+    "one page resume",
+    "resume hosting",
+    "Tiny CV",
+  ],
+  manifest: "/manifest.webmanifest",
+  metadataBase: new URL(appUrl),
+  openGraph: {
+    description: appDescription,
+    locale: "en_US",
+    siteName: "Tiny CV",
+    title: "Tiny CV - The resume builder that stays on one page.",
+    type: "website",
+    url: "/",
+  },
+  publisher: "Tiny CV",
+  robots: {
+    follow: true,
+    googleBot: {
+      follow: true,
+      index: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+    index: true,
+  },
+  title: {
+    default: "Tiny CV - The resume builder that stays on one page",
+    template: "%s | Tiny CV",
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@andrewjiang",
+    description: appDescription,
+    site: "@andrewjiang",
+    title: "Tiny CV - The resume builder that stays on one page.",
+  },
 };
 
 export const viewport: Viewport = {
   initialScale: 1,
+  themeColor: "#065f46",
   width: "device-width",
 };
 
