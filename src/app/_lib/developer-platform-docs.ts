@@ -214,7 +214,7 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
     exampleResponse: {
       payment: {
         benefits: ["standard_hosted_url", "claimable_edit_link", "payment_receipt"],
-        charged_amount_usd: "0.250000",
+        charged_amount_usd: "0.500000",
         premium_url_included: false,
         product: "agent_publish",
         protocols_supported: ["x402", "mpp"],

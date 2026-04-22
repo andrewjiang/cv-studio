@@ -43,14 +43,14 @@ describe("machine-payments", () => {
     expect(config.enabled).toBe(false);
     expect(config.projectId).toBe("proj_machine_payments");
     expect(config.prices.agentFinishUsd).toBe("1.000000");
-    expect(config.prices.createPublishUsd).toBe("0.250000");
-    expect(config.prices.pdfUsd).toBe("0.500000");
+    expect(config.prices.createPublishUsd).toBe("0.500000");
+    expect(config.prices.pdfUsd).toBe("1.000000");
     expect(usdToAtomicUnits(config.prices.agentFinishUsd)).toBe("1000000");
-    expect(usdToAtomicUnits(config.prices.createPublishUsd)).toBe("250000");
-    expect(usdToAtomicUnits(config.prices.pdfUsd)).toBe("500000");
+    expect(usdToAtomicUnits(config.prices.createPublishUsd)).toBe("500000");
+    expect(usdToAtomicUnits(config.prices.pdfUsd)).toBe("1000000");
     expect(usdToMppAmount(config.prices.agentFinishUsd)).toBe("1");
-    expect(usdToMppAmount(config.prices.createPublishUsd)).toBe("0.25");
-    expect(usdToMppAmount(config.prices.pdfUsd)).toBe("0.5");
+    expect(usdToMppAmount(config.prices.createPublishUsd)).toBe("0.5");
+    expect(usdToMppAmount(config.prices.pdfUsd)).toBe("1");
   });
 
   it("fails production config when enabled with missing secrets and testnet defaults", () => {
@@ -181,7 +181,7 @@ describe("machine-payments", () => {
       timestamp: "2026-04-21T00:00:00.000Z",
     });
     const payload = normalizeMachinePaymentReceipt({
-      amountUsd: "0.500000",
+      amountUsd: "1.000000",
       idempotencyKey: "idem-456",
       pdfJobId: "job-123",
       protocol: "mpp",
@@ -196,7 +196,7 @@ describe("machine-payments", () => {
     });
 
     expect(payload).toMatchObject({
-      amountUsd: "0.500000",
+      amountUsd: "1.000000",
       idempotencyKey: "idem-456",
       paymentMethod: "tempo",
       pdfJobId: "job-123",
@@ -215,7 +215,7 @@ describe("machine-payments", () => {
       scheme: "exact",
     })).toString("base64url");
     const payload = normalizeMachinePaymentReceipt({
-      amountUsd: "0.250000",
+      amountUsd: "0.500000",
       idempotencyKey: "idem-789",
       protocol: "x402",
       requestHash: "hash-789",
@@ -229,7 +229,7 @@ describe("machine-payments", () => {
     });
 
     expect(payload).toMatchObject({
-      amountUsd: "0.250000",
+      amountUsd: "0.500000",
       network: "eip155:8453",
       payer: "0xpayer",
       paymentMethod: "exact",
@@ -261,7 +261,7 @@ describe("machine-payments", () => {
     expect(paidCreate.responses).toHaveProperty("402");
     expect(paidCreate["x-payment-info"]).toMatchObject({
       price: {
-        amount: "0.250000",
+        amount: "0.500000",
         currency: "USD",
         mode: "fixed",
       },
@@ -279,7 +279,7 @@ describe("machine-payments", () => {
     });
     expect(paidPdf["x-payment-info"]).toMatchObject({
       price: {
-        amount: "0.500000",
+        amount: "1.000000",
       },
     });
   });
