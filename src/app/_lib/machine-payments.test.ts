@@ -19,6 +19,7 @@ import {
   readMachinePaymentConfig,
   runPaidIdempotentMutation,
   usdToAtomicUnits,
+  usdToMppAmount,
 } from "@/app/_lib/machine-payments";
 import { DeveloperPlatformValidationError } from "@/app/_lib/developer-platform-store";
 
@@ -32,6 +33,8 @@ describe("machine-payments", () => {
     expect(config.prices.pdfUsd).toBe("0.500000");
     expect(usdToAtomicUnits(config.prices.createPublishUsd)).toBe("250000");
     expect(usdToAtomicUnits(config.prices.pdfUsd)).toBe("500000");
+    expect(usdToMppAmount(config.prices.createPublishUsd)).toBe("0.25");
+    expect(usdToMppAmount(config.prices.pdfUsd)).toBe("0.5");
   });
 
   it("fails production config when enabled with missing secrets and testnet defaults", () => {
