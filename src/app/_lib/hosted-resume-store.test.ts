@@ -9,6 +9,7 @@ import {
   importLegacyWorkspaceDrafts,
   publishWorkspaceResume,
   renameWorkspaceResume,
+  shouldRunHostedResumeRuntimeSchemaSync,
 } from "@/app/_lib/hosted-resume-store";
 import { FRIENDLY_RESUME_SLUG_PATTERN } from "@/app/_lib/resume-slugs";
 
@@ -24,6 +25,7 @@ describe("hosted-resume-store", () => {
 
   afterEach(async () => {
     delete process.env.HOSTED_RESUME_LOCAL_STORE_PATH;
+    delete process.env.TINYCV_RUNTIME_SCHEMA_SYNC;
     await rm(tempDir, { force: true, recursive: true });
   });
 
@@ -107,5 +109,13 @@ describe("hosted-resume-store", () => {
     expect(attached?.resume.id).toBe(bootstrap.resume.id);
     expect(attached?.workspace.workspaceId).not.toBe(bootstrap.workspace.workspaceId);
     expect(attached?.workspace.currentResumeId).toBe(bootstrap.resume.id);
+  });
+
+  it("respects explicit hosted resume runtime schema sync configuration", () => {
+    process.env.TINYCV_RUNTIME_SCHEMA_SYNC = "false";
+    expect(shouldRunHostedResumeRuntimeSchemaSync()).toBe(false);
+
+    process.env.TINYCV_RUNTIME_SCHEMA_SYNC = "true";
+    expect(shouldRunHostedResumeRuntimeSchemaSync()).toBe(true);
   });
 });
