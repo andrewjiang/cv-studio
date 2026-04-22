@@ -194,7 +194,7 @@ function checkMachinePayments() {
     pass("machine-payments-x402-address", "Machine payment x402 address is configured.");
   }
 
-  if (x402Network === "eip155:84532") {
+  if (evmAddress && x402Network === "eip155:84532") {
     fail("machine-payments-x402-network", "TINYCV_X402_NETWORK must not use the Base Sepolia testnet default in production.");
   } else {
     pass("machine-payments-x402-network", "Machine payment x402 network is production-configured.");

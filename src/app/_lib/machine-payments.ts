@@ -226,7 +226,11 @@ export function getMachinePaymentConfigurationIssues(
     issues.push("Set TINYCV_MPP_TEMPO_CURRENCY.");
   }
 
-  if (nodeEnv === "production" && config.x402.network === DEFAULT_X402_TESTNET_NETWORK) {
+  if (
+    nodeEnv === "production"
+    && config.x402.evmAddress
+    && config.x402.network === DEFAULT_X402_TESTNET_NETWORK
+  ) {
     issues.push("TINYCV_X402_NETWORK must not use the Base Sepolia testnet default in production.");
   }
 
@@ -234,7 +238,11 @@ export function getMachinePaymentConfigurationIssues(
     issues.push("TINYCV_X402_FACILITATOR_URL must use a production facilitator in production.");
   }
 
-  if (nodeEnv === "production" && config.x402.solanaNetwork === DEFAULT_SOLANA_DEVNET_NETWORK) {
+  if (
+    nodeEnv === "production"
+    && config.x402.solanaAddress
+    && config.x402.solanaNetwork === DEFAULT_SOLANA_DEVNET_NETWORK
+  ) {
     issues.push("TINYCV_X402_SOLANA_NETWORK must not use the Solana devnet default in production.");
   }
 
