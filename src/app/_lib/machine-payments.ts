@@ -544,6 +544,10 @@ export function usdToAtomicUnits(priceUsd: string, decimals = 6) {
   return (whole + fractional).toString();
 }
 
+export function usdToMppAmount(priceUsd: string) {
+  return trimFixedAmount(priceUsd);
+}
+
 export function stableRequestHash(body: unknown) {
   return createHash("sha256").update(JSON.stringify(body)).digest("hex");
 }
@@ -755,7 +759,7 @@ function buildMppChargeOptions(input: {
   route: MachinePaymentRouteDefinition;
 }) {
   return {
-    amount: usdToAtomicUnits(input.route.priceUsd, input.config.mpp.tempoDecimals),
+    amount: usdToMppAmount(input.route.priceUsd),
     description: input.route.description,
     externalId: `${input.route.routeKey}:${input.idempotencyKey}`,
     meta: {
