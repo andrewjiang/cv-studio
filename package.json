@@ -21,8 +21,14 @@
     "test:subdomain": "node scripts/verify-subdomain.mjs"
   },
   "dependencies": {
+    "@agentcash/discovery": "^1.6.2",
     "@chenglou/pretext": "^0.0.5",
+    "@x402/core": "^2.10.0",
+    "@x402/evm": "^2.10.0",
+    "@x402/next": "^2.10.0",
+    "@x402/svm": "^2.10.0",
     "better-auth": "^1.6.5",
+    "mppx": "^0.6.1",
     "next": "16.2.3",
     "pdf-lib": "^1.17.1",
     "pg": "^8.20.0",

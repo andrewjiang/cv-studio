@@ -1,7 +1,7 @@
 import { RESUME_JSON_SCHEMA } from "@/app/_lib/developer-resume-input";
 
 export type DeveloperEndpointDoc = {
-  auth: "bearer" | "bootstrap-secret" | "none";
+  auth: "bearer" | "bootstrap-secret" | "machine-payment" | "none";
   category: "Agent" | "Core" | "Export" | "Getting Started" | "Reference";
   description: string;
   exampleRequestBody?: Record<string, unknown>;
@@ -189,6 +189,45 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
     summary: "Create a draft",
   },
   {
+    auth: "machine-payment",
+    category: "Agent",
+    description: "No-account paid path for agents. Submit valid markdown or JSON with Idempotency-Key, receive a 402 challenge, then retry with either x402 PAYMENT-SIGNATURE or MPP Authorization: Payment. The resume is published immediately and paid webhooks are intentionally not supported.",
+    exampleRequestBody: {
+      client_reference_id: "agent-run-2026-04-21",
+      input_format: "markdown",
+      markdown: "# Alex Morgan\nFounder & Product Engineer\nSan Francisco, CA | [alex@example.com](mailto:alex@example.com)\n\n## Summary\nProduct-minded builder.\n",
+      return_edit_claim_url: true,
+      template_key: "founder",
+      title: "Alex Morgan Resume",
+    },
+    exampleResponse: {
+      payment: {
+        charged_amount_usd: "0.250000",
+        protocols_supported: ["x402", "mpp"],
+      },
+      resume: {
+        created_at: "2026-04-15T10:20:00.000Z",
+        editor_claim_url: "https://tinycv.app/claim/claim_124?token=tcv_claim_xxx",
+        external_resume_id: null,
+        input_format: "markdown",
+        markdown: "# Alex Morgan\nFounder & Product Engineer\n...",
+        pdf_url: null,
+        public_url: "https://tinycv.app/SteadyBlueHeron",
+        published_at: "2026-04-15T10:20:00.000Z",
+        resume_id: "res_paid_123",
+        status: "published",
+        template_key: "founder",
+        title: "Alex Morgan Resume",
+        updated_at: "2026-04-15T10:20:00.000Z",
+      },
+    },
+    idempotent: true,
+    method: "POST",
+    path: "/api/v1/paid/resumes",
+    slug: "paid-create-resume",
+    summary: "Create and publish with x402 or MPP",
+  },
+  {
     auth: "bearer",
     category: "Core",
     description: "Read the current state of one draft or published resume.",
@@ -313,6 +352,30 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
     summary: "Queue a PDF job",
   },
   {
+    auth: "machine-payment",
+    category: "Agent",
+    description: "No-account paid path for PDF generation. Only resumes created through the paid machine-payment project are accepted. Submit an empty JSON object with Idempotency-Key, receive a 402 challenge, then retry with x402 or MPP payment credentials.",
+    exampleRequestBody: {},
+    exampleResponse: {
+      completed_at: null,
+      error_code: null,
+      error_message: null,
+      job_id: "job_paid_123",
+      pdf_url: null,
+      requested_at: "2026-04-15T10:21:00.000Z",
+      resume_id: "res_paid_123",
+      status: "queued",
+    },
+    idempotent: true,
+    method: "POST",
+    path: "/api/v1/paid/resumes/{resume_id}/pdf-jobs",
+    pathParams: [
+      { key: "resume_id", placeholder: "res_paid_123" },
+    ],
+    slug: "paid-create-pdf-job",
+    summary: "Queue a paid PDF job",
+  },
+  {
     auth: "bearer",
     category: "Export",
     description: "Check PDF generation status and get a signed PDF URL once the artifact is ready.",
@@ -381,9 +444,14 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
 
 export const DEVELOPER_DOC_RESOURCES = [
   {
+    href: "/openapi.json",
+    label: "Canonical OpenAPI 3.1 spec",
+    note: "Root discovery document for AgentCash, MPPScan, SDK generation, and validation.",
+  },
+  {
     href: "/api/v1/openapi.json",
     label: "OpenAPI 3.1 spec",
-    note: "Machine-readable reference for SDK generation and validation.",
+    note: "Versioned alias for existing developer integrations.",
   },
   {
     href: "/api/v1/spec/markdown",
@@ -536,7 +604,8 @@ export function buildLlmsManifest(origin: string) {
     "## Core Docs",
     "",
     `- [Documentation](${origin}/documentation): human-first overview with live playground.`,
-    `- [OpenAPI 3.1](${origin}/api/v1/openapi.json): machine-readable API schema.`,
+    `- [OpenAPI 3.1](${origin}/openapi.json): canonical machine-readable API schema for discovery.`,
+    `- [Versioned OpenAPI alias](${origin}/api/v1/openapi.json): backward-compatible API schema URL.`,
     `- [Markdown guide](${origin}/api/v1/spec/markdown): canonical Tiny CV markdown format.`,
     `- [JSON schema](${origin}/api/v1/spec/json-schema): structured resume input.`,
     `- [MCP endpoint](${origin}/api/v1/mcp): remote MCP JSON-RPC endpoint.`,
@@ -545,6 +614,8 @@ export function buildLlmsManifest(origin: string) {
     "",
     `- [llms-full.txt](${origin}/llms-full.txt): single-file Tiny CV docs bundle.`,
     `- [Templates](${origin}/api/v1/templates): list built-in templates.`,
+    `- [Paid create + publish](${origin}/api/v1/paid/resumes): no-account x402 or MPP endpoint for creating a public resume.`,
+    `- [Paid PDF jobs](${origin}/api/v1/paid/resumes/{resume_id}/pdf-jobs): no-account x402 or MPP endpoint for PDF generation.`,
     `- [MCP tools + resources](${origin}/api/v1/mcp): tools, prompts, and resources for agents.`,
   ];
 
