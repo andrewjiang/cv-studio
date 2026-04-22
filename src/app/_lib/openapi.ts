@@ -57,6 +57,30 @@ const paymentRequiredResponse = {
   },
 };
 
+const paidPaymentSummarySchema = {
+  properties: {
+    benefits: {
+      items: { type: "string" },
+      type: "array",
+    },
+    charged_amount_usd: { type: "string" },
+    premium_url_included: { const: false },
+    product: { enum: ["agent_finish", "agent_publish", "pdf_export"], type: "string" },
+    protocols_supported: {
+      items: { enum: ["x402", "mpp"], type: "string" },
+      type: "array",
+    },
+  },
+  required: [
+    "benefits",
+    "charged_amount_usd",
+    "premium_url_included",
+    "product",
+    "protocols_supported",
+  ],
+  type: "object",
+};
+
 const standardErrors = {
   "401": { description: "Unauthorized" },
   "404": { description: "Not found" },
@@ -197,7 +221,7 @@ export function buildOpenApiSpec(origin?: string) {
       title: "Tiny CV Developer API",
       version: "1.0.0",
       description: "Create, validate, publish, and export Tiny CV resumes for users and agents.",
-      "x-guidance": "Agents can use bearer-token /api/v1 endpoints for project-owned workflows, or no-account paid /api/v1/paid endpoints with x402 or MPP. For paid endpoints, send valid JSON plus Idempotency-Key first, pay only after a 402 challenge, then retry with either PAYMENT-SIGNATURE for x402 or Authorization: Payment for MPP. Do not expect paid webhooks or Pro entitlements from machine-payment endpoints.",
+      "x-guidance": "Agents can use bearer-token /api/v1 endpoints for project-owned workflows, or no-account paid /api/v1/paid endpoints with x402 or MPP. Bearer API keys are for developers and integrations that want durable projects, webhooks, and usage history. x402/MPP is for one-off agent execution with no account or API key. Use /api/v1/paid/agent-finish when an agent needs to turn resume markdown or JSON into a claimable hosted Tiny CV plus a queued PDF job. Machine-payment calls do not include premium *.tiny.cv namespace ownership, Pro entitlements, or paid webhooks; a human Founder Pass is required for permanent premium URL identity.",
     },
     "x-discovery": {
       ownershipProofs: parseDiscoveryOwnershipProofs(),
@@ -250,20 +274,32 @@ export function buildOpenApiSpec(origin?: string) {
         PaidCreateResumeRequest: paidCreateResumeRequestSchema,
         PaidCreateResumeResponse: {
           properties: {
-            payment: {
-              properties: {
-                charged_amount_usd: { type: "string" },
-                protocols_supported: {
-                  items: { enum: ["x402", "mpp"], type: "string" },
-                  type: "array",
-                },
-              },
-              required: ["charged_amount_usd", "protocols_supported"],
-              type: "object",
-            },
+            payment: paidPaymentSummarySchema,
             resume: resumeRecordSchema,
           },
           required: ["payment", "resume"],
+          type: "object",
+        },
+        PaidAgentFinishResponse: {
+          properties: {
+            claim: {
+              properties: {
+                editor_claim_url: { type: ["string", "null"] },
+                founder_pass_required_for_premium_url: { const: true },
+                premium_url_included: { const: false },
+              },
+              required: [
+                "editor_claim_url",
+                "founder_pass_required_for_premium_url",
+                "premium_url_included",
+              ],
+              type: "object",
+            },
+            payment: paidPaymentSummarySchema,
+            pdf_job: pdfJobResponseSchema,
+            resume: resumeRecordSchema,
+          },
+          required: ["claim", "payment", "pdf_job", "resume"],
           type: "object",
         },
         PdfJobResponse: pdfJobResponseSchema,
@@ -388,7 +424,7 @@ export function buildOpenApiSpec(origin?: string) {
       },
       "/api/v1/paid/resumes": {
         post: {
-          description: "No-account machine-payment endpoint that creates, publishes, and returns a public Tiny CV resume URL.",
+          description: "No-account machine-payment endpoint that creates, publishes, and returns a standard public Tiny CV resume URL. The response includes a claimable edit link by default, but does not reserve a premium *.tiny.cv URL.",
           parameters: [idempotencyKeyHeader],
           requestBody: jsonRequestBody("#/components/schemas/PaidCreateResumeRequest"),
           responses: {
@@ -400,6 +436,23 @@ export function buildOpenApiSpec(origin?: string) {
           },
           "x-payment-info": buildMachinePaymentOpenApiInfo(
             MACHINE_PAYMENT_ROUTE_KEYS.CREATE_AND_PUBLISH_RESUME,
+          ),
+        },
+      },
+      "/api/v1/paid/agent-finish": {
+        post: {
+          description: "No-account x402/MPP endpoint for agents that need a finished Tiny CV package in one paid operation: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Agent Finish always creates a claim link. It does not include premium *.tiny.cv namespace ownership.",
+          parameters: [idempotencyKeyHeader],
+          requestBody: jsonRequestBody("#/components/schemas/PaidCreateResumeRequest"),
+          responses: {
+            "202": jsonResponse("Agent Finish package queued", "#/components/schemas/PaidAgentFinishResponse"),
+            "400": { description: "Invalid input or missing idempotency key" },
+            "402": paymentRequiredResponse,
+            "429": rateLimitResponse,
+            "503": { description: "Machine payments are disabled or not configured" },
+          },
+          "x-payment-info": buildMachinePaymentOpenApiInfo(
+            MACHINE_PAYMENT_ROUTE_KEYS.AGENT_FINISH,
           ),
         },
       },

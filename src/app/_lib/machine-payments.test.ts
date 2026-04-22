@@ -11,6 +11,7 @@ vi.mock("@/app/_lib/cv-fit", async (importOriginal) => {
 });
 
 import { buildOpenApiSpec } from "@/app/_lib/openapi";
+import { STRONG_AGENT_RESUME_MARKDOWN } from "@/app/_lib/resume-examples";
 import {
   getMachinePaymentConfigurationIssues,
   MACHINE_PAYMENT_ROUTE_KEYS,
@@ -29,10 +30,13 @@ describe("machine-payments", () => {
 
     expect(config.enabled).toBe(false);
     expect(config.projectId).toBe("proj_machine_payments");
+    expect(config.prices.agentFinishUsd).toBe("1.000000");
     expect(config.prices.createPublishUsd).toBe("0.250000");
     expect(config.prices.pdfUsd).toBe("0.500000");
+    expect(usdToAtomicUnits(config.prices.agentFinishUsd)).toBe("1000000");
     expect(usdToAtomicUnits(config.prices.createPublishUsd)).toBe("250000");
     expect(usdToAtomicUnits(config.prices.pdfUsd)).toBe("500000");
+    expect(usdToMppAmount(config.prices.agentFinishUsd)).toBe("1");
     expect(usdToMppAmount(config.prices.createPublishUsd)).toBe("0.25");
     expect(usdToMppAmount(config.prices.pdfUsd)).toBe("0.5");
   });
@@ -85,18 +89,19 @@ describe("machine-payments", () => {
     expect(() => normalizePaidCreateResumeRequest({
       external_resume_id: "not-supported",
       input_format: "markdown",
-      markdown: "# Alex Morgan\nFounder & Product Engineer\nSan Francisco, CA",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN,
     })).toThrow(DeveloperPlatformValidationError);
 
     const normalized = normalizePaidCreateResumeRequest({
       client_reference_id: "agent-123",
       input_format: "markdown",
-      markdown: "# Alex Morgan\nFounder & Product Engineer\nSan Francisco, CA",
+      markdown: STRONG_AGENT_RESUME_MARKDOWN,
       return_edit_claim_url: true,
     });
 
     expect(normalized.input_format).toBe("markdown");
     expect(normalized.client_reference_id).toBe("agent-123");
+    expect(normalized.markdown).toContain("Northstar Labs");
   });
 
   it("replays idempotency without executing the paid mutation again", async () => {
@@ -204,9 +209,11 @@ describe("machine-payments", () => {
       paths: Record<string, Record<string, Record<string, unknown>>>;
     };
     const paidCreate = spec.paths["/api/v1/paid/resumes"].post;
+    const paidAgentFinish = spec.paths["/api/v1/paid/agent-finish"].post;
     const paidPdf = spec.paths["/api/v1/paid/resumes/{resume_id}/pdf-jobs"].post;
 
     expect(spec.info["x-guidance"]).toEqual(expect.stringContaining("x402 or MPP"));
+    expect(spec.info["x-guidance"]).toEqual(expect.stringContaining("Founder Pass"));
     expect(paidCreate.responses).toHaveProperty("402");
     expect(paidCreate["x-payment-info"]).toMatchObject({
       price: {
@@ -218,6 +225,13 @@ describe("machine-payments", () => {
         { x402: {} },
         { mpp: { currency: "USD", intent: "charge", method: "tempo" } },
       ],
+    });
+    expect(paidAgentFinish.responses).toHaveProperty("402");
+    expect(paidAgentFinish.description).toEqual(expect.stringContaining("claimable edit link"));
+    expect(paidAgentFinish["x-payment-info"]).toMatchObject({
+      price: {
+        amount: "1.000000",
+      },
     });
     expect(paidPdf["x-payment-info"]).toMatchObject({
       price: {

@@ -225,10 +225,40 @@ export type ApiErrorShape = {
   };
 };
 
+export type MachinePaymentProduct = "agent_finish" | "agent_publish" | "pdf_export";
+
+export type PaidPaymentSummary = {
+  benefits: string[];
+  charged_amount_usd: string;
+  premium_url_included: false;
+  product: MachinePaymentProduct;
+  protocols_supported: ["x402", "mpp"];
+};
+
 export type PaidCreateResumeResponse = {
   payment: {
+    benefits: string[];
     charged_amount_usd: string;
+    premium_url_included: false;
+    product: "agent_publish";
     protocols_supported: ["x402", "mpp"];
   };
+  resume: ApiResumeRecord;
+};
+
+export type PaidAgentFinishResponse = {
+  claim: {
+    editor_claim_url: string | null;
+    founder_pass_required_for_premium_url: true;
+    premium_url_included: false;
+  };
+  payment: {
+    benefits: string[];
+    charged_amount_usd: string;
+    premium_url_included: false;
+    product: "agent_finish";
+    protocols_supported: ["x402", "mpp"];
+  };
+  pdf_job: PdfJobResponse;
   resume: ApiResumeRecord;
 };

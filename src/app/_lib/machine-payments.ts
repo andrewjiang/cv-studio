@@ -37,6 +37,7 @@ export const MACHINE_PAYMENT_PROJECT_ID = "proj_machine_payments";
 export const MACHINE_PAYMENT_PROTOCOLS = ["x402", "mpp"] as const;
 
 export const MACHINE_PAYMENT_ROUTE_KEYS = {
+  AGENT_FINISH: "paid.agent_finish",
   CREATE_AND_PUBLISH_RESUME: "paid.resume_create_publish",
   CREATE_PDF_JOB: "paid.pdf_job_create",
 } as const;
@@ -56,6 +57,7 @@ export type MachinePaymentConfig = {
     testnet: boolean;
   };
   prices: {
+    agentFinishUsd: string;
     createPublishUsd: string;
     pdfUsd: string;
   };
@@ -142,6 +144,7 @@ type MachinePaymentReceiptPayload = {
 
 const DEFAULT_CREATE_PUBLISH_PRICE_USD = "0.25";
 const DEFAULT_PDF_PRICE_USD = "0.50";
+const DEFAULT_AGENT_FINISH_PRICE_USD = "1.00";
 const DEFAULT_X402_FACILITATOR_URL = "https://x402.org/facilitator";
 const DEFAULT_X402_TESTNET_NETWORK = "eip155:84532";
 const DEFAULT_SOLANA_DEVNET_NETWORK = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
@@ -164,6 +167,11 @@ export function readMachinePaymentConfig(env: EnvLike = process.env): MachinePay
       testnet: parseBooleanEnv(env.TINYCV_MPP_TEMPO_TESTNET, true),
     },
     prices: {
+      agentFinishUsd: parseUsdPrice(
+        env.TINYCV_PAID_AGENT_FINISH_PRICE_USD,
+        DEFAULT_AGENT_FINISH_PRICE_USD,
+        "TINYCV_PAID_AGENT_FINISH_PRICE_USD",
+      ),
       createPublishUsd: parseUsdPrice(
         env.TINYCV_PAID_CREATE_PUBLISH_PRICE_USD,
         DEFAULT_CREATE_PUBLISH_PRICE_USD,
@@ -275,6 +283,15 @@ export function getMachinePaymentRouteDefinition(
   routeKey: MachinePaymentRouteKey,
   config = readMachinePaymentConfig(),
 ): MachinePaymentRouteDefinition {
+  if (routeKey === MACHINE_PAYMENT_ROUTE_KEYS.AGENT_FINISH) {
+    return {
+      description: "Create a claimable Tiny CV resume artifact with a hosted link and queued PDF export.",
+      operation: "POST:/api/v1/paid/agent-finish",
+      priceUsd: config.prices.agentFinishUsd,
+      routeKey,
+    };
+  }
+
   if (routeKey === MACHINE_PAYMENT_ROUTE_KEYS.CREATE_AND_PUBLISH_RESUME) {
     return {
       description: "Create and publish a Tiny CV resume from markdown or JSON.",

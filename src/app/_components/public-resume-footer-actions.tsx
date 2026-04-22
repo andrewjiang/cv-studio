@@ -52,6 +52,13 @@ export function PublicResumeFooterActions({
         >
           Create your own
         </Link>
+        <span aria-hidden="true" className="text-slate-300">·</span>
+        <Link
+          className="inline-flex min-h-11 items-center font-semibold text-[#065f46] underline-offset-4 transition hover:text-[#044e34] hover:underline sm:min-h-0"
+          href="/account#billing"
+        >
+          Claim your tiny.cv URL
+        </Link>
       </div>
     </footer>
   );

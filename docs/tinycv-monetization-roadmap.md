@@ -8,6 +8,10 @@ The agent/API surface is a distribution layer, not the primary business. The str
 
 > Agents can create the final artifact, not just give the user text to copy somewhere else.
 
+The pricing boundary should protect the durable identity value:
+
+> Humans buy permanent professional identity. Agents buy execution.
+
 ## Current Thesis
 
 Tiny CV should optimize first for individual users coming from X:
@@ -25,8 +29,9 @@ The developer and agent story should be visible and real, but it should not driv
 
 Use a simple launch offer before optimizing pricing:
 
-- Founder Pass: first 100 users get lifetime hosting for `$100`
-- Annual Pro: `$40/year`
+- Founder Pass: first 100 users permanently claim a Tiny CV identity for `$100`
+- Annual Pro: `$40/year` for active premium publishing while applying
+- Agent Finish: `$1` x402/MPP call for a standard hosted resume, claim link, queued PDF job, and receipt
 
 This is intentionally simple. The goal is to learn whether people will pay for polished resume hosting and editing, not to maximize ARPU on day one.
 
@@ -44,10 +49,19 @@ Pro should include:
 Free should keep:
 
 - markdown editing
-- public links
+- standard public links
 - PDF export
 - Tiny CV branding
 - enough value that people can share the product honestly
+
+Machine-payment endpoints should include:
+
+- standard hosted URL
+- claimable edit link
+- queued PDF job when using Agent Finish
+- payment receipt
+- no premium `*.tiny.cv` namespace ownership
+- no Pro or Founder Pass entitlement grant
 
 ## Product Hierarchy
 
@@ -131,9 +145,10 @@ Stripe should power:
 
 x402 and MPP should power:
 
-- no-account agent calls
-- pay-per-resume creation
-- pay-per-PDF generation
+- no-account one-off agent calls
+- Agent Finish packages
+- lower-level pay-per-resume creation
+- lower-level pay-per-PDF generation
 - paid MCP tools later
 
 Do not make machine-payment protocols the main human billing path.
@@ -214,8 +229,8 @@ Build:
 
 Recommended first checkout products:
 
-- Founder Pass, `$100`, one-time, first 100 users
-- Annual Pro, `$40/year`
+- Founder Pass, `$100`, one-time, first 100 users, permanent premium Tiny CV identity
+- Annual Pro, `$40/year`, active premium publishing and higher limits
 
 Exit criteria:
 
@@ -277,6 +292,7 @@ Build:
 
 - copy-paste agent instruction on the landing page and docs
 - MCP setup guide
+- x402/MPP Agent Finish endpoint
 - x402/MPP create-and-publish endpoint
 - x402/MPP PDF endpoint
 - examples for Claude, Cursor, and OpenAI-style agents
@@ -286,9 +302,16 @@ Positioning:
 
 > Your agent can finish the resume, not just write text in chat.
 
+Product boundary:
+
+- Bearer API keys are for developers and integrations with durable projects.
+- Agent Finish is for no-account agents that need one paid operation now.
+- Founder Pass owns the durable premium URL and should not be recreated as a cheap API side effect.
+
 Exit criteria:
 
 - an agent can discover `/openapi.json`, create, publish, and return a Tiny CV link through a documented paid flow.
+- an agent can use `/api/v1/paid/agent-finish` to return a hosted URL, claim link, queued PDF job, and receipt.
 - unpaid requests return protocol-correct `402` challenges and idempotent retries do not double-execute mutations.
 
 ### Phase 7: Developer platform, only if pulled
