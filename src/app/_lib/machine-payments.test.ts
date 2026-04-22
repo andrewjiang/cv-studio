@@ -44,8 +44,38 @@ describe("machine-payments", () => {
     expect(issues).toContain("Set MPP_SECRET_KEY.");
     expect(issues).toContain("Set TINYCV_MPP_TEMPO_RECIPIENT.");
     expect(issues).toContain("Set TINYCV_MPP_TEMPO_CURRENCY.");
-    expect(issues).toContain("TINYCV_X402_NETWORK must not use the Base Sepolia testnet default in production.");
     expect(issues).toContain("TINYCV_X402_FACILITATOR_URL must use a production facilitator in production.");
+  });
+
+  it("fails production config when an EVM x402 address uses the testnet default network", () => {
+    const config = readMachinePaymentConfig({
+      MPP_SECRET_KEY: "prod-secret-prod-secret-prod-secret",
+      TINYCV_MACHINE_PAYMENTS_ENABLED: "true",
+      TINYCV_MPP_TEMPO_CURRENCY: "0x20C000000000000000000000b9537d11c60E8b50",
+      TINYCV_MPP_TEMPO_RECIPIENT: "0x742d35Cc6634c0532925a3b844bC9e7595F8fE00",
+      TINYCV_MPP_TEMPO_TESTNET: "false",
+      TINYCV_X402_EVM_ADDRESS: "0x742d35Cc6634c0532925a3b844bC9e7595F8fE00",
+      TINYCV_X402_FACILITATOR_URL: "https://facilitator.example.com",
+    });
+
+    expect(getMachinePaymentConfigurationIssues(config, "production")).toContain(
+      "TINYCV_X402_NETWORK must not use the Base Sepolia testnet default in production.",
+    );
+  });
+
+  it("allows EVM-only production config without requiring Solana mainnet", () => {
+    const config = readMachinePaymentConfig({
+      MPP_SECRET_KEY: "prod-secret-prod-secret-prod-secret",
+      TINYCV_MACHINE_PAYMENTS_ENABLED: "true",
+      TINYCV_MPP_TEMPO_CURRENCY: "0x20C000000000000000000000b9537d11c60E8b50",
+      TINYCV_MPP_TEMPO_RECIPIENT: "0x742d35Cc6634c0532925a3b844bC9e7595F8fE00",
+      TINYCV_MPP_TEMPO_TESTNET: "false",
+      TINYCV_X402_EVM_ADDRESS: "0x742d35Cc6634c0532925a3b844bC9e7595F8fE00",
+      TINYCV_X402_FACILITATOR_URL: "https://facilitator.example.com",
+      TINYCV_X402_NETWORK: "eip155:8453",
+    });
+
+    expect(getMachinePaymentConfigurationIssues(config, "production")).toEqual([]);
   });
 
   it("validates paid resume bodies before payment", () => {
