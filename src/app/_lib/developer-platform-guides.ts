@@ -92,6 +92,10 @@ export const TINYCV_AGENT_INSTRUCTION = `Read the Tiny CV documentation first: $
 
 Help me create a complete one-page resume in Tiny CV. Interview me for missing details, choose the best template, draft the markdown, validate it, publish the public link, and export a PDF if I ask.
 
+If I want to keep editing the markdown myself, return the Tiny CV edit claim link so I can open it in the editor and save it to my account.
+
+Before publishing or making a paid Agent Finish call, show me the final markdown, selected template, and any unverified facts. Ask for approval unless I already explicitly authorized autonomous publishing and payment.
+
 Do not invent employers, dates, credentials, metrics, or links. Ask when something is missing.`;
 
 export const TINYCV_AGENT_FINISH_GUIDE = `# Tiny CV Agent Guide
@@ -109,6 +113,7 @@ ${TINYCV_AGENT_INSTRUCTION}
 - Built-in templates for engineer, designer, sales, and founder/operator profiles.
 - Validation before publishing.
 - Hosted public links and PDF export.
+- Claim links that hand an API-created resume back to a human for markdown editing.
 - A no-account Agent Finish endpoint for agents that can pay with x402 or MPP.
 
 ## Interview before drafting
@@ -123,6 +128,7 @@ Ask for missing facts before writing. Prefer source material over memory.
 6. Projects or selected work: project name, technologies or context, the user's role, and outcomes.
 7. Education and credentials: school, degree, dates, certifications, awards, and licenses.
 8. Constraints: one-page priority, tone, confidential employers, links to omit, and whether the user wants a public link or PDF.
+9. Handoff: whether the user wants to keep editing the markdown themselves in Tiny CV.
 
 ## Never invent
 
@@ -162,6 +168,27 @@ If unsure, choose the template that matches the job the user wants next, not the
 7. If the user has a bearer API key, create a draft, publish it, and request a PDF only when asked.
 8. Return the public URL, claim/edit URL if available, and PDF job or PDF URL if requested.
 
+## Review before publish or payment
+
+Before publishing a public resume, queuing a paid Agent Finish call, or spending x402/MPP funds, show the user:
+
+- The selected template and why it fits the target role.
+- The final markdown.
+- Any missing or unverified facts.
+- The next action: publish public link, charge Agent Finish, queue PDF, return edit link, or stop at markdown.
+
+Ask for explicit approval unless the user already clearly authorized autonomous publishing and payment. If the user wants to edit the markdown themselves, request or return the Tiny CV edit claim link instead of treating the agent draft as final.
+
+## Human editing handoff
+
+Use an edit claim link when the user wants to keep editing the markdown directly in Tiny CV.
+
+- Bearer API: set \`return_edit_claim_url: true\` on \`POST /api/v1/resumes\` to create a draft with \`editor_claim_url\`, or on \`POST /api/v1/resumes/{resume_id}/publish\` to publish and return \`editor_claim_url\`.
+- Paid Agent Finish: \`POST /api/v1/paid/agent-finish\` always returns \`claim.editor_claim_url\` and \`resume.editor_claim_url\`.
+- Lower-level paid create: \`POST /api/v1/paid/resumes\` returns \`resume.editor_claim_url\` by default unless \`return_edit_claim_url\` is explicitly false.
+- The claim link is one-time and expires after seven days.
+- When the human opens the claim link, Tiny CV attaches the resume to their browser workspace and opens the markdown editor. They can then sign up or sign in and claim that browser workspace into their account.
+
 ## Agent Finish endpoint
 
 Use \`POST /api/v1/paid/agent-finish\` for a one-call, no-account paid path. It creates and publishes a standard hosted resume, returns a claim link, queues a PDF job, and persists a payment receipt.
@@ -174,7 +201,7 @@ Agent Finish does not grant a premium \`*.tiny.cv\` identity. The human needs Fo
 - Name the selected template and why.
 - Return the public Tiny CV link if published.
 - Return the PDF job or PDF link if requested.
-- Give the user the edit claim link only when they should continue editing.
+- Give the user the edit claim link when they should continue editing the markdown themselves.
 - Mention any facts that still need confirmation.
 `;
 
@@ -197,8 +224,9 @@ export const TINYCV_AGENT_COOKBOOK = `# Tiny CV Agent Cookbook
 - Use JSON if your agent starts from structured profile data.
 - Do not invent employers, dates, credentials, metrics, or links.
 - Send an \`Idempotency-Key\` on create, update, publish, and PDF job requests.
+- Before publishing or paying, show the selected template, final markdown, unverified facts, and next action. Ask for approval unless the user already authorized autonomous publish/payment.
 - Keep the public URL as the default output for end users.
-- Only request an edit claim URL when the user should continue editing in Tiny CV.
+- Request an edit claim URL when the user should continue editing markdown in Tiny CV, then return that link with the public URL.
 - Use \`POST /api/v1/paid/agent-finish\` for a no-account paid call that returns a hosted resume, claim link, queued PDF job, and receipt.
 - If a request returns \`429\`, wait for the \`Retry-After\` header before retrying.
 

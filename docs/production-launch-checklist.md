@@ -150,6 +150,7 @@ Check local quality:
 ```bash
 pnpm test
 pnpm lint
+pnpm check:design
 pnpm build
 ```
 

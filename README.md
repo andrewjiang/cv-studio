@@ -339,8 +339,11 @@ The app also schedules best-effort background processing after create/update/pub
 ```bash
 pnpm test
 pnpm lint
+pnpm check:design
 pnpm build
 ```
+
+`pnpm check:design` runs automatically as part of `pnpm lint`; `pnpm build` runs the all-files version before compiling. The check fails dark brand-green buttons that do not use the shared primary button class or `!text-white`.
 
 To verify the browser-backed PDF path end to end, start the app with a database, `TINYCV_APP_URL`, and worker/browser configuration, then run:
 
