@@ -142,9 +142,9 @@ type MachinePaymentReceiptPayload = {
   routeKey: MachinePaymentRouteKey;
 };
 
-const DEFAULT_CREATE_PUBLISH_PRICE_USD = "0.50";
-const DEFAULT_PDF_PRICE_USD = "1.00";
-const DEFAULT_AGENT_FINISH_PRICE_USD = "1.00";
+const DEFAULT_CREATE_PUBLISH_PRICE_USD = "0.10";
+const DEFAULT_PDF_PRICE_USD = "0.25";
+const DEFAULT_AGENT_FINISH_PRICE_USD = "0.25";
 const DEFAULT_X402_FACILITATOR_URL = "https://x402.org/facilitator";
 const DEFAULT_X402_TESTNET_NETWORK = "eip155:84532";
 const DEFAULT_SOLANA_DEVNET_NETWORK = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
