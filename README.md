@@ -180,11 +180,11 @@ Tiny CV also exposes an experimental no-account paid path for agents. This is be
 
 Agent Finish is the recommended one-call bundle. Calling the lower-level publish and PDF routes separately costs more by default, while the publish-only route stays available when an agent only needs a public link.
 
-All paid machine routes require `Idempotency-Key`, validate request bodies before issuing payment challenges, and support x402 plus MPP. Paid create/publish and Agent Finish reject malformed publish-ready markdown with `400` before any `402` payment challenge. A first unpaid request returns `402` with x402 `PAYMENT-REQUIRED`, MPP `WWW-Authenticate: Payment`, and `Cache-Control: no-store`; retry with the protocol-specific payment header.
+All paid machine routes require `Idempotency-Key` for real calls and support x402 plus MPP. Paid create/publish and Agent Finish reject malformed publish-ready markdown with `400` before payment when the request includes its idempotency key. Scanner-style unpaid probes can receive `402` before body validation so MPPScan and AgentCash can verify the live payment challenge. A first unpaid request returns `402` with x402 `PAYMENT-REQUIRED`, MPP `WWW-Authenticate: Payment`, and `Cache-Control: no-store`; retry with the protocol-specific payment header.
 
 Machine-payment outputs use standard Tiny CV public URLs and claim links. They do not reserve premium `*.tiny.cv` names, do not grant Pro or Founder Pass entitlements, and do not support paid webhooks.
 
-Discovery is available at root `/openapi.json` for AgentCash and MPPScan, while `/api/v1/openapi.json` remains as the versioned alias:
+Discovery is available at root `/openapi.json` for AgentCash and MPPScan. The root document is intentionally focused on the paid machine-payment surface to avoid scanner ambiguity around free docs/templates routes. The full developer API schema remains available at `/api/v1/openapi.json`:
 
 ```bash
 npx -y @agentcash/discovery@latest discover https://your-origin.com

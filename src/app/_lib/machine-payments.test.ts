@@ -241,6 +241,7 @@ describe("machine-payments", () => {
 
   it("exposes paid metadata in OpenAPI for AgentCash and MPPScan discovery", () => {
     const spec = buildOpenApiSpec("http://localhost:3000") as {
+      components: Record<string, Record<string, Record<string, unknown>>>;
       info: Record<string, unknown>;
       paths: Record<string, Record<string, Record<string, unknown>>>;
     };
@@ -248,9 +249,17 @@ describe("machine-payments", () => {
     const paidAgentFinish = spec.paths["/api/v1/paid/agent-finish"].post;
     const paidPdf = spec.paths["/api/v1/paid/resumes/{resume_id}/pdf-jobs"].post;
 
+    expect(spec.components.securitySchemes.developerApiKey).toMatchObject({
+      in: "header",
+      name: "Authorization",
+      type: "apiKey",
+    });
     expect(spec.info["x-guidance"]).toEqual(expect.stringContaining("x402 or MPP"));
     expect(spec.info["x-guidance"]).toEqual(expect.stringContaining("Founder Pass"));
     expect(spec.info["x-guidance"]).toEqual(expect.stringContaining("quality_gate"));
+    expect(spec.paths["/api/v1/templates"].get.security).toEqual([]);
+    expect(spec.paths["/api/v1/resumes"].post.security).toEqual([{ developerApiKey: [] }]);
+    expect(spec.paths["/api/v1/mcp"].post.security).toEqual([{ developerApiKey: [] }]);
     expect(spec.paths["/api/v1/resumes/validate"].post.requestBody).toMatchObject({
       content: {
         "application/json": {
@@ -282,5 +291,17 @@ describe("machine-payments", () => {
         amount: "0.250000",
       },
     });
+
+    const discoverySpec = buildOpenApiSpec("http://localhost:3000", {
+      audience: "discovery",
+    }) as {
+      paths: Record<string, unknown>;
+    };
+
+    expect(Object.keys(discoverySpec.paths)).toEqual([
+      "/api/v1/paid/resumes",
+      "/api/v1/paid/agent-finish",
+      "/api/v1/paid/resumes/{resume_id}/pdf-jobs",
+    ]);
   });
 });
