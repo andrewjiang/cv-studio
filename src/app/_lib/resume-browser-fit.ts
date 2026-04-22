@@ -15,6 +15,8 @@ export type BrowserFitResult = {
   overflow: boolean;
 };
 
+const MIN_BROWSER_FIT_BOTTOM_GAP_PX = 16;
+
 export async function measureResumeFitInBrowser(input: {
   resumeId: string;
 }): Promise<BrowserFitResult> {
@@ -46,7 +48,7 @@ export async function measureResumeFitInBrowser(input: {
         await document.fonts?.ready;
       });
 
-      return page.evaluate(() => {
+      return page.evaluate((minBottomGapPx) => {
         const pageNode = document.querySelector<HTMLElement>("[data-fit-page]");
         const contentNode = document.querySelector<HTMLElement>("[data-fit-content]");
 
@@ -95,7 +97,7 @@ export async function measureResumeFitInBrowser(input: {
         }
 
         function measureOverflow() {
-          return contentElement.scrollHeight > pageElement.clientHeight + 1;
+          return contentElement.scrollHeight > pageElement.clientHeight - minBottomGapPx + 1;
         }
 
         function refine(limits: typeof normalLimits) {
@@ -134,7 +136,7 @@ export async function measureResumeFitInBrowser(input: {
           fitScale: result.scale,
           overflow: result.overflow,
         };
-      });
+      }, MIN_BROWSER_FIT_BOTTOM_GAP_PX);
     });
   } catch (error) {
     if (error instanceof BrowserRendererUnavailableError) {
