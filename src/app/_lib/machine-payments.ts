@@ -230,6 +230,10 @@ export function getMachinePaymentConfigurationIssues(
     issues.push("TINYCV_X402_NETWORK must not use the Base Sepolia testnet default in production.");
   }
 
+  if (nodeEnv === "production" && config.x402.facilitatorUrl === DEFAULT_X402_FACILITATOR_URL) {
+    issues.push("TINYCV_X402_FACILITATOR_URL must use a production facilitator in production.");
+  }
+
   if (nodeEnv === "production" && config.x402.solanaNetwork === DEFAULT_SOLANA_DEVNET_NETWORK) {
     issues.push("TINYCV_X402_SOLANA_NETWORK must not use the Solana devnet default in production.");
   }

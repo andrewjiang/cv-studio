@@ -45,6 +45,7 @@ describe("machine-payments", () => {
     expect(issues).toContain("Set TINYCV_MPP_TEMPO_RECIPIENT.");
     expect(issues).toContain("Set TINYCV_MPP_TEMPO_CURRENCY.");
     expect(issues).toContain("TINYCV_X402_NETWORK must not use the Base Sepolia testnet default in production.");
+    expect(issues).toContain("TINYCV_X402_FACILITATOR_URL must use a production facilitator in production.");
   });
 
   it("validates paid resume bodies before payment", () => {
