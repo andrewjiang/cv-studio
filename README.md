@@ -117,6 +117,8 @@ Neither API path grants permanent premium URL ownership. The premium `name.tiny.
 4. Request a PDF job if you need a file artifact.
 5. Optionally request a one-time edit claim URL so the end user can keep editing in Tiny CV.
 
+Draft creation is intentionally permissive. API publishing is strict: validate with `quality_gate: "publish"` before `POST /api/v1/resumes/:resume_id/publish`, `POST /api/v1/paid/resumes`, or `POST /api/v1/paid/agent-finish`. Publish-ready markdown needs a short headline under 80 characters, contact info, a `## Summary`, proper `###` entries, and separate `-` bullet lines instead of inline `•` lists.
+
 ### Public endpoints
 
 - `GET /agents`
@@ -176,7 +178,7 @@ Tiny CV also exposes an experimental no-account paid path for agents. This is be
 - `POST /api/v1/paid/resumes` creates a resume from markdown or JSON, publishes it immediately, and returns the public URL. Default price: `$0.25`.
 - `POST /api/v1/paid/resumes/:resume_id/pdf-jobs` queues a PDF job for a paid, published resume. Default price: `$0.50`.
 
-All paid machine routes require `Idempotency-Key`, validate request bodies before issuing payment challenges, and support x402 plus MPP. A first unpaid request returns `402` with x402 `PAYMENT-REQUIRED`, MPP `WWW-Authenticate: Payment`, and `Cache-Control: no-store`; retry with the protocol-specific payment header.
+All paid machine routes require `Idempotency-Key`, validate request bodies before issuing payment challenges, and support x402 plus MPP. Paid create/publish and Agent Finish reject malformed publish-ready markdown with `400` before any `402` payment challenge. A first unpaid request returns `402` with x402 `PAYMENT-REQUIRED`, MPP `WWW-Authenticate: Payment`, and `Cache-Control: no-store`; retry with the protocol-specific payment header.
 
 Machine-payment outputs use standard Tiny CV public URLs and claim links. They do not reserve premium `*.tiny.cv` names, do not grant Pro or Founder Pass entitlements, and do not support paid webhooks.
 
@@ -299,7 +301,7 @@ pnpm check:prod
 
 The full production checklist lives in [docs/production-launch-checklist.md](docs/production-launch-checklist.md).
 
-PDF generation and webhook delivery are durable jobs. PDF jobs render the published resume's `?print=1` view in Chromium, so the exported file uses the same React/CSS as the public page. Configure one of:
+PDF generation, API publish fit measurement, and webhook delivery rely on durable worker/browser infrastructure. API publishes measure the real resume DOM in Chromium before storing `published_fit_scale`, so API-created public pages use the same fit behavior as Studio. PDF jobs render the published resume's `?print=1` view in Chromium, so the exported file uses the same React/CSS as the public page. Configure one of:
 
 - `TINYCV_BROWSER_WS_ENDPOINT` for Browserless or another CDP-compatible browser service
 - `TINYCV_CHROME_EXECUTABLE_PATH` for a local/dedicated Chrome binary
@@ -339,17 +341,23 @@ The app also schedules best-effort background processing after create/update/pub
 ```bash
 pnpm test
 pnpm lint
+pnpm check:design
 pnpm build
 ```
+
+`pnpm check:design` runs automatically as part of `pnpm lint`; `pnpm build` runs the all-files version before compiling. The check fails dark brand-green buttons that do not use the shared primary button class or `!text-white`.
 
 To verify the browser-backed PDF path end to end, start the app with a database, `TINYCV_APP_URL`, and worker/browser configuration, then run:
 
 ```bash
 pnpm test:account
+pnpm test:api-fit
 pnpm test:pdf
 ```
 
 `test:account` creates an anonymous workspace draft, signs up a test account, claims the workspace, opens the claimed resume through the account route, and verifies Studio renders the expected template content.
+
+`test:api-fit` creates and publishes a dense resume through `/api/v1`, opens the public URL in Chromium, and asserts the browser-measured resume has no overflow and a reasonable bottom gap.
 
 `test:pdf` creates a draft through `/api/v1`, publishes it, queues a PDF job, polls for completion, downloads the artifact, and asserts that the generated PDF is a valid one-page Letter document. It writes the downloaded file and a JSON report to `.data/`.
 

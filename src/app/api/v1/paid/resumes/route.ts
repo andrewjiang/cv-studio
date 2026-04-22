@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { assertBrowserRendererConfigured } from "@/app/_lib/browser-renderer";
 import { parseIdempotencyKey } from "@/app/_lib/developer-platform-auth";
 import {
   createProjectResumeDraft,
@@ -64,6 +65,8 @@ export async function POST(request: NextRequest) {
     if (completed) {
       return replayResponse(completed.responseBody, completed.statusCode);
     }
+
+    assertBrowserRendererConfigured();
 
     let executed = false;
     let receiptResumeId: string | null = null;

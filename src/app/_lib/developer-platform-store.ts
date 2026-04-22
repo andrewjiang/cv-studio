@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHmac, randomUUID } from "node:crypto";
 import postgres from "postgres";
+import { BrowserRendererUnavailableError } from "@/app/_lib/browser-renderer";
 import { parseCvMarkdown } from "@/app/_lib/cv-markdown";
 import {
   buildPdfDownloadToken,
@@ -20,6 +21,8 @@ import {
   createFriendlyResumeSlug,
   createFriendlyResumeSlugFallback,
 } from "@/app/_lib/resume-slugs";
+import { evaluateResumeQuality } from "@/app/_lib/resume-quality";
+import { measureResumeFitInBrowser } from "@/app/_lib/resume-browser-fit";
 import type {
   ApiResumeRecord,
   CreatePdfJobRequest,
@@ -194,9 +197,18 @@ type DispatchWebhookOptions = {
 };
 
 export class DeveloperPlatformUnavailableError extends Error {
-  constructor(message = "Tiny CV developer platform is not configured.") {
+  cause?: Error;
+  code: string;
+
+  constructor(
+    message = "Tiny CV developer platform is not configured.",
+    code = "service_unavailable",
+    cause?: Error,
+  ) {
     super(message);
     this.name = "DeveloperPlatformUnavailableError";
+    this.code = code;
+    this.cause = cause;
   }
 }
 
@@ -739,6 +751,48 @@ export async function getProjectResume(input: {
   } satisfies ProjectResumeRecord;
 }
 
+export async function getResumeForInternalFit(resumeId: string): Promise<{
+  id: string;
+  markdown: string;
+} | null> {
+  const sql = getPostgresClient();
+  await ensureSchema(sql);
+
+  const [row] = await sql<Array<{ id: string; markdown: string }>>`
+    select id, markdown
+    from resumes
+    where id = ${resumeId}
+    limit 1
+  `;
+
+  return row ?? null;
+}
+
+export async function updateProjectResumeFitScale(input: {
+  fitScale: number;
+  projectId: string;
+  resumeId: string;
+}) {
+  const sql = getPostgresClient();
+  await ensureSchema(sql);
+
+  const result = await sql`
+    update resumes r
+    set
+      fit_scale = ${input.fitScale},
+      updated_at = ${new Date()}
+    from project_resume_memberships m
+    where r.id = m.resume_id
+      and m.project_id = ${input.projectId}
+      and r.id = ${input.resumeId}
+    returning r.id
+  `;
+
+  if (result.length === 0) {
+    throw new DeveloperPlatformNotFoundError("Requested resume was not found.");
+  }
+}
+
 export async function updateProjectResumeDraft(input: {
   body: UpdateResumeRequest;
   projectId: string;
@@ -831,6 +885,36 @@ export async function updateProjectResumeDraft(input: {
   return payload;
 }
 
+function evaluateProjectResumePublishQuality(markdown: string) {
+  const document = parseCvMarkdown(markdown);
+  const quality = evaluateResumeQuality({
+    document,
+    gate: "publish",
+    markdown,
+  });
+
+  if (!quality.publishReady) {
+    throw new DeveloperPlatformValidationError("Resume is not ready to publish.", {
+      errors: quality.errors,
+      warnings: quality.warnings,
+    });
+  }
+
+  return quality;
+}
+
+async function measureProjectResumeFit(resumeId: string) {
+  try {
+    return await measureResumeFitInBrowser({ resumeId });
+  } catch (error) {
+    if (error instanceof BrowserRendererUnavailableError) {
+      throw new DeveloperPlatformUnavailableError(error.message, "browser_fit_unavailable");
+    }
+
+    throw error;
+  }
+}
+
 export async function publishProjectResume(input: {
   body: PublishResumeRequest;
   projectId: string;
@@ -844,6 +928,8 @@ export async function publishProjectResume(input: {
     return null;
   }
 
+  const publishQuality = evaluateProjectResumePublishQuality(existing.markdown);
+  const measuredFit = await measureProjectResumeFit(input.resumeId);
   const now = new Date();
   await sql.begin(async (tx) => {
     if (input.body.webhook_url) {
@@ -853,9 +939,14 @@ export async function publishProjectResume(input: {
     await tx`
       update resumes
       set
+        fit_scale = ${measuredFit.fitScale},
         published_markdown = ${existing.markdown},
-        published_fit_scale = ${existing.fit_scale},
+        published_fit_scale = ${measuredFit.fitScale},
         is_published = true,
+        public_metadata = ${sql.json({
+          browser_fit: measuredFit,
+          publish_quality_warnings: publishQuality.warnings,
+        })},
         published_at = ${now},
         updated_at = ${now}
       where id = ${input.resumeId}

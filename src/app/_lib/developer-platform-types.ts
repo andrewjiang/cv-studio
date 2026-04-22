@@ -1,4 +1,5 @@
 import type { TemplateKey } from "@/app/_lib/hosted-resume-types";
+import type { ResumeQualityGate } from "@/app/_lib/resume-quality";
 import type {
   ResumeAccentTone,
   ResumeContactStyle,
@@ -109,11 +110,13 @@ export type ValidateResumeRequest =
   | {
       input_format: "markdown";
       markdown: string;
+      quality_gate?: ResumeQualityGate;
       style_overrides?: ResumeStyleOverrideInput;
       template_key?: TemplateKey;
     }
   | {
       input_format: "json";
+      quality_gate?: ResumeQualityGate;
       resume: ResumeJsonInput;
       style?: ResumeStyleOverrideInput;
       template_key?: TemplateKey;
@@ -123,6 +126,9 @@ export type ValidateResumeResponse = {
   errors: ValidationError[];
   inferred_template_key: TemplateKey | null;
   normalized_markdown?: string;
+  publish_errors: ValidationError[];
+  publish_ready: boolean;
+  quality_warnings: ValidationWarning[];
   valid: boolean;
   warnings: ValidationWarning[];
 };

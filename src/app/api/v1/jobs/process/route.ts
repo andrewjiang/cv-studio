@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { parseBearerToken } from "@/app/_lib/developer-platform-auth";
 import { processDeveloperPlatformBackgroundWork } from "@/app/_lib/developer-platform-store";
+import { getAllowedWorkerSecrets } from "@/app/_lib/worker-auth";
 import {
   createApiRequestId,
   handleDeveloperPlatformError,
@@ -68,11 +69,4 @@ function toPositiveInteger(value: unknown) {
   }
 
   return Math.floor(parsed);
-}
-
-function getAllowedWorkerSecrets() {
-  return [
-    process.env.TINYCV_WORKER_SECRET?.trim(),
-    process.env.CRON_SECRET?.trim(),
-  ].filter((secret): secret is string => Boolean(secret));
 }

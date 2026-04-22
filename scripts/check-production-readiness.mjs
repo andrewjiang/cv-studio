@@ -50,14 +50,14 @@ if (cronSecret) {
 if (!browserWsEndpoint && !chromeExecutablePath) {
   fail(
     "pdf-browser",
-    "Set TINYCV_BROWSER_WS_ENDPOINT for Browserless/CDP or TINYCV_CHROME_EXECUTABLE_PATH for a dedicated Chrome binary.",
+    "Set TINYCV_BROWSER_WS_ENDPOINT for Browserless/CDP or TINYCV_CHROME_EXECUTABLE_PATH for API publish fit measurement and PDF rendering.",
   );
 } else if (browserWsEndpoint) {
-  pass("pdf-browser", "PDF rendering is configured for a remote browser endpoint.");
+  pass("pdf-browser", "API publish fit measurement and PDF rendering are configured for a remote browser endpoint.");
 } else {
   warn(
     "pdf-browser",
-    "PDF rendering is configured with TINYCV_CHROME_EXECUTABLE_PATH. This is fine for a server/worker, but remote Browserless/CDP is preferred on Vercel.",
+    "API publish fit measurement and PDF rendering are configured with TINYCV_CHROME_EXECUTABLE_PATH. This is fine for a server/worker, but remote Browserless/CDP is preferred on Vercel.",
   );
 }
 

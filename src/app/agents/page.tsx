@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AgentInstructionCopyButton } from "@/app/_components/agent-instruction-copy-button";
+import { brandPrimaryButtonClass } from "@/app/_components/button-classes";
 import { ArrowRightIcon } from "@/app/_components/icons";
 import {
   TINYCV_AGENT_GUIDE_URL,
@@ -30,7 +31,7 @@ const interviewQuestions = [
   "Which metrics can you verify: revenue, users, latency, conversion, quota, hiring, fundraising, or time saved?",
   "Which projects, selected work, education, credentials, awards, or certifications should be included?",
   "What should stay private or be omitted?",
-  "Do you want only markdown, a public Tiny CV link, or a PDF export too?",
+  "Do you want only markdown, a public Tiny CV link, an edit link for the markdown editor, or a PDF export too?",
 ];
 
 const templateGuidance = [
@@ -64,11 +65,48 @@ const workflowSteps = [
   "Read this guide, /api/v1/spec/markdown, and /openapi.json.",
   "Choose the template that fits the user's next target role.",
   "Draft Tiny CV markdown with the candidate name as #, sections as ##, and entries as ###.",
-  "Validate with POST /api/v1/resumes/validate before creating or publishing.",
+  "Validate with POST /api/v1/resumes/validate using quality_gate: \"publish\" before publishing or paying.",
+  "Before publishing or paying, show the final markdown, selected template, unverified facts, and next action.",
+  "Resolve validation errors before asking the user to approve publish/payment.",
+  "Ask for approval unless the user already explicitly authorized autonomous publishing and payment.",
   "If the user only wants markdown, stop there and show the markdown.",
   "If the user wants a public link and the agent can pay, use POST /api/v1/paid/agent-finish with x402 or MPP.",
   "If the user has a bearer API key, create a draft, publish it, and request a PDF only when asked.",
-  "Return the public URL, claim URL when useful, and PDF job or PDF URL if requested.",
+  "If the user wants to keep editing, request and return an edit claim link.",
+  "Return the public URL, edit claim URL when useful, and PDF job or PDF URL if requested.",
+];
+
+const publishReadyChecklist = [
+  "# candidate name",
+  "Headline under 80 characters",
+  "Contact line under the headline",
+  "## Summary with one concise paragraph",
+  "## Experience with ### entries",
+  "Separate - bullet lines",
+  "No inline • or · lists",
+  "Validate with quality_gate: \"publish\"",
+];
+
+const reviewGateNotes = [
+  "Selected template and why it fits the target role.",
+  "Final Tiny CV markdown.",
+  "Missing or unverified facts.",
+  "The next action: publish public link, charge Agent Finish, queue PDF, return edit link, or stop at markdown.",
+];
+
+const editHandoffNotes = [
+  {
+    body: "Set return_edit_claim_url: true on POST /api/v1/resumes for a draft edit link, or on POST /api/v1/resumes/{resume_id}/publish for a public link plus edit link.",
+    title: "Bearer API",
+  },
+  {
+    body: "POST /api/v1/paid/agent-finish always returns claim.editor_claim_url and resume.editor_claim_url with the hosted resume and queued PDF job.",
+    title: "Agent Finish",
+  },
+  {
+    body: "When the user opens the one-time claim link, Tiny CV attaches the resume to their browser workspace and opens the markdown editor. They can then sign up or sign in and claim the workspace into their account.",
+    title: "Human handoff",
+  },
 ];
 
 const noInventItems = [
@@ -127,7 +165,7 @@ export default function AgentsPage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                className="inline-flex items-center justify-center rounded-full bg-[#065f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#044e34]"
+                className={`${brandPrimaryButtonClass} px-6 py-3 text-sm shadow-sm`}
                 href="/documentation#paid-agent-finish"
               >
                 Agent Finish endpoint
@@ -215,6 +253,21 @@ export default function AgentsPage() {
 
         <section className="grid gap-8 border-t border-black/8 pt-12 lg:grid-cols-[18rem_minmax(0,1fr)]">
           <SectionIntro
+            eyebrow="Quality gate"
+            title="Make markdown publish-ready."
+            body="Tiny CV accepts draft markdown freely, but API publish and paid Agent Finish require a clean structure."
+          />
+          <div className="grid gap-3 md:grid-cols-2">
+            {publishReadyChecklist.map((item) => (
+              <div className="rounded-[1rem] border border-black/8 bg-white px-5 py-4 shadow-sm" key={item}>
+                <p className="text-sm font-semibold leading-6 text-slate-800">{item}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-black/8 pt-12 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <SectionIntro
             eyebrow="Workflow"
             title="Validate, publish, export."
             body="Use Tiny CV to move from raw facts to a finished artifact without making the user learn the API."
@@ -229,6 +282,43 @@ export default function AgentsPage() {
               </li>
             ))}
           </ol>
+        </section>
+
+        <section className="grid gap-8 border-t border-black/8 pt-12 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <SectionIntro
+            eyebrow="Review gate"
+            title="Ask before spending or publishing."
+            body="Publishing a public resume and spending x402/MPP funds are high-trust actions. Review the artifact first unless the user already opted into autonomous completion."
+          />
+          <div className="rounded-[1.25rem] border border-black/8 bg-white p-6 shadow-sm">
+            <p className="text-base font-bold tracking-tight text-slate-950">
+              Before publishing or paying, show the user:
+            </p>
+            <ul className="mt-4 grid gap-3">
+              {reviewGateNotes.map((note) => (
+                <li className="flex gap-3 text-sm font-semibold leading-6 text-slate-800" key={note}>
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#065f46]" />
+                  <span>{note}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-black/8 pt-12 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <SectionIntro
+            eyebrow="Handoff"
+            title="Let the human keep editing."
+            body="When the user wants direct markdown control, return a Tiny CV edit claim link with the finished resume."
+          />
+          <div className="grid gap-4 md:grid-cols-3">
+            {editHandoffNotes.map((note) => (
+              <article className="rounded-[1.25rem] border border-black/8 bg-white p-5 shadow-sm" key={note.title}>
+                <p className="text-base font-bold tracking-tight text-slate-950">{note.title}</p>
+                <p className="mt-3 text-sm leading-6 font-medium text-slate-600">{note.body}</p>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="grid gap-6 border-t border-black/8 pt-12 md:grid-cols-3">

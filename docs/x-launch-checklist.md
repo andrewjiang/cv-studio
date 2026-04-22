@@ -22,6 +22,7 @@ Use this after production smoke tests pass and before posting publicly.
 ## Production Smoke
 
 ```bash
+pnpm check:design
 pnpm check:prod
 TINYCV_ACCOUNT_TEST_BASE_URL=https://your-production-domain pnpm test:account
 TINYCV_BILLING_TEST_BASE_URL=https://your-production-domain pnpm test:billing

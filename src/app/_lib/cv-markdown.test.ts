@@ -126,4 +126,34 @@ Role
       { label: "andrew@example.com", platform: "email" },
     ]);
   });
+
+  it("parses leading unicode bullet markers as bullets", () => {
+    const document = parseCvMarkdown(`# Name
+Role
+
+## Additional Experience
+• Product Manager, Sprig
+• Cofounder, Bayes Impact`);
+
+    const section = document.sections[0];
+
+    expect(section?.bullets).toEqual([
+      "Product Manager, Sprig",
+      "Cofounder, Bayes Impact",
+    ]);
+    expect(section?.paragraphs).toHaveLength(0);
+  });
+
+  it("does not parse inline bullet separators as bullets", () => {
+    const document = parseCvMarkdown(`# Name
+Role
+
+## Additional Experience
+Product Manager • Cofounder`);
+
+    const section = document.sections[0];
+
+    expect(section?.paragraphs).toEqual(["Product Manager • Cofounder"]);
+    expect(section?.bullets).toHaveLength(0);
+  });
 });

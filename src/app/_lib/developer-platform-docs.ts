@@ -128,9 +128,10 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "bearer",
     category: "Core",
-    description: "Validate markdown or JSON input without persisting anything. Best used before draft creation.",
+    description: "Validate markdown or JSON input without persisting anything. Use quality_gate: \"publish\" before publishing or making a paid Agent Finish call.",
     exampleRequestBody: {
       input_format: "json",
+      quality_gate: "publish",
       resume: {
         contact: [
           { kind: "email", value: "maya@example.com" },
@@ -154,6 +155,9 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
       errors: [],
       inferred_template_key: "designer",
       normalized_markdown: "---\nstylePreset: creative\n...\n# Maya Chen",
+      publish_errors: [],
+      publish_ready: true,
+      quality_warnings: [],
       valid: true,
       warnings: [],
     },
@@ -198,7 +202,7 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "machine-payment",
     category: "Agent",
-    description: "Lower-level no-account paid path for agents. Submit valid markdown or JSON with Idempotency-Key, receive a 402 challenge, then retry with either x402 PAYMENT-SIGNATURE or MPP Authorization: Payment. The resume is published immediately with a standard public URL and a claimable edit link by default. Premium *.tiny.cv URL ownership is not included.",
+    description: "Lower-level no-account paid path for agents. Submit publish-ready markdown or JSON with Idempotency-Key, receive a 402 challenge, then retry with either x402 PAYMENT-SIGNATURE or MPP Authorization: Payment. Invalid publish-ready markdown returns 400 before any payment challenge. The resume is published immediately with a standard public URL and a claimable edit link by default. Premium *.tiny.cv URL ownership is not included.",
     exampleRequestBody: {
       client_reference_id: "agent-run-2026-04-21",
       input_format: "markdown",
@@ -240,7 +244,7 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "machine-payment",
     category: "Agent",
-    description: "Recommended one-off paid path for autonomous agents. One x402 or MPP payment turns resume markdown or JSON into a Tiny CV package: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Agent Finish always creates a claim link. This does not reserve a premium *.tiny.cv URL; that remains a human Founder Pass benefit.",
+    description: "Recommended one-off paid path for autonomous agents. One x402 or MPP payment turns publish-ready resume markdown or JSON into a Tiny CV package: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Invalid publish-ready markdown returns 400 before any payment challenge. Agent Finish always creates a claim link. This does not reserve a premium *.tiny.cv URL; that remains a human Founder Pass benefit.",
     exampleRequestBody: {
       client_reference_id: "agent-run-2026-04-21",
       input_format: "markdown",
@@ -380,7 +384,7 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "bearer",
     category: "Core",
-    description: "Publish the current draft snapshot and get the public URL. Send Idempotency-Key so retries return the same publish result.",
+    description: "Publish the current draft snapshot and get the public URL. Send Idempotency-Key so retries return the same publish result. API publish is strict: validate with quality_gate: \"publish\" first, fix malformed markdown, and expect a 503 if browser fit measurement is unavailable.",
     exampleRequestBody: {
       return_edit_claim_url: true,
       webhook_url: "https://example.com/tinycv/webhooks",
@@ -692,7 +696,7 @@ export function buildLlmsManifest(origin: string) {
     "## Core Docs",
     "",
     `- [Documentation](${origin}/documentation): human-first overview with live playground.`,
-    `- [Agent guide](${origin}/agents): instructions for agents that interview a user, choose a template, draft markdown, validate, publish, and export.`,
+    `- [Agent guide](${origin}/agents): instructions for agents that interview a user, choose a template, draft markdown, validate, publish, export, and hand off editing.`,
     `- [OpenAPI 3.1](${origin}/openapi.json): canonical machine-readable API schema for discovery.`,
     `- [Versioned OpenAPI alias](${origin}/api/v1/openapi.json): backward-compatible API schema URL.`,
     `- [Markdown guide](${origin}/api/v1/spec/markdown): canonical Tiny CV markdown format.`,
@@ -701,9 +705,10 @@ export function buildLlmsManifest(origin: string) {
     "",
     "## Agent Resources",
     "",
-    `- [Agent guide](${origin}/agents): canonical finish-line workflow for agents.`,
+    `- [Agent guide](${origin}/agents): canonical finish-line workflow and human edit handoff for agents.`,
     `- [llms-full.txt](${origin}/llms-full.txt): single-file Tiny CV docs bundle.`,
     `- [Templates](${origin}/api/v1/templates): list built-in templates.`,
+    `- [Validate](${origin}/api/v1/resumes/validate): use quality_gate="publish" before publishing or paid Agent Finish.`,
     `- [Agent Finish](${origin}/api/v1/paid/agent-finish): no-account x402 or MPP endpoint for a standard hosted resume, claim link, queued PDF job, and receipt.`,
     `- [Paid create + publish](${origin}/api/v1/paid/resumes): lower-level no-account x402 or MPP endpoint for creating a standard public resume.`,
     `- [Paid PDF jobs](${origin}/api/v1/paid/resumes/{resume_id}/pdf-jobs): lower-level no-account x402 or MPP endpoint for PDF generation.`,

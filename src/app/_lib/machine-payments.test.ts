@@ -24,6 +24,18 @@ import {
 } from "@/app/_lib/machine-payments";
 import { DeveloperPlatformValidationError } from "@/app/_lib/developer-platform-store";
 
+const BAD_PUBLISH_MARKDOWN = `# Andrew Jiang
+Builder and founder with deep business development and product management experience, plus generalist design and engineering chops. YC alum.
+Los Angeles, CA | [andrew@example.com](mailto:andrew@example.com)
+
+## Experience
+### Founder | LockIn
+*Los Angeles, CA | Jun 2025 - Present*
+- Built LockIn from idea to revenue.
+
+## Additional Experience
+Product Manager, Sprig (2015 - 2016) • Cofounder and CEO, Bayes Impact (Apr 2014 - Apr 2015)`;
+
 describe("machine-payments", () => {
   it("parses disabled default config and normalizes fixed USD prices", () => {
     const config = readMachinePaymentConfig({});
@@ -103,6 +115,30 @@ describe("machine-payments", () => {
     expect(normalized.client_reference_id).toBe("agent-123");
     expect(normalized.markdown).toContain("Northstar Labs");
   });
+
+  it("rejects bad paid publish markdown before payment", () => {
+    expect(() => normalizePaidCreateResumeRequest({
+      input_format: "markdown",
+      markdown: BAD_PUBLISH_MARKDOWN,
+    })).toThrow(DeveloperPlatformValidationError);
+
+    try {
+      normalizePaidCreateResumeRequest({
+        input_format: "markdown",
+        markdown: BAD_PUBLISH_MARKDOWN,
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(DeveloperPlatformValidationError);
+      expect((error as DeveloperPlatformValidationError).errors.map((issue) => issue.code)).toEqual(
+        expect.arrayContaining([
+          "missing_summary",
+          "headline_too_long",
+          "inline_bullet_separator",
+        ]),
+      );
+    }
+  });
+
 
   it("replays idempotency without executing the paid mutation again", async () => {
     const execute = vi.fn(async () => ({
@@ -214,6 +250,14 @@ describe("machine-payments", () => {
 
     expect(spec.info["x-guidance"]).toEqual(expect.stringContaining("x402 or MPP"));
     expect(spec.info["x-guidance"]).toEqual(expect.stringContaining("Founder Pass"));
+    expect(spec.info["x-guidance"]).toEqual(expect.stringContaining("quality_gate"));
+    expect(spec.paths["/api/v1/resumes/validate"].post.requestBody).toMatchObject({
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/ValidateResumeRequest" },
+        },
+      },
+    });
     expect(paidCreate.responses).toHaveProperty("402");
     expect(paidCreate["x-payment-info"]).toMatchObject({
       price: {

@@ -375,10 +375,13 @@ export function normalizePaidCreateResumeRequest(body: unknown): PaidCreateResum
   }
 
   const candidate = record as unknown as PaidCreateResumeRequest;
-  const compiled = compileResumeInput(candidate as CreateResumeRequest);
+  const compiled = compileResumeInput({
+    ...candidate,
+    quality_gate: "publish",
+  } as CreateResumeRequest & { quality_gate: "publish" });
 
   if (!compiled.valid) {
-    throw new DeveloperPlatformValidationError("Resume payload did not pass validation.", {
+    throw new DeveloperPlatformValidationError("Resume is not ready to publish.", {
       errors: compiled.errors,
       warnings: compiled.warnings,
     });
@@ -590,17 +593,20 @@ async function handleMppPayment(input: {
   }
 
   const response = result.withReceipt(await input.handler());
-  const receiptResourceIds = input.receiptResourceIds?.();
-  await recordReceiptFromResponse({
-    amountUsd: input.route.priceUsd,
-    idempotencyKey: input.idempotencyKey,
-    pdfJobId: receiptResourceIds?.pdfJobId ?? input.pdfJobId ?? null,
-    protocol: "mpp",
-    requestHash: input.requestHash,
-    response,
-    resumeId: receiptResourceIds?.resumeId ?? input.resumeId ?? null,
-    routeKey: input.route.routeKey,
-  });
+
+  if (response.status < 400) {
+    const receiptResourceIds = input.receiptResourceIds?.();
+    await recordReceiptFromResponse({
+      amountUsd: input.route.priceUsd,
+      idempotencyKey: input.idempotencyKey,
+      pdfJobId: receiptResourceIds?.pdfJobId ?? input.pdfJobId ?? null,
+      protocol: "mpp",
+      requestHash: input.requestHash,
+      response,
+      resumeId: receiptResourceIds?.resumeId ?? input.resumeId ?? null,
+      routeKey: input.route.routeKey,
+    });
+  }
 
   return response;
 }

@@ -6,6 +6,7 @@ import {
   assertApiRateLimit,
   type ApiRateLimitAction,
 } from "@/app/_lib/api-rate-limit";
+import { BrowserRendererUnavailableError } from "@/app/_lib/browser-renderer";
 import {
   DeveloperPlatformConfigurationError,
   parseIdempotencyKey,
@@ -135,8 +136,12 @@ export function handleDeveloperPlatformError(requestId: string, error: unknown) 
     return jsonError(requestId, 503, error.code, error.message);
   }
 
+  if (error instanceof BrowserRendererUnavailableError) {
+    return jsonError(requestId, 503, error.code, error.message);
+  }
+
   if (error instanceof DeveloperPlatformUnavailableError) {
-    return jsonError(requestId, 503, "service_unavailable", error.message);
+    return jsonError(requestId, 503, error.code, error.message);
   }
 
   if (error instanceof DeveloperPlatformConfigurationError) {

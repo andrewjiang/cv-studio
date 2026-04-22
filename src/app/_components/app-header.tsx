@@ -42,7 +42,7 @@ export function AppHeader({
 
         <div className="flex items-center gap-6 sm:gap-10">
           <nav className="hidden items-center gap-6 text-[0.92rem] font-semibold text-slate-600 md:flex">
-            <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/#examples">
+            <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/templates">
               Templates
             </Link>
             <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/documentation">

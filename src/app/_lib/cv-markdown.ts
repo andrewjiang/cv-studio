@@ -476,7 +476,7 @@ function parseSection(title: string, lines: string[], id: string): ResumeSection
 
     if (isBulletLine(line)) {
       flushParagraphBuffer();
-      const bullet = line.replace(/^[-*]\s+/, "").trim();
+      const bullet = stripBulletMarker(line);
 
       if (activeEntry) {
         activeEntry.bullets.push(bullet);
@@ -528,8 +528,14 @@ function stripOuterAsterisks(value: string) {
   return value.replace(/^\*+|\*+$/g, "").trim();
 }
 
+const BULLET_LINE_PATTERN = /^(?:[-*•]|[–—])\s+/;
+
 function isBulletLine(line: string) {
-  return /^[-*]\s+/.test(line);
+  return BULLET_LINE_PATTERN.test(line);
+}
+
+function stripBulletMarker(line: string) {
+  return line.replace(BULLET_LINE_PATTERN, "").trim();
 }
 
 function isMetaLine(line: string) {

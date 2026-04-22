@@ -20,12 +20,14 @@ type ResumeContentVariant = "paper" | "mobile";
 
 export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
   document: ResumeDocument;
+  fitContent?: boolean;
   fitScale?: number;
   interactive?: boolean;
   typeScale?: ResumeTypographyScale;
   variant?: ResumeContentVariant;
 }>(function ResumeDocumentContent({
   document,
+  fitContent = false,
   fitScale = 1,
   interactive = true,
   typeScale = resolveResumeTypography(document.style),
@@ -38,6 +40,7 @@ export const ResumeDocumentContent = forwardRef<HTMLDivElement, {
   return (
     <div
       className={isMobile ? "cv-content-root resume-mobile" : "cv-content-root"}
+      data-fit-content={fitContent ? "" : undefined}
       ref={ref}
       style={
         {
@@ -177,6 +180,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, {
         } as CSSProperties}
       >
         <div
+          data-fit-page={contentBoundsRef ? "" : undefined}
           ref={contentBoundsRef}
           style={{
             height: `${pageMetrics.contentHeight}px`,
@@ -185,6 +189,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, {
         >
           <ResumeDocumentContent
             document={document}
+            fitContent={Boolean(contentBoundsRef)}
             fitScale={fitScale}
             interactive={interactive}
             ref={ref}

@@ -88,7 +88,7 @@ export function TinyCvLandingPage({
               </LandingPrimaryLink>
               <Link
                 className="inline-flex items-center justify-center gap-1.5 text-[0.98rem] font-semibold text-slate-600 transition hover:text-slate-950"
-                href="#examples"
+                href="/templates"
               >
                 Browse templates
                 <ArrowRightIcon className="h-3.5 w-3.5" />

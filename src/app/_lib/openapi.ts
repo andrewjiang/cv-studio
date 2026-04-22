@@ -81,6 +81,21 @@ const paidPaymentSummarySchema = {
   type: "object",
 };
 
+const validationIssueSchema = {
+  properties: {
+    code: { type: "string" },
+    message: { type: "string" },
+    path: { type: "string" },
+  },
+  required: ["code", "message"],
+  type: "object",
+};
+
+const qualityGateSchema = {
+  enum: ["draft", "publish"],
+  type: "string",
+};
+
 const standardErrors = {
   "401": { description: "Unauthorized" },
   "404": { description: "Not found" },
@@ -157,6 +172,68 @@ const createResumeRequestSchema = {
   ],
 };
 
+const validateResumeRequestSchema = {
+  oneOf: [
+    {
+      properties: {
+        input_format: { const: "markdown" },
+        markdown: { type: "string" },
+        quality_gate: qualityGateSchema,
+        style_overrides: { type: "object" },
+        template_key: { type: "string" },
+      },
+      required: ["input_format", "markdown"],
+      type: "object",
+    },
+    {
+      properties: {
+        input_format: { const: "json" },
+        quality_gate: qualityGateSchema,
+        resume: RESUME_JSON_SCHEMA,
+        style: { type: "object" },
+        template_key: { type: "string" },
+      },
+      required: ["input_format", "resume"],
+      type: "object",
+    },
+  ],
+};
+
+const validateResumeResponseSchema = {
+  properties: {
+    errors: {
+      items: validationIssueSchema,
+      type: "array",
+    },
+    inferred_template_key: { type: ["string", "null"] },
+    normalized_markdown: { type: "string" },
+    publish_errors: {
+      items: validationIssueSchema,
+      type: "array",
+    },
+    publish_ready: { type: "boolean" },
+    quality_warnings: {
+      items: validationIssueSchema,
+      type: "array",
+    },
+    valid: { type: "boolean" },
+    warnings: {
+      items: validationIssueSchema,
+      type: "array",
+    },
+  },
+  required: [
+    "errors",
+    "inferred_template_key",
+    "publish_errors",
+    "publish_ready",
+    "quality_warnings",
+    "valid",
+    "warnings",
+  ],
+  type: "object",
+};
+
 const paidCreateResumeRequestSchema = {
   oneOf: [
     {
@@ -221,7 +298,7 @@ export function buildOpenApiSpec(origin?: string) {
       title: "Tiny CV Developer API",
       version: "1.0.0",
       description: "Create, validate, publish, and export Tiny CV resumes for users and agents.",
-      "x-guidance": "Agents can use bearer-token /api/v1 endpoints for project-owned workflows, or no-account paid /api/v1/paid endpoints with x402 or MPP. Bearer API keys are for developers and integrations that want durable projects, webhooks, and usage history. x402/MPP is for one-off agent execution with no account or API key. Use /api/v1/paid/agent-finish when an agent needs to turn resume markdown or JSON into a claimable hosted Tiny CV plus a queued PDF job. Machine-payment calls do not include premium *.tiny.cv namespace ownership, Pro entitlements, or paid webhooks; a human Founder Pass is required for permanent premium URL identity.",
+      "x-guidance": "Agents can use bearer-token /api/v1 endpoints for project-owned workflows, or no-account paid /api/v1/paid endpoints with x402 or MPP. Use POST /api/v1/resumes/validate with quality_gate: \"publish\" before publish/payment. The headline is not the summary: keep the line after # name under 80 characters and put narrative positioning in ## Summary. Do not use inline bullet-dot lists; use separate - bullet lines. Bearer API keys are for durable projects, webhooks, and usage history. x402/MPP is for one-off agent execution with no account or API key. Before publishing or making a paid Agent Finish call, resolve validation errors, show the selected template, final markdown, unverified facts, and next action; ask for approval unless the user explicitly authorized autonomous publishing/payment. Use /api/v1/paid/agent-finish when an agent needs to turn resume markdown or JSON into a claimable hosted Tiny CV plus a queued PDF job. If a human wants to keep editing the markdown, return the editor_claim_url from Agent Finish, from paid create, or from bearer create/publish with return_edit_claim_url=true. Machine-payment calls do not include premium *.tiny.cv namespace ownership, Pro entitlements, or paid webhooks; a human Founder Pass is required for permanent premium URL identity.",
     },
     "x-discovery": {
       ownershipProofs: parseDiscoveryOwnershipProofs(),
@@ -266,6 +343,8 @@ export function buildOpenApiSpec(origin?: string) {
         },
         ApiResumeRecord: resumeRecordSchema,
         CreateResumeRequest: createResumeRequestSchema,
+        ValidateResumeRequest: validateResumeRequestSchema,
+        ValidateResumeResponse: validateResumeResponseSchema,
         PaidCreatePdfJobRequest: {
           additionalProperties: false,
           properties: {},
@@ -354,9 +433,10 @@ export function buildOpenApiSpec(origin?: string) {
       },
       "/api/v1/resumes/validate": {
         post: {
-          description: "Validate markdown or JSON resume input without persisting it.",
+          description: "Validate markdown or JSON resume input without persisting it. Use quality_gate: \"publish\" before publishing or making paid Agent Finish calls.",
+          requestBody: jsonRequestBody("#/components/schemas/ValidateResumeRequest"),
           responses: {
-            "200": { description: "Validation result" },
+            "200": jsonResponse("Validation result", "#/components/schemas/ValidateResumeResponse"),
             ...standardErrors,
           },
           security: [{ bearerAuth: [] }],
@@ -399,11 +479,12 @@ export function buildOpenApiSpec(origin?: string) {
       },
       "/api/v1/resumes/{resume_id}/publish": {
         post: {
-          description: "Publish the current draft snapshot and return a public URL. Requires Idempotency-Key.",
+          description: "Publish the current draft snapshot and return a public URL. Requires Idempotency-Key. API publish is strict: the resume must pass the publish quality gate and browser fit measurement.",
           parameters: [resumeIdParam, idempotencyKeyHeader],
           responses: {
             "200": { description: "Resume published" },
-            "400": { description: "Missing idempotency key" },
+            "400": { description: "Missing idempotency key or invalid publish-ready markdown. Example codes: missing_summary, headline_too_long, inline_bullet_separator." },
+            "503": { description: "Browser fit measurement unavailable. Example code: browser_fit_unavailable." },
             ...standardErrors,
           },
           security: [{ bearerAuth: [] }],
@@ -424,15 +505,15 @@ export function buildOpenApiSpec(origin?: string) {
       },
       "/api/v1/paid/resumes": {
         post: {
-          description: "No-account machine-payment endpoint that creates, publishes, and returns a standard public Tiny CV resume URL. The response includes a claimable edit link by default, but does not reserve a premium *.tiny.cv URL.",
+          description: "No-account machine-payment endpoint that creates, publishes, and returns a standard public Tiny CV resume URL. The response includes a claimable edit link by default, but does not reserve a premium *.tiny.cv URL. Invalid publish-ready markdown returns 400 before any 402 payment challenge.",
           parameters: [idempotencyKeyHeader],
           requestBody: jsonRequestBody("#/components/schemas/PaidCreateResumeRequest"),
           responses: {
             "201": jsonResponse("Created and published paid resume", "#/components/schemas/PaidCreateResumeResponse"),
-            "400": { description: "Invalid input or missing idempotency key" },
+            "400": { description: "Invalid input, missing idempotency key, or invalid publish-ready markdown. Example codes: missing_summary, headline_too_long, inline_bullet_separator." },
             "402": paymentRequiredResponse,
             "429": rateLimitResponse,
-            "503": { description: "Machine payments are disabled or not configured" },
+            "503": { description: "Machine payments are disabled/not configured, or browser fit measurement is unavailable. Example code: browser_fit_unavailable." },
           },
           "x-payment-info": buildMachinePaymentOpenApiInfo(
             MACHINE_PAYMENT_ROUTE_KEYS.CREATE_AND_PUBLISH_RESUME,
@@ -441,15 +522,15 @@ export function buildOpenApiSpec(origin?: string) {
       },
       "/api/v1/paid/agent-finish": {
         post: {
-          description: "No-account x402/MPP endpoint for agents that need a finished Tiny CV package in one paid operation: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Agent Finish always creates a claim link. It does not include premium *.tiny.cv namespace ownership.",
+          description: "No-account x402/MPP endpoint for agents that need a finished Tiny CV package in one paid operation: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Agent Finish always creates a claim link. It does not include premium *.tiny.cv namespace ownership. Invalid publish-ready markdown returns 400 before any 402 payment challenge.",
           parameters: [idempotencyKeyHeader],
           requestBody: jsonRequestBody("#/components/schemas/PaidCreateResumeRequest"),
           responses: {
             "202": jsonResponse("Agent Finish package queued", "#/components/schemas/PaidAgentFinishResponse"),
-            "400": { description: "Invalid input or missing idempotency key" },
+            "400": { description: "Invalid input, missing idempotency key, or invalid publish-ready markdown. Example codes: missing_summary, headline_too_long, inline_bullet_separator." },
             "402": paymentRequiredResponse,
             "429": rateLimitResponse,
-            "503": { description: "Machine payments are disabled or not configured" },
+            "503": { description: "Machine payments are disabled/not configured, or browser fit measurement is unavailable. Example code: browser_fit_unavailable." },
           },
           "x-payment-info": buildMachinePaymentOpenApiInfo(
             MACHINE_PAYMENT_ROUTE_KEYS.AGENT_FINISH,
