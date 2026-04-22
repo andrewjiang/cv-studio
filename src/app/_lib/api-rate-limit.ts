@@ -191,6 +191,13 @@ async function recordAndAssertSubjects(
     subject_hash: hashRateLimitSubject(subject),
     subject_type: subject.type,
   }));
+  const eventRows = events.map((event) => [
+    event.id,
+    event.action,
+    event.subject_type,
+    event.subject_hash,
+    event.created_at.toISOString(),
+  ]);
   const subjectHashes = events.map((event) => event.subject_hash);
   const subjectTypes = [...new Set(events.map((event) => event.subject_type))];
 
@@ -202,15 +209,7 @@ async function recordAndAssertSubjects(
         subject_type,
         subject_hash,
         created_at
-      )
-      select *
-      from unnest(
-        ${events.map((event) => event.id)}::text[],
-        ${events.map((event) => event.action)}::text[],
-        ${events.map((event) => event.subject_type)}::text[],
-        ${events.map((event) => event.subject_hash)}::text[],
-        ${events.map((event) => event.created_at)}::timestamptz[]
-      )
+      ) values ${tx(eventRows)}
     `;
 
     return tx<RateLimitEventRow[]>`
