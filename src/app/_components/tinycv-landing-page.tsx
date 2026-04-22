@@ -33,33 +33,6 @@ const LANDING_EXAMPLE_ROTATIONS: Record<TemplateKey, string> = {
   sales: "-rotate-[1.1deg]",
 };
 
-const TESTIMONIALS = [
-  {
-    author: "Sarah Chen",
-    quote: "I used to spend hours fighting with Word margins. Tiny CV let me focus on my experience, and the auto-scaling kept everything on one perfect page without me even thinking about it.",
-    role: "Senior Product Designer",
-    src: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=256&h=256&auto=format&fit=crop",
-  },
-  {
-    author: "Marcus Thorne",
-    quote: "The markdown-first approach is a breath of fresh air. It feels like I'm writing code, and the output is always professional. No more template theater—just clean, honest typography.",
-    role: "Lead Frontend Engineer",
-    src: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=256&h=256&auto=format&fit=crop",
-  },
-  {
-    author: "Elena Rossi",
-    quote: "Finally, a builder that understands whitespace. I love how it keeps my portfolio links clean and the overall design minimal. It’s the most sophisticated way to host a professional identity.",
-    role: "Creative Director",
-    src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=256&h=256&auto=format&fit=crop",
-  },
-  {
-    author: "David Kim",
-    quote: "Tiny CV is the first tool that actually solves the one-page problem properly. The API integration is a game-changer for our automated recruiting pipeline. It's built for how we hire now.",
-    role: "Founder & CTO",
-    src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=256&h=256&auto=format&fit=crop",
-  },
-];
-
 const AGENT_INSTRUCTION = `Read the Tiny CV documentation first.
 
 Help me create a complete one-page resume in Tiny CV. Interview me for missing details, choose the best template, draft the markdown, validate it, publish the public link, and export a PDF if I ask.
@@ -125,7 +98,7 @@ export function TinyCvLandingPage({
             </div>
           </div>
 
-          <div className="relative mt-20 w-full lg:mt-24">
+          <div className="relative mt-12 w-full sm:mt-20 lg:mt-24">
             <LandingHeroProof />
           </div>
         </section>
@@ -203,8 +176,6 @@ export function TinyCvLandingPage({
 
               <LandingLaptopPreview />
             </section>
-
-            <LandingTestimonialCarousel />
 
             <section className="grid gap-12 rounded-[2.5rem] border border-black/8 bg-white/60 p-8 shadow-sm lg:grid-cols-[minmax(0,0.95fr)_minmax(28rem,1.05fr)] lg:items-center lg:gap-20 lg:p-14" id="api">
               <div className="max-w-xl">
@@ -361,10 +332,10 @@ function LandingHeroProof() {
   }, []);
 
   return (
-    <div className="relative flex justify-center pb-16 lg:pb-32">
+    <div className="relative flex justify-center pb-10 sm:pb-16 lg:pb-32">
       <div className="relative">
         {/* Paper Preview - The "Desktop" view */}
-        <div className="relative z-10">
+        <div className="relative z-10 hidden sm:block">
           <ResumePaperPreview
             className="shadow-[0_80px_160px_-30px_rgba(15,23,42,0.15),0_30px_60px_-15px_rgba(15,23,42,0.08),0_10px_30px_-5px_rgba(15,23,42,0.04)] ring-1 ring-black/5"
             cropHeightRatio={1}
@@ -385,7 +356,7 @@ function LandingHeroProof() {
         </div>
       </div>
 
-      <div className="mt-16 sm:hidden">
+      <div className="sm:hidden">
         <LandingMobilePreview templateKey="engineer" />
       </div>
     </div>
@@ -618,66 +589,6 @@ function PricingCard({
         {body}
       </p>
     </article>
-  );
-}
-
-function LandingTestimonialCarousel() {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex((i) => (i + 1) % TESTIMONIALS.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <section className="mx-auto max-w-4xl py-12 lg:py-20">
-      <div className="relative flex flex-col items-center text-center overflow-hidden min-h-[440px]">
-        {TESTIMONIALS.map((t, i) => (
-          <div
-            className={cx(
-              "absolute inset-0 flex flex-col items-center transition-all duration-700 ease-in-out",
-              i === index ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12 pointer-events-none",
-            )}
-            key={t.author}
-          >
-            <div className="relative mb-10 h-28 w-28 overflow-hidden rounded-full border-4 border-white shadow-xl lg:h-32 lg:w-32">
-              <Image
-                alt={t.author}
-                className="object-cover"
-                fill
-                src={t.src}
-              />
-            </div>
-            <blockquote
-              className="px-4 text-[1.65rem] leading-[1.3] font-medium tracking-tight text-slate-950 sm:text-[1.9rem]"
-              style={{ fontFamily: "var(--font-display-newsreader)" }}
-            >
-              &ldquo;{t.quote}&rdquo;
-            </blockquote>
-            <cite className="mt-8 block not-italic">
-              <span className="block text-[1.1rem] font-bold text-slate-950">{t.author}</span>
-              <span className="mt-1 block text-[0.94rem] font-medium text-slate-500">{t.role}</span>
-            </cite>
-          </div>
-        ))}
-      </div>
-      
-      <div className="mt-8 flex justify-center gap-2.5">
-        {TESTIMONIALS.map((_, i) => (
-          <button
-            className={cx(
-              "h-1.5 rounded-full transition-all duration-300",
-              i === index ? "w-8 bg-[#065f46]" : "w-1.5 bg-black/10 hover:bg-black/20",
-            )}
-            key={i}
-            onClick={() => setIndex(i)}
-            type="button"
-          />
-        ))}
-      </div>
-    </section>
   );
 }
 
