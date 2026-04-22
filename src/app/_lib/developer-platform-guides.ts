@@ -37,13 +37,59 @@ Frameworks: React, Next.js, Node.js
 ## Rules
 
 - The first \`#\` heading is the candidate name.
-- The next non-empty line is treated as the headline unless it looks like contact info.
+- The next non-empty line is treated as the headline unless it looks like contact info. Keep it under 80 characters for publish-ready resumes.
 - Contact info can be plain text or markdown links and is usually separated with \`|\`.
+- Always include \`## Summary\` for publish-ready resumes.
 - Top-level sections use \`##\`.
 - Resume entries inside sections use \`###\`.
 - Entry metadata goes on the next italic line, usually in the form \`*Location | Dates*\`.
-- Bullets use \`-\` or \`*\`.
+- Bullets should be separate lines beginning with \`-\`. Tiny CV also parses \`*\`, \`•\`, \`–\`, and \`—\` line bullets, but agents should emit \`-\`.
+- Do not write inline dot-separated lists like \`Role one • Role two • Role three\`.
 - A \`Skills\` section should use \`Label: value\` rows.
+- Treat validation errors as blockers before publish or payment.
+
+## Headline vs Summary
+
+The line after the candidate name is a short headline, not a summary.
+Keep it under 80 characters.
+
+Good:
+
+\`\`\`md
+# Andrew Jiang
+Founder & Product Operator
+
+## Summary
+Builder and founder with deep business development, product, design, and engineering experience. YC alum.
+\`\`\`
+
+Bad:
+
+\`\`\`md
+# Andrew Jiang
+Builder and founder with deep business development and product management experience, plus generalist design and engineering chops. YC alum.
+\`\`\`
+
+## Lists and bullets
+
+Use separate markdown bullet lines. Do not use inline dot separators.
+
+Good:
+
+\`\`\`md
+## Additional Experience
+- Product Manager, Sprig (2015 - 2016)
+- Cofounder and CEO, Bayes Impact (Apr 2014 - Apr 2015)
+- Private Equity Associate, American Securities (Aug 2012 - Feb 2014)
+- Consultant, Boston Consulting Group (2010 - 2012)
+\`\`\`
+
+Bad:
+
+\`\`\`md
+## Additional Experience
+Product Manager, Sprig (2015 - 2016) • Cofounder and CEO, Bayes Impact ...
+\`\`\`
 
 ## Frontmatter options
 
@@ -156,13 +202,27 @@ If unsure, choose the template that matches the job the user wants next, not the
 - Remove weak filler like "responsible for", "helped with", and "worked on".
 - Keep links real and public.
 - Use markdown headings exactly: candidate name as \`#\`, sections as \`##\`, entries as \`###\`.
+- Keep the headline under 80 characters and move narrative positioning into \`## Summary\`.
+- Always include a \`## Summary\` section before publishing.
+- Use separate \`-\` bullet lines. Do not use inline \`•\` lists.
+
+## Publish-ready markdown checklist
+
+- \`#\` candidate name.
+- Headline under 80 characters.
+- Contact line under the headline.
+- \`## Summary\` with one concise paragraph.
+- \`## Experience\` with \`###\` entries.
+- Separate \`-\` bullet lines.
+- No inline \`•\` or \`·\` lists.
+- Validate with \`quality_gate: "publish"\`.
 
 ## Tiny CV workflow
 
 1. Read the docs: \`${TINYCV_AGENT_GUIDE_URL}\`, \`/api/v1/spec/markdown\`, and \`/openapi.json\`.
 2. Choose a template with \`GET /api/v1/templates\`.
 3. Draft Tiny CV markdown using the chosen template and the markdown guide.
-4. Validate with \`POST /api/v1/resumes/validate\` before publishing.
+4. Validate with \`POST /api/v1/resumes/validate\` using \`quality_gate: "publish"\` before publishing or paying.
 5. If the user only wants markdown, stop and show the markdown.
 6. If the user wants a public link and the agent can pay, use \`POST /api/v1/paid/agent-finish\` with x402 or MPP.
 7. If the user has a bearer API key, create a draft, publish it, and request a PDF only when asked.
@@ -178,6 +238,8 @@ Before publishing a public resume, queuing a paid Agent Finish call, or spending
 - The next action: publish public link, charge Agent Finish, queue PDF, return edit link, or stop at markdown.
 
 Ask for explicit approval unless the user already clearly authorized autonomous publishing and payment. If the user wants to edit the markdown themselves, request or return the Tiny CV edit claim link instead of treating the agent draft as final.
+
+Resolve validation errors before asking the user to approve publish/payment.
 
 ## Human editing handoff
 
@@ -214,7 +276,7 @@ export const TINYCV_AGENT_COOKBOOK = `# Tiny CV Agent Cookbook
 3. Choose the best template for the target role.
 4. Fetch the markdown guide or JSON schema.
 5. Draft a one-page resume without inventing facts.
-6. Validate the payload.
+6. Validate the payload with \`quality_gate: "publish"\` before publish or payment.
 7. Publish the draft only when the user wants a public link.
 8. Request a PDF only when needed.
 
@@ -225,6 +287,7 @@ export const TINYCV_AGENT_COOKBOOK = `# Tiny CV Agent Cookbook
 - Do not invent employers, dates, credentials, metrics, or links.
 - Send an \`Idempotency-Key\` on create, update, publish, and PDF job requests.
 - Before publishing or paying, show the selected template, final markdown, unverified facts, and next action. Ask for approval unless the user already authorized autonomous publish/payment.
+- Resolve validation errors before asking the user to approve publish/payment.
 - Keep the public URL as the default output for end users.
 - Request an edit claim URL when the user should continue editing markdown in Tiny CV, then return that link with the public URL.
 - Use \`POST /api/v1/paid/agent-finish\` for a no-account paid call that returns a hosted resume, claim link, queued PDF job, and receipt.

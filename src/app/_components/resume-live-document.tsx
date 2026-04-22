@@ -10,11 +10,13 @@ import {
 export function ResumeDesktopSheet({
   className,
   document,
+  fitAttributes = false,
   fitScale = 1,
   interactive = true,
 }: {
   className?: string;
   document: ResumeDocument;
+  fitAttributes?: boolean;
   fitScale?: number;
   interactive?: boolean;
 }) {
@@ -45,12 +47,21 @@ export function ResumeDesktopSheet({
             paddingTop: `${pageMetrics.paddingTop}px`,
           } as CSSProperties}
         >
-          <ResumeDocumentContent
-            document={document}
-            fitScale={fitScale}
-            interactive={interactive}
-            typeScale={desktopTypeScale}
-          />
+          <div
+            data-fit-page={fitAttributes ? "" : undefined}
+            style={{
+              height: `${pageMetrics.contentHeight}px`,
+              width: `${pageMetrics.contentWidth}px`,
+            } as CSSProperties}
+          >
+            <ResumeDocumentContent
+              document={document}
+              fitContent={fitAttributes}
+              fitScale={fitScale}
+              interactive={interactive}
+              typeScale={desktopTypeScale}
+            />
+          </div>
         </div>
       </article>
     </div>

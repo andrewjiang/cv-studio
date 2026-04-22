@@ -65,14 +65,26 @@ const workflowSteps = [
   "Read this guide, /api/v1/spec/markdown, and /openapi.json.",
   "Choose the template that fits the user's next target role.",
   "Draft Tiny CV markdown with the candidate name as #, sections as ##, and entries as ###.",
-  "Validate with POST /api/v1/resumes/validate before creating or publishing.",
+  "Validate with POST /api/v1/resumes/validate using quality_gate: \"publish\" before publishing or paying.",
   "Before publishing or paying, show the final markdown, selected template, unverified facts, and next action.",
+  "Resolve validation errors before asking the user to approve publish/payment.",
   "Ask for approval unless the user already explicitly authorized autonomous publishing and payment.",
   "If the user only wants markdown, stop there and show the markdown.",
   "If the user wants a public link and the agent can pay, use POST /api/v1/paid/agent-finish with x402 or MPP.",
   "If the user has a bearer API key, create a draft, publish it, and request a PDF only when asked.",
   "If the user wants to keep editing, request and return an edit claim link.",
   "Return the public URL, edit claim URL when useful, and PDF job or PDF URL if requested.",
+];
+
+const publishReadyChecklist = [
+  "# candidate name",
+  "Headline under 80 characters",
+  "Contact line under the headline",
+  "## Summary with one concise paragraph",
+  "## Experience with ### entries",
+  "Separate - bullet lines",
+  "No inline • or · lists",
+  "Validate with quality_gate: \"publish\"",
 ];
 
 const reviewGateNotes = [
@@ -236,6 +248,21 @@ export default function AgentsPage() {
               <p className="text-[1rem] leading-7 font-semibold text-slate-800">
               Do not invent {formatList(noInventItems)}. If a number would help but the user cannot verify it, use truthful scale language instead.
             </p>
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-black/8 pt-12 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <SectionIntro
+            eyebrow="Quality gate"
+            title="Make markdown publish-ready."
+            body="Tiny CV accepts draft markdown freely, but API publish and paid Agent Finish require a clean structure."
+          />
+          <div className="grid gap-3 md:grid-cols-2">
+            {publishReadyChecklist.map((item) => (
+              <div className="rounded-[1rem] border border-black/8 bg-white px-5 py-4 shadow-sm" key={item}>
+                <p className="text-sm font-semibold leading-6 text-slate-800">{item}</p>
+              </div>
+            ))}
           </div>
         </section>
 

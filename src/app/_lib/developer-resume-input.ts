@@ -18,6 +18,10 @@ import {
   type ResumeStylePrefs,
 } from "@/app/_lib/cv-markdown";
 import { parseResumeStyle } from "@/app/_lib/resume-style";
+import {
+  evaluateResumeQuality,
+  type ResumeQualityGate,
+} from "@/app/_lib/resume-quality";
 import type {
   CreateResumeRequest,
   ResumeJsonContactInput,
@@ -37,6 +41,9 @@ type CompileResult = {
   inferredTemplateKey: TemplateKey | null;
   inputFormat: "json" | "markdown";
   markdown: string;
+  publishErrors: ValidationError[];
+  publishReady: boolean;
+  qualityWarnings: ValidationWarning[];
   valid: boolean;
   warnings: ValidationWarning[];
 };
@@ -159,15 +166,19 @@ export const RESUME_JSON_SCHEMA = {
 } as const;
 
 export function compileResumeInput(input: CreateResumeRequest | ValidateResumeRequest): CompileResult {
+  const qualityGate = readQualityGate(input);
+
   if (input.input_format === "markdown") {
     return compileMarkdownInput({
       markdown: input.markdown,
+      qualityGate,
       styleOverrides: input.style_overrides,
       templateKey: input.template_key,
     });
   }
 
   return compileJsonInput({
+    qualityGate,
     resume: input.resume,
     styleOverrides: input.style,
     templateKey: input.template_key,
@@ -181,6 +192,9 @@ export function validateResumeInput(input: CreateResumeRequest | ValidateResumeR
     errors: compiled.errors,
     inferred_template_key: compiled.inferredTemplateKey,
     normalized_markdown: compiled.valid ? compiled.markdown : undefined,
+    publish_errors: compiled.publishErrors,
+    publish_ready: compiled.publishReady,
+    quality_warnings: compiled.qualityWarnings,
     valid: compiled.valid,
     warnings: compiled.warnings,
   };
@@ -188,10 +202,12 @@ export function validateResumeInput(input: CreateResumeRequest | ValidateResumeR
 
 function compileMarkdownInput({
   markdown,
+  qualityGate,
   styleOverrides,
   templateKey,
 }: {
   markdown: string;
+  qualityGate: ResumeQualityGate;
   styleOverrides?: ResumeStyleOverrideInput;
   templateKey?: TemplateKey;
 }) {
@@ -211,6 +227,9 @@ function compileMarkdownInput({
       inferredTemplateKey: templateKey ?? null,
       inputFormat: "markdown" as const,
       markdown,
+      publishErrors: [],
+      publishReady: false,
+      qualityWarnings: [],
       valid: false,
       warnings,
     };
@@ -234,6 +253,22 @@ function compileMarkdownInput({
     });
   }
 
+  const publishQuality = evaluateResumeQuality({
+    document,
+    gate: "publish",
+    markdown: normalizedMarkdown,
+  });
+  const requestedQuality = qualityGate === "publish"
+    ? publishQuality
+    : evaluateResumeQuality({
+      document,
+      gate: "draft",
+      markdown: normalizedMarkdown,
+    });
+
+  errors.push(...requestedQuality.errors);
+  warnings.push(...requestedQuality.warnings);
+
   const fitScale = estimateServerFitScale(normalizedMarkdown);
 
   if (fitScale <= CV_SCALE_LIMITS.min + 0.002) {
@@ -249,29 +284,41 @@ function compileMarkdownInput({
     inferredTemplateKey: templateKey ?? inferTemplateKeyFromDocument(document),
     inputFormat: "markdown" as const,
     markdown: normalizedMarkdown,
+    publishErrors: publishQuality.errors,
+    publishReady: errors.length === 0 && publishQuality.publishReady,
+    qualityWarnings: evaluateResumeQuality({
+      document,
+      gate: "draft",
+      markdown: normalizedMarkdown,
+    }).warnings,
     valid: errors.length === 0,
     warnings,
   };
 }
 
 function compileJsonInput({
+  qualityGate,
   resume,
   styleOverrides,
   templateKey,
 }: {
+  qualityGate: ResumeQualityGate;
   resume: ResumeJsonInput;
   styleOverrides?: ResumeStyleOverrideInput;
   templateKey?: TemplateKey;
 }) {
-  const errors = validateJsonResume(resume);
+  const schemaErrors = validateJsonResume(resume);
 
-  if (errors.length > 0) {
+  if (schemaErrors.length > 0) {
     return {
-      errors,
+      errors: schemaErrors,
       fitScale: 1,
       inferredTemplateKey: templateKey ?? null,
       inputFormat: "json" as const,
       markdown: "",
+      publishErrors: [],
+      publishReady: false,
+      qualityWarnings: [],
       valid: false,
       warnings: [] as ValidationWarning[],
     };
@@ -283,7 +330,25 @@ function compileJsonInput({
     styleOverrides,
   );
   const fitScale = estimateServerFitScale(markdown);
+  const document = parseCvMarkdown(markdown);
+  const publishQuality = evaluateResumeQuality({
+    document,
+    gate: "publish",
+    markdown,
+  });
+  const draftQuality = evaluateResumeQuality({
+    document,
+    gate: "draft",
+    markdown,
+  });
   const warnings: ValidationWarning[] = [];
+  const errors: ValidationError[] = [];
+
+  if (qualityGate === "publish") {
+    errors.push(...publishQuality.errors);
+  } else {
+    warnings.push(...draftQuality.warnings);
+  }
 
   if (fitScale <= CV_SCALE_LIMITS.min + 0.002) {
     warnings.push({
@@ -293,14 +358,21 @@ function compileJsonInput({
   }
 
   return {
-    errors: [],
+    errors,
     fitScale,
     inferredTemplateKey,
     inputFormat: "json" as const,
     markdown,
-    valid: true,
+    publishErrors: publishQuality.errors,
+    publishReady: errors.length === 0 && publishQuality.publishReady,
+    qualityWarnings: draftQuality.warnings,
+    valid: errors.length === 0,
     warnings,
   };
+}
+
+function readQualityGate(input: CreateResumeRequest | ValidateResumeRequest): ResumeQualityGate {
+  return "quality_gate" in input && input.quality_gate === "publish" ? "publish" : "draft";
 }
 
 function buildJsonResumeMarkdown(resume: ResumeJsonInput, templateKey: TemplateKey) {

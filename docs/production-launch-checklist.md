@@ -1,6 +1,6 @@
 # Tiny CV Production Launch Checklist
 
-This is the operational checklist for the next launch wave: get Tiny CV running safely on Vercel with the API, jobs, and PDF export enabled.
+This is the operational checklist for the next launch wave: get Tiny CV running safely on Vercel with the API, jobs, browser-measured API publish fit, and PDF export enabled.
 
 ## What Andrew Should Set Up
 
@@ -30,14 +30,14 @@ DATABASE_URL="postgresql://..." pnpm db:migrate
 
 ### 3. Browserless Or CDP-Compatible Chrome
 
-PDF jobs should use a remote browser in production.
+API publish fit measurement and PDF jobs should use a remote browser in production.
 
 Set one of:
 
 - `TINYCV_BROWSER_WS_ENDPOINT`
 - `BROWSERLESS_WS_ENDPOINT`
 
-Local Chrome paths are fine for local testing, but not the preferred Vercel production path.
+Local Chrome paths are fine for local testing, but not the preferred Vercel production path. The browser must be able to load `TINYCV_APP_URL` plus protected `/internal/resume-fit/:resumeId` routes.
 
 ### 4. Production Secrets
 
@@ -172,6 +172,10 @@ pnpm test:billing
 TINYCV_BRANDING_TEST_BASE_URL=https://your-production-domain \
 DATABASE_URL=postgresql://... \
 pnpm test:branding
+
+TINYCV_API_FIT_TEST_BASE_URL=https://your-production-domain \
+TINYCV_API_KEY=tcv_live_... \
+pnpm test:api-fit
 
 TINYCV_PDF_TEST_BASE_URL=https://your-production-domain \
 TINYCV_API_KEY=tcv_live_... \
