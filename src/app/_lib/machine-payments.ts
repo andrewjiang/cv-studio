@@ -505,6 +505,25 @@ export async function requireMachinePayment(input: {
   });
 }
 
+export function attachX402BazaarSchemaToPaymentRequiredHeader(
+  header: string,
+  routeKey: MachinePaymentRouteKey,
+) {
+  const decoded = decodeMaybeJson(header);
+
+  if (!isRecord(decoded)) {
+    return header;
+  }
+
+  return Buffer.from(JSON.stringify({
+    ...decoded,
+    extensions: {
+      ...(isRecord(decoded.extensions) ? decoded.extensions : {}),
+      bazaar: buildBazaarSchemaExtension(routeKey),
+    },
+  })).toString("base64url");
+}
+
 export async function maybeCreateMachinePaymentDiscoveryChallenge(input: {
   idempotencyKey: string | null;
   request: NextRequest;
@@ -657,6 +676,7 @@ async function handleX402Payment(input: {
   let response = await protectedHandler(input.request);
 
   if (response.status === 402) {
+    response = await appendX402BazaarSchema(response, input.route.routeKey);
     response = await appendMppChallenge(response, input);
   }
 
@@ -675,6 +695,29 @@ async function handleX402Payment(input: {
   }
 
   return response;
+}
+
+async function appendX402BazaarSchema(
+  response: NextResponse,
+  routeKey: MachinePaymentRouteKey,
+) {
+  const paymentRequired = response.headers.get("payment-required");
+
+  if (!paymentRequired) {
+    return response;
+  }
+
+  const headers = new Headers(response.headers);
+  headers.set(
+    "PAYMENT-REQUIRED",
+    attachX402BazaarSchemaToPaymentRequiredHeader(paymentRequired, routeKey),
+  );
+
+  return new NextResponse(await response.text(), {
+    headers,
+    status: response.status,
+    statusText: response.statusText,
+  });
 }
 
 async function appendMppChallenge(
@@ -1000,6 +1043,144 @@ async function syncMachinePaymentSchema(sql: SqlClient) {
     create index if not exists machine_payment_receipts_pdf_job_lookup_idx
     on machine_payment_receipts(pdf_job_id)
   `;
+}
+
+function buildBazaarSchemaExtension(routeKey: MachinePaymentRouteKey): Record<string, unknown> {
+  return {
+    schema: {
+      properties: {
+        input: {
+          properties: {
+            body: getPaidRouteInputSchema(routeKey),
+          },
+          type: "object",
+        },
+        output: {
+          properties: {
+            example: getPaidRouteOutputSchema(routeKey),
+          },
+          type: "object",
+        },
+      },
+      type: "object",
+    },
+  };
+}
+
+function getPaidRouteInputSchema(routeKey: MachinePaymentRouteKey): Record<string, unknown> {
+  if (routeKey === MACHINE_PAYMENT_ROUTE_KEYS.CREATE_PDF_JOB) {
+    return {
+      additionalProperties: false,
+      properties: {},
+      type: "object",
+    };
+  }
+
+  return {
+    oneOf: [
+      {
+        additionalProperties: false,
+        properties: {
+          client_reference_id: { type: "string" },
+          input_format: { const: "markdown" },
+          markdown: { type: "string" },
+          return_edit_claim_url: { type: "boolean" },
+          style_overrides: { type: "object" },
+          template_key: { enum: ["engineer", "designer", "sales", "founder"], type: "string" },
+          title: { type: "string" },
+        },
+        required: ["input_format", "markdown"],
+        type: "object",
+      },
+      {
+        additionalProperties: false,
+        properties: {
+          client_reference_id: { type: "string" },
+          input_format: { const: "json" },
+          resume: { type: "object" },
+          return_edit_claim_url: { type: "boolean" },
+          style: { type: "object" },
+          template_key: { enum: ["engineer", "designer", "sales", "founder"], type: "string" },
+          title: { type: "string" },
+        },
+        required: ["input_format", "resume"],
+        type: "object",
+      },
+    ],
+  };
+}
+
+function getPaidRouteOutputSchema(routeKey: MachinePaymentRouteKey): Record<string, unknown> {
+  const resumeSchema = {
+    properties: {
+      editor_claim_url: { type: "string" },
+      public_url: { type: "string" },
+      resume_id: { type: "string" },
+      status: { enum: ["published"], type: "string" },
+      template_key: { enum: ["engineer", "designer", "sales", "founder"], type: "string" },
+    },
+    required: ["public_url", "resume_id", "status", "template_key"],
+    type: "object",
+  };
+  const paymentSchema = {
+    properties: {
+      charged_amount_usd: { type: "string" },
+      premium_url_included: { const: false },
+      protocols_supported: {
+        items: { enum: ["x402", "mpp"], type: "string" },
+        type: "array",
+      },
+    },
+    required: ["charged_amount_usd", "premium_url_included", "protocols_supported"],
+    type: "object",
+  };
+
+  if (routeKey === MACHINE_PAYMENT_ROUTE_KEYS.CREATE_PDF_JOB) {
+    return {
+      properties: {
+        job_id: { type: "string" },
+        pdf_url: { type: ["string", "null"] },
+        resume_id: { type: "string" },
+        status: { enum: ["queued", "processing", "completed", "failed", "cancelled"], type: "string" },
+      },
+      required: ["job_id", "resume_id", "status"],
+      type: "object",
+    };
+  }
+
+  if (routeKey === MACHINE_PAYMENT_ROUTE_KEYS.AGENT_FINISH) {
+    return {
+      properties: {
+        claim: {
+          properties: {
+            editor_claim_url: { type: "string" },
+            founder_pass_required_for_premium_url: { const: true },
+            premium_url_included: { const: false },
+          },
+          required: [
+            "editor_claim_url",
+            "founder_pass_required_for_premium_url",
+            "premium_url_included",
+          ],
+          type: "object",
+        },
+        payment: paymentSchema,
+        pdf_job: getPaidRouteOutputSchema(MACHINE_PAYMENT_ROUTE_KEYS.CREATE_PDF_JOB),
+        resume: resumeSchema,
+      },
+      required: ["claim", "payment", "pdf_job", "resume"],
+      type: "object",
+    };
+  }
+
+  return {
+    properties: {
+      payment: paymentSchema,
+      resume: resumeSchema,
+    },
+    required: ["payment", "resume"],
+    type: "object",
+  };
 }
 
 function withNoStore(response: Response) {

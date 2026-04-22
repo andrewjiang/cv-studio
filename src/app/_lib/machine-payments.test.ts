@@ -13,6 +13,7 @@ vi.mock("@/app/_lib/cv-fit", async (importOriginal) => {
 import { buildOpenApiSpec } from "@/app/_lib/openapi";
 import { STRONG_AGENT_RESUME_MARKDOWN } from "@/app/_lib/resume-examples";
 import {
+  attachX402BazaarSchemaToPaymentRequiredHeader,
   getMachinePaymentConfigurationIssues,
   MACHINE_PAYMENT_ROUTE_KEYS,
   normalizeMachinePaymentReceipt,
@@ -236,6 +237,32 @@ describe("machine-payments", () => {
       protocol: "x402",
       reference: "0xsettlement",
       resumeId: "res-789",
+    });
+  });
+
+  it("adds Bazaar schemas to x402 payment-required headers for runtime discovery", () => {
+    const header = Buffer.from(JSON.stringify({
+      accepts: [],
+      resource: {
+        url: "https://tiny.cv/api/v1/paid/agent-finish",
+      },
+      x402Version: 2,
+    })).toString("base64url");
+    const enriched = attachX402BazaarSchemaToPaymentRequiredHeader(
+      header,
+      MACHINE_PAYMENT_ROUTE_KEYS.AGENT_FINISH,
+    );
+    const decoded = JSON.parse(Buffer.from(enriched, "base64url").toString("utf8"));
+
+    expect(decoded.extensions.bazaar.schema.properties.input.properties.body).toMatchObject({
+      oneOf: expect.any(Array),
+    });
+    expect(decoded.extensions.bazaar.schema.properties.output.properties.example).toMatchObject({
+      properties: {
+        claim: expect.any(Object),
+        pdf_job: expect.any(Object),
+        resume: expect.any(Object),
+      },
     });
   });
 
