@@ -102,6 +102,9 @@ const standardErrors = {
   "429": rateLimitResponse,
 };
 
+const bearerSecurity = [{ developerApiKey: [] }];
+const publicSecurity: [] = [];
+
 const resumeRecordSchema = {
   properties: {
     client_reference_id: { type: ["string", "null"] },
@@ -291,8 +294,13 @@ const pdfJobResponseSchema = {
   type: "object",
 };
 
-export function buildOpenApiSpec(origin?: string) {
-  return {
+type OpenApiAudience = "discovery" | "full";
+
+export function buildOpenApiSpec(
+  origin?: string,
+  options: { audience?: OpenApiAudience } = {},
+) {
+  const spec = {
     openapi: "3.1.0",
     info: {
       title: "Tiny CV Developer API",
@@ -312,6 +320,12 @@ export function buildOpenApiSpec(origin?: string) {
         bearerAuth: {
           scheme: "bearer",
           type: "http",
+        },
+        developerApiKey: {
+          description: "Tiny CV developer API key. Send as `Authorization: Bearer <api_key>`.",
+          in: "header",
+          name: "Authorization",
+          type: "apiKey",
         },
         bootstrapSecret: {
           in: "header",
@@ -403,6 +417,7 @@ export function buildOpenApiSpec(origin?: string) {
           responses: {
             "200": { description: "Template list" },
           },
+          security: publicSecurity,
         },
       },
       "/api/v1/templates/{key}": {
@@ -413,6 +428,7 @@ export function buildOpenApiSpec(origin?: string) {
             "200": { description: "Template detail" },
             "404": { description: "Template not found" },
           },
+          security: publicSecurity,
         },
       },
       "/api/v1/spec/markdown": {
@@ -421,6 +437,7 @@ export function buildOpenApiSpec(origin?: string) {
           responses: {
             "200": { description: "Markdown guide" },
           },
+          security: publicSecurity,
         },
       },
       "/api/v1/spec/json-schema": {
@@ -429,6 +446,7 @@ export function buildOpenApiSpec(origin?: string) {
           responses: {
             "200": { description: "JSON schema" },
           },
+          security: publicSecurity,
         },
       },
       "/api/v1/resumes/validate": {
@@ -439,7 +457,7 @@ export function buildOpenApiSpec(origin?: string) {
             "200": jsonResponse("Validation result", "#/components/schemas/ValidateResumeResponse"),
             ...standardErrors,
           },
-          security: [{ bearerAuth: [] }],
+          security: bearerSecurity,
         },
       },
       "/api/v1/resumes": {
@@ -452,7 +470,7 @@ export function buildOpenApiSpec(origin?: string) {
             "400": { description: "Invalid input or missing idempotency key" },
             ...standardErrors,
           },
-          security: [{ bearerAuth: [] }],
+          security: bearerSecurity,
         },
       },
       "/api/v1/resumes/{resume_id}": {
@@ -463,7 +481,7 @@ export function buildOpenApiSpec(origin?: string) {
             "200": { description: "Resume detail" },
             ...standardErrors,
           },
-          security: [{ bearerAuth: [] }],
+          security: bearerSecurity,
         },
         patch: {
           description: "Update a draft resume. Requires Idempotency-Key for safe retries.",
@@ -474,7 +492,7 @@ export function buildOpenApiSpec(origin?: string) {
             "400": { description: "Invalid input or missing idempotency key" },
             ...standardErrors,
           },
-          security: [{ bearerAuth: [] }],
+          security: bearerSecurity,
         },
       },
       "/api/v1/resumes/{resume_id}/publish": {
@@ -487,7 +505,7 @@ export function buildOpenApiSpec(origin?: string) {
             "503": { description: "Browser fit measurement unavailable. Example code: browser_fit_unavailable." },
             ...standardErrors,
           },
-          security: [{ bearerAuth: [] }],
+          security: bearerSecurity,
         },
       },
       "/api/v1/resumes/{resume_id}/pdf-jobs": {
@@ -500,7 +518,7 @@ export function buildOpenApiSpec(origin?: string) {
             "409": { description: "Resume is not published" },
             ...standardErrors,
           },
-          security: [{ bearerAuth: [] }],
+          security: bearerSecurity,
         },
       },
       "/api/v1/paid/resumes": {
@@ -562,7 +580,7 @@ export function buildOpenApiSpec(origin?: string) {
             "200": { description: "PDF job detail" },
             ...standardErrors,
           },
-          security: [{ bearerAuth: [] }],
+          security: bearerSecurity,
         },
       },
       "/api/v1/edit-claims/{claim_id}/consume": {
@@ -575,6 +593,7 @@ export function buildOpenApiSpec(origin?: string) {
             "409": { description: "Claim expired or already consumed" },
             "429": rateLimitResponse,
           },
+          security: publicSecurity,
         },
       },
       "/api/v1/mcp": {
@@ -583,6 +602,7 @@ export function buildOpenApiSpec(origin?: string) {
           responses: {
             "200": { description: "MCP server metadata" },
           },
+          security: publicSecurity,
         },
         post: {
           description: "Remote MCP endpoint for Tiny CV tools over JSON-RPC.",
@@ -590,7 +610,7 @@ export function buildOpenApiSpec(origin?: string) {
             "200": { description: "MCP JSON-RPC response" },
             ...standardErrors,
           },
-          security: [{ bearerAuth: [] }],
+          security: bearerSecurity,
         },
       },
       "/api/v1/jobs/process": {
@@ -605,6 +625,21 @@ export function buildOpenApiSpec(origin?: string) {
         },
       },
     },
+  };
+
+  if (options.audience === "discovery") {
+    return withMachinePaymentDiscoveryPaths(spec);
+  }
+
+  return spec;
+}
+
+function withMachinePaymentDiscoveryPaths<T extends { paths: Record<string, unknown> }>(spec: T): T {
+  return {
+    ...spec,
+    paths: Object.fromEntries(
+      Object.entries(spec.paths).filter(([path]) => path.startsWith("/api/v1/paid/")),
+    ),
   };
 }
 

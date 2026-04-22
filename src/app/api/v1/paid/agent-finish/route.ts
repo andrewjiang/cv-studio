@@ -19,6 +19,7 @@ import {
   getMachinePaymentRouteDefinition,
   MACHINE_PAYMENT_PROTOCOLS,
   MACHINE_PAYMENT_ROUTE_KEYS,
+  maybeCreateMachinePaymentDiscoveryChallenge,
   normalizePaidCreateResumeRequest,
   requireMachinePayment,
   runPaidIdempotentMutation,
@@ -40,7 +41,23 @@ export async function POST(request: NextRequest) {
 
   try {
     const config = assertMachinePaymentsConfigured();
+    const route = {
+      ...getMachinePaymentRouteDefinition(MACHINE_PAYMENT_ROUTE_KEYS.AGENT_FINISH, config),
+      operation: `${request.method}:${request.nextUrl.pathname}`,
+    };
     const idempotencyKey = parseIdempotencyKey(request);
+
+    await assertIpRateLimit(request, "api:resume_create");
+
+    const discoveryChallenge = await maybeCreateMachinePaymentDiscoveryChallenge({
+      idempotencyKey,
+      request,
+      route,
+    });
+
+    if (discoveryChallenge) {
+      return discoveryChallenge;
+    }
 
     if (!idempotencyKey) {
       throw new DeveloperPlatformConflictError(
@@ -49,14 +66,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await assertIpRateLimit(request, "api:resume_create");
-
     const body = normalizePaidCreateResumeRequest(await parseJsonBody(request));
     const requestHash = stableRequestHash(body);
-    const route = {
-      ...getMachinePaymentRouteDefinition(MACHINE_PAYMENT_ROUTE_KEYS.AGENT_FINISH, config),
-      operation: `${request.method}:${request.nextUrl.pathname}`,
-    };
 
     await ensureMachinePaymentStorage(config);
 

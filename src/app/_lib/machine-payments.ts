@@ -505,6 +505,32 @@ export async function requireMachinePayment(input: {
   });
 }
 
+export async function maybeCreateMachinePaymentDiscoveryChallenge(input: {
+  idempotencyKey: string | null;
+  request: NextRequest;
+  route: MachinePaymentRouteDefinition;
+}) {
+  if (input.idempotencyKey || hasMachinePaymentAuthorization(input.request)) {
+    return null;
+  }
+
+  return requireMachinePayment({
+    handler: async () => NextResponse.json({
+      error: {
+        code: "missing_idempotency_key",
+        message: "Idempotency-Key header is required for this endpoint.",
+      },
+    }, { status: 400 }),
+    idempotencyKey: "discovery-probe",
+    request: input.request,
+    requestHash: stableRequestHash({
+      discovery: true,
+      route: input.route.routeKey,
+    }),
+    route: input.route,
+  });
+}
+
 export function normalizeMachinePaymentReceipt(input: NormalizedReceiptInput): MachinePaymentReceiptPayload | null {
   if (input.protocol === "mpp") {
     return normalizeMppReceipt(input);
@@ -989,6 +1015,18 @@ function withNoStore(response: Response) {
 
 function hasMppPaymentAuthorization(request: NextRequest) {
   return /^Payment\s+/i.test(request.headers.get("authorization") ?? "");
+}
+
+function hasX402PaymentAuthorization(request: NextRequest) {
+  return Boolean(
+    request.headers.get("payment") ??
+    request.headers.get("payment-signature") ??
+    request.headers.get("x-payment"),
+  );
+}
+
+function hasMachinePaymentAuthorization(request: NextRequest) {
+  return hasMppPaymentAuthorization(request) || hasX402PaymentAuthorization(request);
 }
 
 function assertObjectBody(body: unknown): Record<string, unknown> {

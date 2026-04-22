@@ -537,13 +537,13 @@ export const DEVELOPER_DOC_RESOURCES = [
   },
   {
     href: "/openapi.json",
-    label: "Canonical OpenAPI 3.1 spec",
-    note: "Root discovery document for AgentCash, MPPScan, SDK generation, and validation.",
+    label: "Machine-payment OpenAPI 3.1 spec",
+    note: "Root discovery document for AgentCash and MPPScan. Focused on paid x402/MPP routes.",
   },
   {
     href: "/api/v1/openapi.json",
-    label: "OpenAPI 3.1 spec",
-    note: "Versioned alias for existing developer integrations.",
+    label: "Full OpenAPI 3.1 spec",
+    note: "Complete versioned developer API schema for bearer-token integrations and internal tooling.",
   },
   {
     href: "/api/v1/spec/markdown",
@@ -697,8 +697,8 @@ export function buildLlmsManifest(origin: string) {
     "",
     `- [Documentation](${origin}/documentation): human-first overview with live playground.`,
     `- [Agent guide](${origin}/agents): instructions for agents that interview a user, choose a template, draft markdown, validate, publish, export, and hand off editing.`,
-    `- [OpenAPI 3.1](${origin}/openapi.json): canonical machine-readable API schema for discovery.`,
-    `- [Versioned OpenAPI alias](${origin}/api/v1/openapi.json): backward-compatible API schema URL.`,
+    `- [Machine-payment OpenAPI 3.1](${origin}/openapi.json): root discovery document for paid x402/MPP routes.`,
+    `- [Full OpenAPI 3.1](${origin}/api/v1/openapi.json): complete developer API schema for bearer-token integrations.`,
     `- [Markdown guide](${origin}/api/v1/spec/markdown): canonical Tiny CV markdown format.`,
     `- [JSON schema](${origin}/api/v1/spec/json-schema): structured resume input.`,
     `- [MCP endpoint](${origin}/api/v1/mcp): remote MCP JSON-RPC endpoint.`,

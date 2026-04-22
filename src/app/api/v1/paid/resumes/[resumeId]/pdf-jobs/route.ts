@@ -13,6 +13,7 @@ import {
   ensureMachinePaymentStorage,
   getMachinePaymentRouteDefinition,
   MACHINE_PAYMENT_ROUTE_KEYS,
+  maybeCreateMachinePaymentDiscoveryChallenge,
   normalizePaidCreatePdfJobRequest,
   requireMachinePayment,
   runPaidIdempotentMutation,
@@ -37,7 +38,23 @@ export async function POST(
 
   try {
     const config = assertMachinePaymentsConfigured();
+    const route = {
+      ...getMachinePaymentRouteDefinition(MACHINE_PAYMENT_ROUTE_KEYS.CREATE_PDF_JOB, config),
+      operation: `${request.method}:${request.nextUrl.pathname}`,
+    };
     const idempotencyKey = parseIdempotencyKey(request);
+
+    await assertIpRateLimit(request, "api:pdf_create");
+
+    const discoveryChallenge = await maybeCreateMachinePaymentDiscoveryChallenge({
+      idempotencyKey,
+      request,
+      route,
+    });
+
+    if (discoveryChallenge) {
+      return discoveryChallenge;
+    }
 
     if (!idempotencyKey) {
       throw new DeveloperPlatformConflictError(
@@ -46,15 +63,9 @@ export async function POST(
       );
     }
 
-    await assertIpRateLimit(request, "api:pdf_create");
-
     const { resumeId } = await context.params;
     const body = normalizePaidCreatePdfJobRequest(await parseOptionalJsonBody(request));
     const requestHash = stableRequestHash(body);
-    const route = {
-      ...getMachinePaymentRouteDefinition(MACHINE_PAYMENT_ROUTE_KEYS.CREATE_PDF_JOB, config),
-      operation: `${request.method}:${request.nextUrl.pathname}`,
-    };
 
     await ensureMachinePaymentStorage(config);
 

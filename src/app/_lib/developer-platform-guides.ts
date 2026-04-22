@@ -219,7 +219,7 @@ If unsure, choose the template that matches the job the user wants next, not the
 
 ## Tiny CV workflow
 
-1. Read the docs: \`${TINYCV_AGENT_GUIDE_URL}\`, \`/api/v1/spec/markdown\`, and \`/openapi.json\`.
+1. Read the docs: \`${TINYCV_AGENT_GUIDE_URL}\`, \`/api/v1/spec/markdown\`, and \`/api/v1/openapi.json\`. Use \`/openapi.json\` for paid x402/MPP discovery.
 2. Choose a template with \`GET /api/v1/templates\`.
 3. Draft Tiny CV markdown using the chosen template and the markdown guide.
 4. Validate with \`POST /api/v1/resumes/validate\` using \`quality_gate: "publish"\` before publishing or paying.
