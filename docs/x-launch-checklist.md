@@ -7,7 +7,7 @@ Use this after production smoke tests pass and before posting publicly.
 - `/` explains Tiny CV in one screen and links to `/new`, examples, pricing, docs, and account.
 - `/new` creates a resume from a template.
 - `/account` supports sign up, sign in, workspace claiming, checkout, and plan status.
-- `/developers` and `/documentation` load without errors.
+- `/agents`, `/developers`, and `/documentation` load without errors.
 - `/openapi.json` and `/api/v1/openapi.json` load.
 
 ## Paid Plans

@@ -15,6 +15,10 @@ import {
   LANDING_EXAMPLES,
   getLandingExample,
 } from "@/app/_lib/landing-examples";
+import {
+  TINYCV_AGENT_GUIDE_PATH,
+  TINYCV_AGENT_INSTRUCTION,
+} from "@/app/_lib/developer-platform-guides";
 import { getResumeTemplate } from "@/app/_lib/resume-templates";
 import type { TemplateKey } from "@/app/_lib/hosted-resume-types";
 
@@ -32,12 +36,6 @@ const LANDING_EXAMPLE_ROTATIONS: Record<TemplateKey, string> = {
   founder: "rotate-[1.1deg]",
   sales: "-rotate-[1.1deg]",
 };
-
-const AGENT_INSTRUCTION = `Read the Tiny CV documentation first.
-
-Help me create a complete one-page resume in Tiny CV. Interview me for missing details, choose the best template, draft the markdown, validate it, publish the public link, and export a PDF if I ask.
-
-Do not invent employers, dates, credentials, metrics, or links. Ask when something is missing.`;
 
 type LandingBillingLaunchState = {
   founderPassLimit: number;
@@ -68,7 +66,7 @@ export function TinyCvLandingPage({
               <p className="text-sm font-medium text-slate-500">
                 Building with agents?
               </p>
-              <Link className="inline-flex items-center gap-1.5 text-sm font-bold text-[#065f46] transition-colors hover:text-[#044e34]" href="/documentation">
+              <Link className="inline-flex items-center gap-1.5 text-sm font-bold text-[#065f46] transition-colors hover:text-[#044e34]" href={TINYCV_AGENT_GUIDE_PATH}>
                 Start here
                 <ArrowRightIcon className="h-3.5 w-3.5" />
               </Link>
@@ -193,7 +191,7 @@ export function TinyCvLandingPage({
                   Use bearer API keys for durable integrations. Use x402 or MPP Agent Finish when an agent needs one paid, no-account call for a hosted resume, claim link, and PDF job.
                 </p>
                 <div className="mt-10 flex flex-wrap gap-4">
-                  <LandingPrimaryLink href="/documentation">
+                  <LandingPrimaryLink href={TINYCV_AGENT_GUIDE_PATH}>
                     Read agent docs
                   </LandingPrimaryLink>
                   <Link
@@ -554,17 +552,17 @@ function AgentInstructionBlock() {
         </p>
         <Link
           className="inline-flex items-center gap-1.5 text-[0.86rem] font-bold text-[#065f46] transition hover:text-[#044e34]"
-          href="/documentation"
+          href={TINYCV_AGENT_GUIDE_PATH}
         >
           Read docs
           <ArrowRightIcon className="h-3.5 w-3.5" />
         </Link>
       </div>
       <pre className="overflow-x-auto whitespace-pre-wrap px-6 py-7 font-mono text-[0.82rem] leading-7 text-slate-800">
-        {AGENT_INSTRUCTION}
+        {TINYCV_AGENT_INSTRUCTION}
       </pre>
       <div className="flex justify-end border-t border-black/8 bg-white/55 px-6 py-4">
-        <AgentInstructionCopyButton value={AGENT_INSTRUCTION} />
+        <AgentInstructionCopyButton value={TINYCV_AGENT_INSTRUCTION} />
       </div>
     </div>
   );

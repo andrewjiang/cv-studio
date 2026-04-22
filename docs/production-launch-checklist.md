@@ -234,6 +234,7 @@ Before sharing publicly:
 - `/studio/[resumeId]` saves and publishes.
 - `/:slug` renders the public page.
 - `/developers` loads.
+- `/agents` loads and shows the agent instruction plus template/interview guidance.
 - `/openapi.json` loads and includes `/api/v1/paid/agent-finish`.
 - `/api/v1/openapi.json` loads.
 - `pnpm test:pdf` passes against production.

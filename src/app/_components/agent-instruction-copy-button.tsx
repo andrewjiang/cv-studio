@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { CopyIcon } from "@/app/_components/icons";
 
-export function AgentInstructionCopyButton({ value }: { value: string }) {
+export function AgentInstructionCopyButton({
+  copiedLabel = "Copied",
+  idleLabel = "Copy instruction",
+  value,
+}: {
+  copiedLabel?: string;
+  idleLabel?: string;
+  value: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function copyInstruction() {
@@ -19,7 +27,7 @@ export function AgentInstructionCopyButton({ value }: { value: string }) {
       type="button"
     >
       <CopyIcon className="h-4 w-4" />
-      {copied ? "Copied" : "Copy instruction"}
+      {copied ? copiedLabel : idleLabel}
     </button>
   );
 }
