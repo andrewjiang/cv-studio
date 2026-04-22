@@ -119,6 +119,7 @@ Neither API path grants permanent premium URL ownership. The premium `name.tiny.
 
 ### Public endpoints
 
+- `GET /agents`
 - `GET /api/v1/templates`
 - `GET /api/v1/templates/:key`
 - `GET /api/v1/spec/markdown`
@@ -170,6 +171,7 @@ curl -X POST http://localhost:3000/api/v1/projects/bootstrap \
 
 Tiny CV also exposes an experimental no-account paid path for agents. This is best thought of as Agent Finish: the agent brings resume content, Tiny CV turns it into a claimable hosted artifact.
 
+- Agent guide: `https://tiny.cv/agents`
 - `POST /api/v1/paid/agent-finish` creates and publishes a standard hosted resume, returns a claimable edit link, queues a PDF job, and returns a payment receipt. Default price: `$1.00`.
 - `POST /api/v1/paid/resumes` creates a resume from markdown or JSON, publishes it immediately, and returns the public URL. Default price: `$0.25`.
 - `POST /api/v1/paid/resumes/:resume_id/pdf-jobs` queues a PDF job for a paid, published resume. Default price: `$0.50`.

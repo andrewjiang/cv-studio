@@ -527,6 +527,11 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
 
 export const DEVELOPER_DOC_RESOURCES = [
   {
+    href: "/agents",
+    label: "Agent guide",
+    note: "Step-by-step guide for interviewing, template choice, markdown drafting, validation, publishing, and PDF export.",
+  },
+  {
     href: "/openapi.json",
     label: "Canonical OpenAPI 3.1 spec",
     note: "Root discovery document for AgentCash, MPPScan, SDK generation, and validation.",
@@ -687,6 +692,7 @@ export function buildLlmsManifest(origin: string) {
     "## Core Docs",
     "",
     `- [Documentation](${origin}/documentation): human-first overview with live playground.`,
+    `- [Agent guide](${origin}/agents): instructions for agents that interview a user, choose a template, draft markdown, validate, publish, and export.`,
     `- [OpenAPI 3.1](${origin}/openapi.json): canonical machine-readable API schema for discovery.`,
     `- [Versioned OpenAPI alias](${origin}/api/v1/openapi.json): backward-compatible API schema URL.`,
     `- [Markdown guide](${origin}/api/v1/spec/markdown): canonical Tiny CV markdown format.`,
@@ -695,6 +701,7 @@ export function buildLlmsManifest(origin: string) {
     "",
     "## Agent Resources",
     "",
+    `- [Agent guide](${origin}/agents): canonical finish-line workflow for agents.`,
     `- [llms-full.txt](${origin}/llms-full.txt): single-file Tiny CV docs bundle.`,
     `- [Templates](${origin}/api/v1/templates): list built-in templates.`,
     `- [Agent Finish](${origin}/api/v1/paid/agent-finish): no-account x402 or MPP endpoint for a standard hosted resume, claim link, queued PDF job, and receipt.`,

@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { TINYCV_AGENT_COOKBOOK, TINYCV_MARKDOWN_GUIDE } from "@/app/_lib/developer-platform-guides";
+import {
+  TINYCV_AGENT_COOKBOOK,
+  TINYCV_AGENT_FINISH_GUIDE,
+  TINYCV_MARKDOWN_GUIDE,
+} from "@/app/_lib/developer-platform-guides";
 import { RESUME_JSON_SCHEMA, validateResumeInput } from "@/app/_lib/developer-resume-input";
 import {
   DeveloperPlatformConflictError,
@@ -178,6 +182,7 @@ export async function POST(request: NextRequest) {
     if (method === "resources/list") {
       return jsonRpcResult(id, {
         resources: [
+          { mimeType: "text/markdown", name: "Tiny CV Agent Guide", uri: "tinycv://guides/agent-finish" },
           { mimeType: "text/markdown", name: "Tiny CV Markdown Guide", uri: "tinycv://spec/markdown" },
           { mimeType: "application/schema+json", name: "Tiny CV JSON Schema", uri: "tinycv://spec/json-schema" },
           ...RESUME_TEMPLATES.map((template) => ({
@@ -463,6 +468,14 @@ function buildJsonRpcIdempotencyKey(id: JsonRpcRequest["id"]) {
 }
 
 function readMcpResource(uri: string) {
+  if (uri === "tinycv://guides/agent-finish") {
+    return [{
+      mimeType: "text/markdown",
+      text: TINYCV_AGENT_FINISH_GUIDE,
+      uri,
+    }];
+  }
+
   if (uri === "tinycv://spec/markdown") {
     return [{
       mimeType: "text/markdown",
@@ -504,7 +517,7 @@ function buildPromptMessages(name: string) {
   if (name === "convert_profile_to_tinycv_resume") {
     return [{
       content: {
-        text: `${TINYCV_AGENT_COOKBOOK}\n\nUse the JSON schema or markdown guide to produce a complete Tiny CV resume.`,
+        text: `${TINYCV_AGENT_FINISH_GUIDE}\n\n${TINYCV_AGENT_COOKBOOK}\n\nUse the JSON schema or markdown guide to produce a complete Tiny CV resume.`,
         type: "text",
       },
       role: "user",

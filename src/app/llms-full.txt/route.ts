@@ -1,5 +1,9 @@
 import { DEVELOPER_ENDPOINT_DOCS, buildCurlExample, buildLlmsManifest } from "@/app/_lib/developer-platform-docs";
-import { TINYCV_AGENT_COOKBOOK, TINYCV_MARKDOWN_GUIDE } from "@/app/_lib/developer-platform-guides";
+import {
+  TINYCV_AGENT_COOKBOOK,
+  TINYCV_AGENT_FINISH_GUIDE,
+  TINYCV_MARKDOWN_GUIDE,
+} from "@/app/_lib/developer-platform-guides";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +34,10 @@ export async function GET(request: Request) {
     "## Tiny CV Markdown Guide",
     "",
     TINYCV_MARKDOWN_GUIDE,
+    "",
+    "## Tiny CV Agent Guide",
+    "",
+    TINYCV_AGENT_FINISH_GUIDE,
     "",
     "## Tiny CV Agent Cookbook",
     "",
