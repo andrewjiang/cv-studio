@@ -13,7 +13,7 @@ export const appHeaderInnerClass =
 
 export function AppHeaderBrand({ className = "" }: { className?: string }) {
   return (
-    <Link className={`group flex items-center gap-2 ${className}`} href="/">
+    <Link className={`group inline-flex min-h-11 items-center gap-2 ${className}`} href="/">
       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#065f46] text-white shadow-sm transition group-hover:scale-105">
         <span className="text-[0.65rem] font-bold tracking-tight">CV</span>
       </div>
@@ -42,10 +42,10 @@ export function AppHeader({
 
         <div className="flex items-center gap-6 sm:gap-10">
           <nav className="hidden items-center gap-6 text-[0.92rem] font-semibold text-slate-600 md:flex">
-            <Link className="transition hover:text-slate-950" href="/#examples">
+            <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/#examples">
               Templates
             </Link>
-            <Link className="transition hover:text-slate-950" href="/documentation">
+            <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/documentation">
               API
             </Link>
           </nav>
