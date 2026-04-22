@@ -180,6 +180,7 @@ function printReport() {
 function checkMachinePayments() {
   const evmAddress = env("TINYCV_X402_EVM_ADDRESS");
   const solanaAddress = env("TINYCV_X402_SOLANA_ADDRESS");
+  const x402FacilitatorUrl = env("TINYCV_X402_FACILITATOR_URL") || "https://x402.org/facilitator";
   const x402Network = env("TINYCV_X402_NETWORK") || "eip155:84532";
   const mppMethod = env("TINYCV_MPP_METHOD") || "tempo";
   const mppIntent = env("TINYCV_MPP_INTENT") || "charge";
@@ -197,6 +198,12 @@ function checkMachinePayments() {
     fail("machine-payments-x402-network", "TINYCV_X402_NETWORK must not use the Base Sepolia testnet default in production.");
   } else {
     pass("machine-payments-x402-network", "Machine payment x402 network is production-configured.");
+  }
+
+  if (x402FacilitatorUrl === "https://x402.org/facilitator") {
+    fail("machine-payments-x402-facilitator", "TINYCV_X402_FACILITATOR_URL must use a production facilitator in production.");
+  } else {
+    pass("machine-payments-x402-facilitator", "Machine payment x402 facilitator is production-configured.");
   }
 
   if (!env("MPP_SECRET_KEY")) {
