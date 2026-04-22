@@ -175,8 +175,10 @@ Tiny CV also exposes an experimental no-account paid path for agents. This is be
 
 - Agent guide: `https://tiny.cv/agents`
 - `POST /api/v1/paid/agent-finish` creates and publishes a standard hosted resume, returns a claimable edit link, queues a PDF job, and returns a payment receipt. Default price: `$1.00`.
-- `POST /api/v1/paid/resumes` creates a resume from markdown or JSON, publishes it immediately, and returns the public URL. Default price: `$0.25`.
-- `POST /api/v1/paid/resumes/:resume_id/pdf-jobs` queues a PDF job for a paid, published resume. Default price: `$0.50`.
+- `POST /api/v1/paid/resumes` creates a resume from markdown or JSON, publishes it immediately, and returns the public URL. Default price: `$0.50`.
+- `POST /api/v1/paid/resumes/:resume_id/pdf-jobs` queues a PDF job for a paid, published resume. Default price: `$1.00`.
+
+Agent Finish is the recommended one-call bundle. Calling the lower-level publish and PDF routes separately costs more by default, while the publish-only route stays available when an agent only needs a public link.
 
 All paid machine routes require `Idempotency-Key`, validate request bodies before issuing payment challenges, and support x402 plus MPP. Paid create/publish and Agent Finish reject malformed publish-ready markdown with `400` before any `402` payment challenge. A first unpaid request returns `402` with x402 `PAYMENT-REQUIRED`, MPP `WWW-Authenticate: Payment`, and `Cache-Control: no-store`; retry with the protocol-specific payment header.
 
