@@ -118,8 +118,8 @@ async function main() {
     const page = await browser.newPage();
     await page.setViewport({
       deviceScaleFactor: 1,
-      height: 1056,
-      width: 816,
+      height: 1200,
+      width: 1280,
     });
     await page.goto(absolutize(published.public_url), {
       timeout: timeoutMs,
