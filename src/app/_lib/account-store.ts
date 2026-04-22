@@ -248,6 +248,60 @@ export async function openUserResumeInWorkspace(input: {
   });
 }
 
+export async function attachWorkspaceResumeToUser(input: {
+  resumeId: string;
+  userId: string;
+  workspaceId: string;
+}): Promise<boolean> {
+  const sql = getAccountSql();
+  const now = new Date();
+
+  return await sql.begin(async (tx) => {
+    const [membership] = await tx<{ resume_id: string }[]>`
+      select resume_id
+      from workspace_resume_memberships
+      where workspace_id = ${input.workspaceId}
+        and resume_id = ${input.resumeId}
+        and deleted_at is null
+      limit 1
+    `;
+
+    if (!membership) {
+      return false;
+    }
+
+    await tx`
+      insert into user_resume_memberships (
+        user_id,
+        resume_id,
+        attached_via,
+        last_opened_at,
+        deleted_at,
+        created_at,
+        updated_at
+      ) values (
+        ${input.userId},
+        ${input.resumeId},
+        ${"workspace_auto"},
+        ${now},
+        ${null},
+        ${now},
+        ${now}
+      )
+      on conflict (user_id, resume_id)
+      do update set
+        attached_via = excluded.attached_via,
+        last_opened_at = excluded.last_opened_at,
+        deleted_at = null,
+        updated_at = excluded.updated_at
+    `;
+
+    await ensureUserProfile(tx, input.userId, input.resumeId, now);
+
+    return true;
+  });
+}
+
 export async function setPrimaryAccountResume(input: {
   resumeId: string;
   userId: string;

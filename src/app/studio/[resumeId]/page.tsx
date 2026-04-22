@@ -1,6 +1,9 @@
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { CvStudio } from "@/app/_components/cv-studio";
 import { EditorLinkAttachBridge } from "@/app/_components/editor-link-attach-bridge";
+import { attachWorkspaceResumeToUser } from "@/app/_lib/account-store";
+import { auth } from "@/app/_lib/auth";
 import {
   getStudioBootstrap,
   HostedResumeStoreUnavailableError,
@@ -66,6 +69,18 @@ export default async function HostedStudioPage({
 
   if (!payload) {
     redirect("/");
+  }
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (session?.user?.id) {
+    await attachWorkspaceResumeToUser({
+      resumeId,
+      userId: session.user.id,
+      workspaceId,
+    });
   }
 
   return (
