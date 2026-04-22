@@ -76,10 +76,108 @@ try {
 }
 
 function splitSqlStatements(contents) {
-  return contents
-    .split(/;\s*(?:\n|$)/)
-    .map((statement) => statement.trim())
-    .filter(Boolean);
+  const statements = [];
+  let statement = "";
+  let quote = null;
+  let dollarQuote = null;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let index = 0; index < contents.length; index += 1) {
+    const char = contents[index];
+    const next = contents[index + 1];
+
+    if (inLineComment) {
+      statement += char;
+      if (char === "\n") {
+        inLineComment = false;
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      statement += char;
+      if (char === "*" && next === "/") {
+        statement += next;
+        index += 1;
+        inBlockComment = false;
+      }
+      continue;
+    }
+
+    if (dollarQuote) {
+      if (contents.startsWith(dollarQuote, index)) {
+        statement += dollarQuote;
+        index += dollarQuote.length - 1;
+        dollarQuote = null;
+      } else {
+        statement += char;
+      }
+      continue;
+    }
+
+    if (quote) {
+      statement += char;
+
+      if (char === quote) {
+        if ((quote === "'" || quote === "\"") && next === quote) {
+          statement += next;
+          index += 1;
+          continue;
+        }
+
+        quote = null;
+      }
+
+      continue;
+    }
+
+    if (char === "-" && next === "-") {
+      statement += char + next;
+      index += 1;
+      inLineComment = true;
+      continue;
+    }
+
+    if (char === "/" && next === "*") {
+      statement += char + next;
+      index += 1;
+      inBlockComment = true;
+      continue;
+    }
+
+    if (char === "'" || char === "\"") {
+      statement += char;
+      quote = char;
+      continue;
+    }
+
+    const dollarMatch = /^\$[A-Za-z_][A-Za-z0-9_]*\$|^\$\$/.exec(contents.slice(index));
+    if (dollarMatch) {
+      dollarQuote = dollarMatch[0];
+      statement += dollarQuote;
+      index += dollarQuote.length - 1;
+      continue;
+    }
+
+    if (char === ";") {
+      const trimmed = statement.trim();
+      if (trimmed) {
+        statements.push(trimmed);
+      }
+      statement = "";
+      continue;
+    }
+
+    statement += char;
+  }
+
+  const trimmed = statement.trim();
+  if (trimmed) {
+    statements.push(trimmed);
+  }
+
+  return statements;
 }
 
 async function loadEnvFile(fileName) {

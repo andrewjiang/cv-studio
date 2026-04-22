@@ -6,6 +6,7 @@
     "dev": "node scripts/dev.mjs",
     "dev:restart": "node scripts/dev.mjs --restart",
     "db:migrate": "node scripts/migrate.mjs",
+    "check:db-security": "node scripts/check-supabase-security.mjs",
     "build": "next build",
     "check:prod": "node scripts/check-production-readiness.mjs",
     "start": "next start",

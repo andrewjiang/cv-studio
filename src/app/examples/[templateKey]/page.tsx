@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LandingPaperPreview } from "@/app/_components/tinycv-landing-page";
+import { ResumePaperPreview } from "@/app/_components/resume-paper-preview";
 import { ResumeDocumentContent, fontFamilyForChoice } from "@/app/_components/resume-content";
 import { parseCvMarkdown, resolveMobileResumeTypography } from "@/app/_lib/cv-markdown";
 import {
@@ -99,7 +99,7 @@ export default async function ExamplePage({ params }: ExamplePageProps) {
         </div>
 
         <div className="hidden justify-center lg:flex">
-          <LandingPaperPreview cropHeightRatio={1} scale={0.8} templateKey={templateKey as TemplateKey} />
+          <ResumePaperPreview cropHeightRatio={1} scale={0.8} templateKey={templateKey as TemplateKey} />
         </div>
       </div>
     </main>

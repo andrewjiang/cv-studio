@@ -24,6 +24,20 @@ type BillingCustomerRow = {
   user_id: string;
 };
 
+type BillingSubscriptionRow = {
+  cancel_at_period_end: boolean;
+  current_period_end: Date | string | null;
+  current_period_start: Date | string | null;
+  plan_key: string;
+  provider_subscription_id: string;
+  status: string;
+};
+
+type FounderGrantRow = {
+  created_at: Date | string;
+  metadata: Record<string, unknown> | null;
+};
+
 export type BillingLaunchState = {
   founderPassAvailable: boolean;
   founderPassLimit: number;
@@ -33,8 +47,39 @@ export type BillingLaunchState = {
 };
 
 export type AccountBillingManagementSummary = {
+  billingHistory: AccountBillingHistoryItem[];
   hasStripeCustomer: boolean;
+  paymentMethod: AccountPaymentMethodSummary | null;
   portalAvailable: boolean;
+  stripeCustomerId: string | null;
+  subscription: AccountBillingSubscriptionSummary | null;
+};
+
+export type AccountBillingHistoryItem = {
+  amount: number | null;
+  createdAt: string;
+  currency: string | null;
+  hostedInvoiceUrl: string | null;
+  id: string;
+  invoicePdf: string | null;
+  label: string;
+  status: string;
+  type: "founder_pass" | "invoice";
+};
+
+export type AccountBillingSubscriptionSummary = {
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null;
+  currentPeriodStart: string | null;
+  providerSubscriptionId: string;
+  status: string;
+};
+
+export type AccountPaymentMethodSummary = {
+  brand: string;
+  expMonth: number;
+  expYear: number;
+  last4: string;
 };
 
 export class BillingConfigurationError extends Error {
@@ -156,16 +201,86 @@ export async function getBillingLaunchState(): Promise<BillingLaunchState> {
 export async function getAccountBillingManagementSummary(userId: string): Promise<AccountBillingManagementSummary> {
   if (!process.env.DATABASE_URL) {
     return {
+      billingHistory: [],
       hasStripeCustomer: false,
+      paymentMethod: null,
       portalAvailable: false,
+      stripeCustomerId: null,
+      subscription: null,
     };
   }
 
+  const sql = getBillingSql();
   const customerId = await getStripeCustomerIdForUser(userId);
+  const subscription = await getAccountBillingSubscription(sql, userId);
+  const founderGrant = await getFounderPassGrant(sql, userId);
+  const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY?.trim());
+
+  if (!customerId || !stripeConfigured) {
+    return {
+      billingHistory: buildLocalBillingHistory(founderGrant),
+      hasStripeCustomer: Boolean(customerId),
+      paymentMethod: null,
+      portalAvailable: false,
+      stripeCustomerId: customerId,
+      subscription: subscription ? toSubscriptionSummary(subscription) : null,
+    };
+  }
+
+  const stripe = getStripeClient();
+  const [paymentMethod, invoices] = await Promise.all([
+    getDefaultCardPaymentMethod(stripe, customerId),
+    getCustomerInvoices(stripe, customerId),
+  ]);
 
   return {
+    billingHistory: [
+      ...invoices.map(toBillingHistoryInvoice),
+      ...buildLocalBillingHistory(founderGrant),
+    ].sort((left, right) => Number(new Date(right.createdAt)) - Number(new Date(left.createdAt))),
     hasStripeCustomer: Boolean(customerId),
-    portalAvailable: Boolean(customerId && process.env.STRIPE_SECRET_KEY?.trim()),
+    paymentMethod,
+    portalAvailable: true,
+    stripeCustomerId: customerId,
+    subscription: subscription ? toSubscriptionSummary(subscription) : null,
+  };
+}
+
+export async function updateAccountSubscriptionCancellation(input: {
+  cancelAtPeriodEnd: boolean;
+  userId: string;
+}) {
+  const sql = getBillingSql();
+  const subscription = await getAccountBillingSubscription(sql, input.userId);
+
+  if (!subscription) {
+    throw new BillingValidationError("No active subscription exists for this account.");
+  }
+
+  const updated = await getStripeClient().subscriptions.update(
+    subscription.provider_subscription_id,
+    {
+      cancel_at_period_end: input.cancelAtPeriodEnd,
+    },
+  ).catch((error: unknown) => {
+    throw new BillingProviderError(error instanceof Error
+      ? error.message
+      : "Stripe subscription update failed.");
+  });
+
+  await upsertStripeSubscription(sql, updated);
+  await recordUsageEvent({
+    action: input.cancelAtPeriodEnd ? "billing.subscription_cancel_scheduled" : "billing.subscription_cancel_resumed",
+    metadata: {
+      stripe_subscription_id: updated.id,
+    },
+    userId: input.userId,
+  });
+
+  return {
+    cancelAtPeriodEnd: updated.cancel_at_period_end,
+    currentPeriodEnd: formatNullableTimestamp(getSubscriptionPeriod(updated).currentPeriodEnd),
+    status: updated.status,
   };
 }
 
@@ -416,6 +531,78 @@ async function getStripeCustomerIdForUser(userId: string) {
   return existing?.stripe_customer_id ?? null;
 }
 
+async function getAccountBillingSubscription(sql: SqlClient, userId: string) {
+  const [subscription] = await sql<BillingSubscriptionRow[]>`
+    select
+      provider_subscription_id,
+      plan_key,
+      status,
+      current_period_start,
+      current_period_end,
+      cancel_at_period_end
+    from billing_subscriptions
+    where user_id = ${userId}
+      and provider = 'stripe'
+      and status in ('active', 'trialing', 'past_due')
+    order by current_period_end desc nulls first, updated_at desc
+    limit 1
+  `;
+
+  return subscription ?? null;
+}
+
+async function getFounderPassGrant(sql: SqlClient, userId: string) {
+  const [grant] = await sql<FounderGrantRow[]>`
+    select
+      metadata,
+      created_at
+    from account_plan_grants
+    where user_id = ${userId}
+      and plan_key = 'founder'
+      and source = 'founder_pass'
+      and revoked_at is null
+    order by created_at desc
+    limit 1
+  `;
+
+  return grant ?? null;
+}
+
+async function getDefaultCardPaymentMethod(stripe: Stripe, customerId: string) {
+  const customer = await stripe.customers.retrieve(customerId, {
+    expand: ["invoice_settings.default_payment_method"],
+  }).catch(() => null);
+
+  if (customer && !customer.deleted) {
+    const defaultPaymentMethod = customer.invoice_settings.default_payment_method;
+
+    if (defaultPaymentMethod && typeof defaultPaymentMethod !== "string") {
+      const card = toCardPaymentMethod(defaultPaymentMethod);
+
+      if (card) {
+        return card;
+      }
+    }
+  }
+
+  const paymentMethods = await stripe.paymentMethods.list({
+    customer: customerId,
+    limit: 1,
+    type: "card",
+  }).catch(() => null);
+
+  return paymentMethods?.data[0] ? toCardPaymentMethod(paymentMethods.data[0]) : null;
+}
+
+async function getCustomerInvoices(stripe: Stripe, customerId: string) {
+  const invoices = await stripe.invoices.list({
+    customer: customerId,
+    limit: 8,
+  }).catch(() => null);
+
+  return invoices?.data ?? [];
+}
+
 async function handleCheckoutSessionCompleted(
   sql: SqlClient,
   session: Stripe.Checkout.Session,
@@ -654,6 +841,66 @@ function getSubscriptionPeriod(subscription: Stripe.Subscription) {
   };
 }
 
+function toCardPaymentMethod(paymentMethod: Stripe.PaymentMethod): AccountPaymentMethodSummary | null {
+  if (!paymentMethod.card) {
+    return null;
+  }
+
+  return {
+    brand: paymentMethod.card.brand,
+    expMonth: paymentMethod.card.exp_month,
+    expYear: paymentMethod.card.exp_year,
+    last4: paymentMethod.card.last4,
+  };
+}
+
+function toBillingHistoryInvoice(invoice: Stripe.Invoice): AccountBillingHistoryItem {
+  return {
+    amount: typeof invoice.amount_paid === "number" ? invoice.amount_paid : null,
+    createdAt: toDate(invoice.created)?.toISOString() ?? new Date().toISOString(),
+    currency: invoice.currency ?? null,
+    hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
+    id: invoice.id ?? `invoice-${invoice.created}`,
+    invoicePdf: invoice.invoice_pdf ?? null,
+    label: invoice.number ? `Invoice ${invoice.number}` : "Stripe invoice",
+    status: invoice.status ?? "unknown",
+    type: "invoice",
+  };
+}
+
+function buildLocalBillingHistory(founderGrant: FounderGrantRow | null): AccountBillingHistoryItem[] {
+  if (!founderGrant) {
+    return [];
+  }
+
+  const metadata = founderGrant.metadata ?? {};
+  const amount = typeof metadata.amount_total === "number" ? metadata.amount_total : null;
+  const currency = typeof metadata.currency === "string" ? metadata.currency : null;
+  const sessionId = typeof metadata.stripe_session_id === "string" ? metadata.stripe_session_id : "founder-pass";
+
+  return [{
+    amount,
+    createdAt: formatTimestamp(founderGrant.created_at),
+    currency,
+    hostedInvoiceUrl: null,
+    id: `founder-pass:${sessionId}`,
+    invoicePdf: null,
+    label: "Founder Pass",
+    status: "paid",
+    type: "founder_pass",
+  }];
+}
+
+function toSubscriptionSummary(subscription: BillingSubscriptionRow): AccountBillingSubscriptionSummary {
+  return {
+    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    currentPeriodEnd: formatNullableTimestamp(subscription.current_period_end),
+    currentPeriodStart: formatNullableTimestamp(subscription.current_period_start),
+    providerSubscriptionId: subscription.provider_subscription_id,
+    status: subscription.status,
+  };
+}
+
 function getStripeCustomerId(customer: Stripe.Checkout.Session["customer"] | Stripe.Subscription["customer"]) {
   if (!customer) {
     return null;
@@ -664,6 +911,14 @@ function getStripeCustomerId(customer: Stripe.Checkout.Session["customer"] | Str
 
 function toDate(value: number | null | undefined) {
   return typeof value === "number" ? new Date(value * 1000) : null;
+}
+
+function formatTimestamp(value: Date | string) {
+  return (value instanceof Date ? value : new Date(value)).toISOString();
+}
+
+function formatNullableTimestamp(value: Date | string | null) {
+  return value ? formatTimestamp(value) : null;
 }
 
 function getAppUrl() {

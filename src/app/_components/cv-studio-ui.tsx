@@ -301,9 +301,9 @@ export function MenuSection({
   );
 }
 
-export function DownloadIcon() {
+export function DownloadIcon({ className = "h-[1.05rem] w-[1.05rem]" }: { className?: string }) {
   return (
-    <svg aria-hidden="true" className="h-[1.05rem] w-[1.05rem]" fill="none" viewBox="0 0 24 24">
+    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24">
       <path
         d="M12 4v9m0 0 3.5-3.5M12 13l-3.5-3.5M5 16.5v1A1.5 1.5 0 0 0 6.5 19h11a1.5 1.5 0 0 0 1.5-1.5v-1"
         stroke="currentColor"

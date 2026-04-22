@@ -125,6 +125,25 @@ export function PencilIcon({ className }: { className?: string }) {
   );
 }
 
+export function SquarePenIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3H6.75A3.75 3.75 0 0 0 3 6.75v10.5A3.75 3.75 0 0 0 6.75 21h10.5A3.75 3.75 0 0 0 21 17.25V12" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.25 15.25l1.4-.28a2.25 2.25 0 0 0 1.16-.63l7.07-7.07a1.72 1.72 0 0 0-2.43-2.43l-7.07 7.07a2.25 2.25 0 0 0-.63 1.16l-.28 1.4a.65.65 0 0 0 .78.78Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function LinkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.6 7.8l1.05-1.05a4.2 4.2 0 0 1 5.94 5.94l-1.05 1.05" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14.4 16.2l-1.05 1.05a4.2 4.2 0 1 1-5.94-5.94l1.05-1.05" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.85 14.15l4.3-4.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function TrashIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

@@ -230,7 +230,7 @@ Before sharing publicly:
 - Paid account-owned public resumes hide Tiny CV branding.
 - `usage_events` records signup/sign-in, account claim, checkout start/complete, workspace publish, API publish, and PDF job events.
 - Subscription accounts can open Stripe Customer Portal from `/account`.
-- `/account/resumes/:resumeId/open` reattaches an account-owned draft to the current browser and opens Studio.
+- `/cvs/:resumeId/open` reattaches an account-owned draft to the current browser and opens Studio.
 - `/studio/[resumeId]` saves and publishes.
 - `/:slug` renders the public page.
 - `/developers` loads.

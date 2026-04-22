@@ -92,7 +92,8 @@ Tiny CV uses Better Auth for the account layer.
 - Auth route: `/api/auth/[...all]`
 - Account dashboard: `/account`
 - Workspace claim endpoint: `POST /api/account/claim-workspace`
-- Account-owned resume opener: `/account/resumes/:resumeId/open`
+- Account-owned CV library: `/cvs`
+- Account-owned resume opener: `/cvs/:resumeId/open`
 
 Email/password auth is enabled by default. Google and GitHub sign-in are enabled when their OAuth env vars are present.
 

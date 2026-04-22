@@ -9,7 +9,6 @@ import {
   FileTextIcon,
   LayoutIcon,
   LogoutIcon,
-  SettingsIcon,
   UserIcon,
 } from "./icons";
 
@@ -80,15 +79,15 @@ export function UserMenu() {
 
           <MenuGroup>
             <UserMenuLink
-              href="/account/resumes"
+              href="/cvs"
               icon={<LayoutIcon className="h-4 w-4" />}
               label="My CVs"
               onNavigate={() => setIsOpen(false)}
             />
             <UserMenuLink
               href="/account"
-              icon={<SettingsIcon className="h-4 w-4" />}
-              label="Account settings"
+              icon={<UserIcon className="h-4 w-4" />}
+              label="Account"
               onNavigate={() => setIsOpen(false)}
             />
           </MenuGroup>

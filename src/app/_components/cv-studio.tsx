@@ -10,6 +10,8 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import { AppHeaderBrand, appHeaderClass } from "@/app/_components/app-header";
+import { brandPrimaryButtonClass } from "@/app/_components/button-classes";
 import { ResumeTemplateChooser } from "@/app/_components/resume-template-chooser";
 import {
   CheckIcon,
@@ -22,14 +24,13 @@ import {
   menuButtonClass,
   MobileIcon,
   modeButtonClass,
-  primaryActionButtonClass,
   ShareIcon,
   SpinnerIcon,
   StylePreferenceControls,
   textActionLinkClass,
   TuneIcon,
 } from "@/app/_components/cv-studio-ui";
-import { DotsHorizontalIcon } from "@/app/_components/icons";
+import { CopyIcon, DotsHorizontalIcon, ExternalLinkIcon } from "@/app/_components/icons";
 import {
   ResumeDocumentContent,
   ResumePreview,
@@ -174,12 +175,16 @@ export function CvStudio({
     mode === "edit"
       ? "grid items-start gap-7 xl:grid-cols-[minmax(23rem,0.8fr)_minmax(38rem,1.2fr)]"
       : "flex justify-center";
+  const studioWorkspaceMaxWidthClassName =
+    mode === "edit" ? "max-w-[96rem] xl:w-[90%]" : "max-w-[108rem]";
   const isPublishing = remoteSyncState.kind === "publishing";
   const publishButtonLabel = isPublishing
     ? "Publishing..."
     : activeResume.isPublished
       ? "Publish changes"
       : "Publish";
+  const headerSecondaryActionButtonClass =
+    "inline-flex h-11 items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-4 text-[0.92rem] font-bold text-slate-700 shadow-sm transition hover:border-black/20 hover:bg-slate-50 hover:text-slate-950";
   const mobileCompactIconButtonClass =
     "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-black/10 bg-white/92 text-slate-700 transition hover:border-black/20 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40";
   const fitAdjustmentPreference =
@@ -351,7 +356,7 @@ export function CvStudio({
     setRemoteSyncState({ kind: "idle" });
     setNotice(
       syncResult === "published"
-        ? { kind: "success", message: "Published. Share link is ready." }
+        ? { kind: "success", message: "Published. Link is ready." }
         : { kind: "success", message: "Changes saved." },
     );
 
@@ -897,12 +902,10 @@ export function CvStudio({
 
   return (
     <main className="app-shell flex flex-1 flex-col">
-      <header className="app-chrome sticky top-0 z-50 border-b border-black/5 bg-[#fbf7f0]/80 backdrop-blur-md">
+      <header className={`app-chrome ${appHeaderClass}`}>
         <div className="mx-auto flex w-full max-w-[108rem] flex-col gap-2 px-5 py-3 sm:px-8 lg:hidden">
           <div className="flex items-center justify-between gap-3">
-            <h1 className="text-[0.96rem] leading-none font-semibold uppercase tracking-[0.26em] text-[var(--accent-strong)]">
-              TINY CV
-            </h1>
+            <AppHeaderBrand />
             <UserMenu />
           </div>
 
@@ -991,114 +994,122 @@ export function CvStudio({
           ) : null}
         </div>
 
-        <div className="mx-auto hidden w-full max-w-[108rem] flex-col gap-1.5 px-5 py-3 sm:px-8 lg:flex lg:px-12">
-          <div className="flex items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
-              <h1 className="text-[1.05rem] leading-none font-semibold uppercase tracking-[0.32em] text-[var(--accent-strong)] sm:text-[1.22rem]">
-                TINY CV
-              </h1>
+        <div className="mx-auto hidden h-16 w-full max-w-[108rem] items-center justify-between gap-6 px-5 sm:px-8 lg:flex lg:px-12">
+          <div className="flex items-center gap-5">
+            <AppHeaderBrand />
 
-              <span className="h-6 w-px bg-black/10" aria-hidden />
+            <span className="h-6 w-px bg-black/10" aria-hidden />
 
-              <div className="flex items-center gap-2.5">
-                <span className="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-slate-400">
-                  Draft
+            <div className="flex items-center gap-2.5">
+              <span className="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-slate-400">
+                Draft
+              </span>
+              <div className="relative min-w-[14.5rem] rounded-[1rem] border border-black/10 bg-white/92 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition hover:border-black/20 hover:shadow-md">
+                <select
+                  aria-label="Select draft"
+                  className="h-11 w-full cursor-pointer appearance-none bg-transparent px-4 pr-11 text-[0.92rem] font-bold text-slate-800 outline-none"
+                  onChange={(event) => {
+                    if (event.target.value === "__new__") {
+                      setShowTemplateChooser(true);
+                      return;
+                    }
+
+                    void selectResume(event.target.value);
+                  }}
+                  value={workspaceState.currentResumeId ?? activeResume.id}
+                >
+                  {workspaceState.resumes.map((resume) => (
+                    <option key={resume.id} value={resume.id}>
+                      {resume.title}
+                    </option>
+                  ))}
+                  <option value="__new__">+ New resume</option>
+                </select>
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
+                  <ChevronDownIcon />
                 </span>
-                <div className="relative min-w-[14.5rem] rounded-[1rem] border border-black/10 bg-white/92 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition hover:border-black/20 hover:shadow-md">
-                  <select
-                    aria-label="Select draft"
-                    className="h-11 w-full cursor-pointer appearance-none bg-transparent px-4 pr-11 text-[0.92rem] font-bold text-slate-800 outline-none"
-                    onChange={(event) => {
-                      if (event.target.value === "__new__") {
-                        setShowTemplateChooser(true);
-                        return;
-                      }
+              </div>
 
-                      void selectResume(event.target.value);
+              <div className="relative" ref={desktopMenuRef}>
+                <button
+                  aria-expanded={menuOpen}
+                  aria-haspopup="menu"
+                  aria-label="Draft actions"
+                  className={iconActionButtonClass}
+                  onClick={() => {
+                    setMenuOpen((current) => !current);
+                    setIsRenamingDraft(false);
+                    setRenameDraftValue(activeResume.title);
+                  }}
+                  title="Draft actions"
+                  type="button"
+                >
+                  <DotsHorizontalIcon className="h-5 w-5" />
+                </button>
+                {menuOpen ? (
+                  <DraftActionsMenu
+                    canDelete={workspaceState.resumes.length > 1}
+                    exportMarkdown={() => {
+                      exportResume(activeResume);
+                      setMenuOpen(false);
                     }}
-                    value={workspaceState.currentResumeId ?? activeResume.id}
-                  >
-                    {workspaceState.resumes.map((resume) => (
-                      <option key={resume.id} value={resume.id}>
-                        {resume.title}
-                      </option>
-                    ))}
-                    <option value="__new__">+ New resume</option>
-                  </select>
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
-                    <ChevronDownIcon />
-                  </span>
-                </div>
-
-                <div className="relative" ref={desktopMenuRef}>
-                  <button
-                    aria-expanded={menuOpen}
-                    aria-haspopup="menu"
-                    aria-label="Draft actions"
-                    className={iconActionButtonClass}
-                    onClick={() => {
-                      setMenuOpen((current) => !current);
+                    isRenamingDraft={isRenamingDraft}
+                    mobile={false}
+                    onDeleteDraft={() => void deleteCurrentResume()}
+                    onRenameCancel={() => {
                       setIsRenamingDraft(false);
                       setRenameDraftValue(activeResume.title);
                     }}
-                    title="Draft actions"
-                    type="button"
-                  >
-                    <DotsHorizontalIcon className="h-5 w-5" />
-                  </button>
-                  {menuOpen ? (
-                    <DraftActionsMenu
-                      canDelete={workspaceState.resumes.length > 1}
-                      exportMarkdown={() => {
-                        exportResume(activeResume);
-                        setMenuOpen(false);
-                      }}
-                      isRenamingDraft={isRenamingDraft}
-                      mobile={false}
-                      onDeleteDraft={() => void deleteCurrentResume()}
-                      onRenameCancel={() => {
-                        setIsRenamingDraft(false);
-                        setRenameDraftValue(activeResume.title);
-                      }}
-                      onRenameChange={setRenameDraftValue}
-                      onRenameCommit={() => void renameCurrentResume()}
-                      onRenameStart={() => {
-                        setIsRenamingDraft(true);
-                        setRenameDraftValue(activeResume.title);
-                      }}
-                      onResetTemplate={() => {
-                        setMarkdown(getResumeTemplate(activeResume.templateKey).markdown);
-                        setMenuOpen(false);
-                      }}
-                      renameInputRef={renameInputRef}
-                      renameValue={renameDraftValue}
-                    />
-                  ) : null}
-                </div>
+                    onRenameChange={setRenameDraftValue}
+                    onRenameCommit={() => void renameCurrentResume()}
+                    onRenameStart={() => {
+                      setIsRenamingDraft(true);
+                      setRenameDraftValue(activeResume.title);
+                    }}
+                    onResetTemplate={() => {
+                      setMarkdown(getResumeTemplate(activeResume.templateKey).markdown);
+                      setMenuOpen(false);
+                    }}
+                    renameInputRef={renameInputRef}
+                    renameValue={renameDraftValue}
+                  />
+                ) : null}
               </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                className={primaryActionButtonClass}
-                disabled={isPublishing}
-                onClick={() => void mutateResume({ publish: true })}
-                type="button"
-              >
-                {isPublishing ? <SpinnerIcon /> : null}
-                <span>{publishButtonLabel}</span>
-              </button>
-
-              <UserMenu />
             </div>
           </div>
 
-          {remoteSyncState.kind === "saving" || remoteSyncState.kind === "publishing" ? (
-            <div className="flex items-center justify-end gap-2 pr-1 text-right text-[0.8rem] leading-5 text-slate-500">
-              <SpinnerIcon />
-              <span>{describeRemoteSyncState(activeResume, remoteSyncState)}</span>
-            </div>
-          ) : null}
+          <div className="flex items-center gap-4">
+            {remoteSyncState.kind === "saving" || remoteSyncState.kind === "publishing" ? (
+              <div className="hidden items-center gap-2 text-right text-[0.8rem] leading-5 text-slate-500 xl:flex">
+                <SpinnerIcon />
+                <span>{describeRemoteSyncState(activeResume, remoteSyncState)}</span>
+              </div>
+            ) : null}
+
+            {activeResume.isPublished && publicLink ? (
+              <a
+                className={headerSecondaryActionButtonClass}
+                href={publicLink}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <ExternalLinkIcon className="h-4 w-4" />
+                <span>View live</span>
+              </a>
+            ) : null}
+
+            <button
+              className={`${brandPrimaryButtonClass} h-11 px-5 text-[0.92rem]`}
+              disabled={isPublishing}
+              onClick={() => void mutateResume({ publish: true })}
+              type="button"
+            >
+              {isPublishing ? <SpinnerIcon /> : null}
+              <span>{publishButtonLabel}</span>
+            </button>
+
+            <UserMenu />
+          </div>
         </div>
       </header>
 
@@ -1117,7 +1128,7 @@ export function CvStudio({
         </div>
       ) : null}
 
-      <div className="studio-workspace mx-auto flex w-full max-w-[108rem] flex-1 flex-col px-4 pt-4 pb-4 sm:px-5 lg:px-8 lg:pt-6 lg:pb-5">
+      <div className={`studio-workspace mx-auto flex w-full ${studioWorkspaceMaxWidthClassName} flex-1 flex-col px-4 pt-4 pb-4 sm:px-5 lg:px-8 lg:pt-6 lg:pb-5`}>
         <div className="app-chrome mb-3 flex items-center justify-between gap-2 px-1 lg:hidden">
           <div className="flex w-[12.2rem] shrink-0 gap-[0.2rem] rounded-full border border-black/10 bg-white/92 p-[0.2rem] shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
             <button
@@ -1299,13 +1310,14 @@ export function CvStudio({
                 Live Preview
               </h2>
               <div className="flex items-center gap-2">
-                {activeResume.isPublished ? (
+                {activeResume.isPublished && publicLink ? (
                   <button
                     className={textActionLinkClass}
                     onClick={() => void copyHostedLink(publicLink)}
                     type="button"
                   >
-                    Share link
+                    <CopyIcon className="h-[1.05rem] w-[1.05rem]" />
+                    <span>Copy link</span>
                   </button>
                 ) : null}
                 <button

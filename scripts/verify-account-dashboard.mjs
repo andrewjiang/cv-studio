@@ -72,16 +72,16 @@ async function main() {
   assert(apiKey.project?.id, "Account API key creation did not return a project.");
 
   const accountHtml = await fetchText("/account");
-  assert(accountHtml.includes("Public profile"), "Dashboard did not render the publishing section.");
+  assert(accountHtml.includes("Publishing"), "Dashboard did not render the publishing section.");
   assert(accountHtml.includes("Billing"), "Dashboard did not render billing.");
   assert(accountHtml.includes("Developer access"), "Dashboard did not render developer API access.");
   assert(accountHtml.includes("Dashboard smoke key"), "Dashboard did not render the created API key.");
   assert(accountHtml.includes("Primary"), "Dashboard did not mark the primary resume.");
   assert(accountHtml.includes(bootstrapped.resume.title), "Dashboard did not include the resume title.");
 
-  const libraryHtml = await fetchText("/account/resumes");
-  assert(libraryHtml.includes("CVs"), "CV library page did not render.");
-  assert(libraryHtml.includes("Copy public link"), "CV library did not render copy-link action.");
+  const libraryHtml = await fetchText("/cvs");
+  assert(libraryHtml.includes("My CVs"), "My CVs page did not render.");
+  assert(libraryHtml.includes("Open public link"), "CV library did not render public-link action.");
   assert(libraryHtml.includes("Primary"), "CV library did not mark the primary resume.");
   assert(libraryHtml.includes(bootstrapped.resume.title), "CV library did not include the resume title.");
 

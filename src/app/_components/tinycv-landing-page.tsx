@@ -6,10 +6,10 @@ import Link from "next/link";
 import desktopEditorShot from "../../../docs/cv-studio-desktop.png";
 import { AgentInstructionCopyButton } from "@/app/_components/agent-instruction-copy-button";
 import { brandPrimaryButtonClass } from "@/app/_components/button-classes";
-import { ResumeDocumentContent, ResumePreview, fontFamilyForChoice } from "@/app/_components/resume-content";
+import { ResumePaperPreview } from "@/app/_components/resume-paper-preview";
+import { ResumeDocumentContent, fontFamilyForChoice } from "@/app/_components/resume-content";
 import { AppHeader } from "./app-header";
 import { ArrowRightIcon, CheckIcon, GitHubIcon, LayoutIcon, FileTextIcon, GlobeIcon, CodeIcon } from "./icons";
-import { getPageMetrics } from "@/app/_lib/cv-fit";
 import { parseCvMarkdown, resolveMobileResumeTypography } from "@/app/_lib/cv-markdown";
 import {
   LANDING_EXAMPLES,
@@ -365,7 +365,7 @@ function LandingHeroProof() {
       <div className="relative">
         {/* Paper Preview - The "Desktop" view */}
         <div className="relative z-10">
-          <LandingPaperPreview
+          <ResumePaperPreview
             className="shadow-[0_80px_160px_-30px_rgba(15,23,42,0.15),0_30px_60px_-15px_rgba(15,23,42,0.08),0_10px_30px_-5px_rgba(15,23,42,0.04)] ring-1 ring-black/5"
             cropHeightRatio={1}
             fitScale={0.96}
@@ -520,7 +520,7 @@ function ExampleCard({
         )}
         href={`/new?template=${templateKey}`}
       >
-        <LandingPaperPreview
+        <ResumePaperPreview
           className="shadow-[0_30px_70px_rgba(15,23,42,0.12)] ring-1 ring-black/5"
           cropHeightRatio={1}
           fitScale={LANDING_PREVIEW_FIT_SCALES[templateKey]}
@@ -618,56 +618,6 @@ function PricingCard({
         {body}
       </p>
     </article>
-  );
-}
-
-export function LandingPaperPreview({
-  className,
-  cropHeightRatio = 1,
-  fitScale = 1,
-  markdown,
-  scale,
-  templateKey,
-}: {
-  className?: string;
-  cropHeightRatio?: number;
-  fitScale?: number;
-  markdown?: string;
-  scale: number;
-  templateKey: TemplateKey;
-}) {
-  const template = getResumeTemplate(templateKey);
-  const document = parseCvMarkdown(markdown ?? template.markdown);
-  const pageMetrics = getPageMetrics(document.style);
-  const previewHeight = pageMetrics.pageHeight * scale * cropHeightRatio;
-
-  return (
-    <div
-      className={cx(
-        "overflow-hidden rounded-[1.2rem] border border-slate-300 bg-white text-left",
-        className,
-      )}
-      style={{
-        height: `${previewHeight}px`,
-        width: `${pageMetrics.pageWidth * scale}px`,
-      }}
-    >
-      <div
-        className="origin-top-left"
-        style={{
-          height: `${pageMetrics.pageHeight}px`,
-          transform: `scale(${scale})`,
-          width: `${pageMetrics.pageWidth}px`,
-        }}
-      >
-        <ResumePreview
-          document={document}
-          fitScale={fitScale}
-          interactive={false}
-          showPageGuides={false}
-        />
-      </div>
-    </div>
   );
 }
 

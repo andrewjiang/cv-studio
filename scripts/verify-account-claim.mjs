@@ -39,7 +39,7 @@ async function main() {
   assert(claimed.claimedCount === 1, `Expected to claim 1 resume, claimed ${claimed.claimedCount}.`);
   assert(claimed.currentResumeId === bootstrapped.resume.id, "Claimed current resume did not match bootstrapped resume.");
 
-  const opened = await rawRequest(`/account/resumes/${bootstrapped.resume.id}/open`, {
+  const opened = await rawRequest(`/cvs/${bootstrapped.resume.id}/open`, {
     redirect: "manual",
   });
   assert(opened.status === 307 || opened.status === 308, `Expected open route redirect, received ${opened.status}.`);

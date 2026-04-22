@@ -406,17 +406,16 @@ export function AccountApiKeyCreateForm() {
       </form>
 
       {newApiKey ? (
-        <div className="mt-4 rounded-[1.1rem] border border-[#065f46]/15 bg-[#ecfdf5] p-4">
-          <p className="text-sm font-bold text-slate-950">Copy this key now.</p>
-          <p className="mt-1 text-sm font-medium leading-5 text-slate-600">
-            Tiny CV only shows the full key once.
-          </p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <code className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-[#065f46]/10 bg-white/82 px-3 py-2.5 text-xs font-bold text-slate-800">
-              {newApiKey}
-            </code>
+        <div className="mt-4 rounded-[1.2rem] border border-[#065f46]/20 bg-[#ecfdf5] p-4 shadow-[0_10px_24px_rgba(6,95,70,0.08)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-black text-[#064e3b]">API key created</p>
+              <p className="mt-1 text-sm font-semibold leading-5 text-[#064e3b]/75">
+                Shown once. Copy it before leaving this page.
+              </p>
+            </div>
             <button
-              className={`${brandSecondaryButtonClass} gap-2 px-4 py-2.5 text-sm`}
+              className={`${brandPrimaryButtonClass} gap-2 px-4 py-2.5 text-sm`}
               onClick={copyKey}
               type="button"
             >
@@ -424,6 +423,9 @@ export function AccountApiKeyCreateForm() {
               {copied ? "Copied" : "Copy"}
             </button>
           </div>
+          <code className="mt-3 block max-w-full overflow-x-auto rounded-xl border border-[#065f46]/12 bg-white/90 px-3 py-3 font-mono text-xs font-bold leading-5 text-slate-900">
+            {newApiKey}
+          </code>
         </div>
       ) : null}
 
@@ -562,7 +564,7 @@ export function SubdomainClaimForm({
         <p className="text-sm font-semibold leading-5 text-red-700">{error}</p>
       ) : null}
       <button
-        className={`${brandPrimaryButtonClass} px-5 py-3 text-sm`}
+        className={`${brandPrimaryButtonClass} w-full px-5 py-3 text-sm`}
         disabled={pending}
         type="submit"
       >
@@ -695,7 +697,74 @@ export function SetPrimaryResumeIconButton({
   );
 }
 
-export function BillingPortalButton() {
+export function BillingSubscriptionActionButton({
+  cancelAtPeriodEnd,
+}: {
+  cancelAtPeriodEnd: boolean;
+}) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function updateSubscription() {
+    setError(null);
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/billing/subscription", {
+        body: JSON.stringify({
+          cancelAtPeriodEnd,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "PATCH",
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        setError(payload.error || "Could not update subscription.");
+        return;
+      }
+
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        className={cancelAtPeriodEnd
+          ? "inline-flex items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-55"
+          : `${brandSecondaryButtonClass} px-4 py-2.5 text-sm`}
+        disabled={pending}
+        onClick={updateSubscription}
+        type="button"
+      >
+        {pending
+          ? "Updating..."
+          : cancelAtPeriodEnd
+          ? "Cancel renewal"
+          : "Resume renewal"}
+      </button>
+      {error ? (
+        <p className="mt-2 max-w-xs text-sm font-semibold leading-5 text-red-700">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function BillingPortalButton({
+  children = "Manage billing",
+}: {
+  children?: React.ReactNode;
+}) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -731,7 +800,7 @@ export function BillingPortalButton() {
         onClick={openPortal}
         type="button"
       >
-        {pending ? "Opening billing..." : "Manage billing"}
+        {pending ? "Opening..." : children}
       </button>
       {error ? (
         <p className="mt-2 max-w-xs text-sm font-semibold leading-5 text-red-700">
