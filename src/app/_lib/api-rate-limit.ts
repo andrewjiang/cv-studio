@@ -57,6 +57,8 @@ const DEFAULT_POLICIES: Record<ApiRateLimitAction, RateLimitPolicy> = {
 
 type RateLimitEventRow = {
   created_at: Date | string;
+  subject_hash: string;
+  subject_type: RateLimitSubject["type"];
 };
 
 let postgresClient: SqlClient | null = null;
@@ -105,10 +107,7 @@ export async function assertApiRateLimit(input: {
 
   const sql = getPostgresClient();
   await ensureSchema(sql);
-
-  for (const subject of subjects) {
-    await recordAndAssertSubject(sql, input.action, subject, policy);
-  }
+  await recordAndAssertSubjects(sql, input.action, subjects, policy);
 }
 
 export function buildRateLimitSubjects(
@@ -177,14 +176,23 @@ export function getRateLimitRetryAfterSeconds(
   return Math.ceil(retryAfterMs / 1000);
 }
 
-async function recordAndAssertSubject(
+async function recordAndAssertSubjects(
   sql: SqlClient,
   action: ApiRateLimitAction,
-  subject: RateLimitSubject,
+  subjects: RateLimitSubject[],
   policy: RateLimitPolicy,
 ) {
-  const subjectHash = hashRateLimitSubject(subject);
   const windowStart = new Date(Date.now() - policy.windowSeconds * 1000);
+  const timestamp = new Date();
+  const events = subjects.map((subject) => ({
+    action,
+    created_at: timestamp,
+    id: randomUUID(),
+    subject_hash: hashRateLimitSubject(subject),
+    subject_type: subject.type,
+  }));
+  const subjectHashes = events.map((event) => event.subject_hash);
+  const subjectTypes = [...new Set(events.map((event) => event.subject_type))];
 
   const recentEvents = await sql.begin(async (tx) => {
     await tx`
@@ -194,30 +202,46 @@ async function recordAndAssertSubject(
         subject_type,
         subject_hash,
         created_at
-      ) values (
-        ${randomUUID()},
-        ${action},
-        ${subject.type},
-        ${subjectHash},
-        ${new Date()}
+      )
+      select *
+      from unnest(
+        ${events.map((event) => event.id)}::text[],
+        ${events.map((event) => event.action)}::text[],
+        ${events.map((event) => event.subject_type)}::text[],
+        ${events.map((event) => event.subject_hash)}::text[],
+        ${events.map((event) => event.created_at)}::timestamptz[]
       )
     `;
 
     return tx<RateLimitEventRow[]>`
-      select created_at
+      select subject_type, subject_hash, created_at
       from api_rate_limit_events
       where action = ${action}
-        and subject_type = ${subject.type}
-        and subject_hash = ${subjectHash}
+        and subject_type = any(${subjectTypes})
+        and subject_hash = any(${subjectHashes})
         and created_at >= ${windowStart}
-      order by created_at asc
+      order by subject_type asc, subject_hash asc, created_at asc
     `;
   });
 
-  if (recentEvents.length > policy.max) {
-    throw new ApiRateLimitError(
-      getRateLimitRetryAfterSeconds(recentEvents[0]?.created_at, policy.windowSeconds),
-    );
+  const recentEventsBySubject = new Map<string, RateLimitEventRow[]>();
+
+  for (const event of recentEvents) {
+    const key = `${event.subject_type}:${event.subject_hash}`;
+    const subjectEvents = recentEventsBySubject.get(key) ?? [];
+    subjectEvents.push(event);
+    recentEventsBySubject.set(key, subjectEvents);
+  }
+
+  for (const event of events) {
+    const key = `${event.subject_type}:${event.subject_hash}`;
+    const subjectEvents = recentEventsBySubject.get(key) ?? [];
+
+    if (subjectEvents.length > policy.max) {
+      throw new ApiRateLimitError(
+        getRateLimitRetryAfterSeconds(subjectEvents[0]?.created_at, policy.windowSeconds),
+      );
+    }
   }
 }
 

@@ -38,12 +38,6 @@ export async function GET(
       return workspaceId;
     }
 
-    await assertWorkspaceRateLimit({
-      action: "workspace:save",
-      request,
-      workspaceId,
-    });
-
     const { resumeId } = await context.params;
     const payload = await getStudioBootstrap({ resumeId, workspaceId });
 

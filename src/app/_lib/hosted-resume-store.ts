@@ -967,6 +967,11 @@ function getPostgresClient() {
 async function ensureSchema(sql: SqlClient) {
   if (!schemaReadyPromise) {
     schemaReadyPromise = (async () => {
+      if (!shouldRunHostedResumeRuntimeSchemaSync()) {
+        await verifyHostedResumeSchema(sql);
+        return;
+      }
+
       await sql`
         create table if not exists resumes (
           id text primary key,
@@ -1051,6 +1056,119 @@ async function ensureSchema(sql: SqlClient) {
   }
 
   await schemaReadyPromise;
+}
+
+async function verifyHostedResumeSchema(sql: SqlClient) {
+  const requiredTables = [
+    "resumes",
+    "workspace_resume_memberships",
+    "workspaces",
+  ];
+  const tableRows = await sql<{ table_name: string }[]>`
+    select table_name
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = any(${requiredTables})
+  `;
+  const existingTables = new Set(tableRows.map((row) => row.table_name));
+  const missingTables = requiredTables.filter((table) => !existingTables.has(table));
+
+  if (missingTables.length > 0) {
+    throw new HostedResumeStoreUnavailableError(
+      `Tiny CV hosted resume schema is not migrated. Run \`pnpm db:migrate\` before enabling hosted resumes. Missing: ${missingTables.join(", ")}.`,
+    );
+  }
+
+  const requiredColumnsByTable = {
+    resumes: [
+      "created_at",
+      "editor_token_hash",
+      "fit_scale",
+      "id",
+      "is_published",
+      "markdown",
+      "published_at",
+      "published_fit_scale",
+      "published_markdown",
+      "slug",
+      "template_key",
+      "title",
+      "title_is_custom",
+      "updated_at",
+    ],
+    workspace_resume_memberships: [
+      "attached_via",
+      "created_at",
+      "deleted_at",
+      "last_opened_at",
+      "resume_id",
+      "updated_at",
+      "workspace_id",
+    ],
+    workspaces: [
+      "created_at",
+      "current_resume_id",
+      "id",
+      "updated_at",
+    ],
+  } satisfies Record<string, string[]>;
+  const requiredColumns = [...new Set(Object.values(requiredColumnsByTable).flat())];
+  const columnRows = await sql<{ column_name: string; table_name: string }[]>`
+    select table_name, column_name
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = any(${requiredTables})
+      and column_name = any(${requiredColumns})
+  `;
+  const existingColumns = new Set(
+    columnRows.map((row) => `${row.table_name}.${row.column_name}`),
+  );
+  const missingColumns = Object.entries(requiredColumnsByTable).flatMap(([table, columns]) =>
+    columns
+      .filter((column) => !existingColumns.has(`${table}.${column}`))
+      .map((column) => `${table}.${column}`)
+  );
+
+  if (missingColumns.length > 0) {
+    throw new HostedResumeStoreUnavailableError(
+      `Tiny CV hosted resume schema is not migrated. Run \`pnpm db:migrate\` before enabling hosted resumes. Missing columns: ${missingColumns.join(", ")}.`,
+    );
+  }
+
+  const requiredIndexes = [
+    "resumes_editor_token_hash_idx",
+    "resumes_slug_lower_idx",
+    "workspace_resume_memberships_lookup_idx",
+    "workspace_resume_memberships_resume_idx",
+  ];
+  const indexRows = await sql<{ indexname: string }[]>`
+    select indexname
+    from pg_indexes
+    where schemaname = 'public'
+      and indexname = any(${requiredIndexes})
+  `;
+  const existingIndexes = new Set(indexRows.map((row) => row.indexname));
+  const missingIndexes = requiredIndexes.filter((index) => !existingIndexes.has(index));
+
+  if (missingIndexes.length > 0) {
+    throw new HostedResumeStoreUnavailableError(
+      `Tiny CV hosted resume schema is not migrated. Run \`pnpm db:migrate\` before enabling hosted resumes. Missing indexes: ${missingIndexes.join(", ")}.`,
+    );
+  }
+}
+
+export function shouldRunHostedResumeRuntimeSchemaSync() {
+  const configured = process.env.TINYCV_RUNTIME_SCHEMA_SYNC?.trim().toLowerCase();
+
+  if (configured === "1" || configured === "true" || configured === "yes") {
+    return true;
+  }
+
+  if (configured === "0" || configured === "false" || configured === "no") {
+    return false;
+  }
+
+  return process.env.NODE_ENV !== "production";
 }
 
 function getLocalStorePath() {
@@ -1475,7 +1593,16 @@ async function buildPostgresWorkspacePayload(sql: SqlClient, workspaceId: string
     return null;
   }
 
-  const resumes = await sql<WorkspaceSummaryRow[]>`
+  const resumes = await getPostgresWorkspaceResumeSummaries(sql, workspaceId);
+  return buildPostgresWorkspacePayloadFromRows(
+    workspaceId,
+    workspace.current_resume_id,
+    resumes,
+  );
+}
+
+async function getPostgresWorkspaceResumeSummaries(sql: SqlClient, workspaceId: string) {
+  return sql<WorkspaceSummaryRow[]>`
     select
       r.id,
       r.title,
@@ -1490,13 +1617,19 @@ async function buildPostgresWorkspacePayload(sql: SqlClient, workspaceId: string
       and m.deleted_at is null
     order by m.last_opened_at desc, r.updated_at desc
   `;
+}
 
-  const currentResumeId = resumes.some((resume) => resume.id === workspace.current_resume_id)
-    ? workspace.current_resume_id
+function buildPostgresWorkspacePayloadFromRows(
+  workspaceId: string,
+  currentResumeId: string | null,
+  resumes: WorkspaceSummaryRow[],
+) {
+  const resolvedCurrentResumeId = resumes.some((resume) => resume.id === currentResumeId)
+    ? currentResumeId
     : resumes[0]?.id ?? null;
 
   return {
-    currentResumeId,
+    currentResumeId: resolvedCurrentResumeId,
     resumes: resumes.map(toWorkspaceResumeSummary),
     workspaceId,
   };
@@ -1507,10 +1640,13 @@ async function buildPostgresStudioPayload(
   workspaceId: string,
   resumeId: string,
 ): Promise<StudioBootstrapPayload | null> {
-  const [resume] = await sql<ResumeRow[]>`
-    select r.*
+  const [resume] = await sql<(ResumeRow & { workspace_current_resume_id: string | null })[]>`
+    select
+      r.*,
+      w.current_resume_id as workspace_current_resume_id
     from workspace_resume_memberships m
     join resumes r on r.id = m.resume_id
+    join workspaces w on w.id = m.workspace_id
     where m.workspace_id = ${workspaceId}
       and m.resume_id = ${resumeId}
       and m.deleted_at is null
@@ -1521,11 +1657,12 @@ async function buildPostgresStudioPayload(
     return null;
   }
 
-  const workspace = await buildPostgresWorkspacePayload(sql, workspaceId);
-
-  if (!workspace) {
-    return null;
-  }
+  const resumes = await getPostgresWorkspaceResumeSummaries(sql, workspaceId);
+  const workspace = buildPostgresWorkspacePayloadFromRows(
+    workspaceId,
+    resume.workspace_current_resume_id,
+    resumes,
+  );
 
   return {
     editorPath: buildEditorPath(resume.id),
