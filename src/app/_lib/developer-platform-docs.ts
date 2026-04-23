@@ -705,7 +705,7 @@ export function buildLlmsManifest(origin: string) {
     "",
     "## Agent Resources",
     "",
-    `- [Agent guide](${origin}/agents): canonical finish-line workflow and human edit handoff for agents.`,
+    `- [Agent guide](${origin}/agents): canonical resume-writing workflow and human edit handoff for agents.`,
     `- [llms-full.txt](${origin}/llms-full.txt): single-file Tiny CV docs bundle.`,
     `- [Templates](${origin}/api/v1/templates): list built-in templates.`,
     `- [Validate](${origin}/api/v1/resumes/validate): use quality_gate="publish" before publishing or paid Agent Finish.`,

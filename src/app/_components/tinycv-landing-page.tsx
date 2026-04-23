@@ -182,17 +182,17 @@ export function TinyCvLandingPage({
                   className="mt-6 text-[2.6rem] leading-[0.95] font-bold tracking-[-0.04em] text-slate-950 sm:text-[3.2rem]"
                   style={{ fontFamily: "var(--font-display-newsreader)" }}
                 >
-                  Give your agent a finish line.
+                  Let your agent write your resume.
                 </h2>
                 <p className="mt-6 text-[1.05rem] leading-8 font-medium text-slate-600">
-                  Agents can write the content. Tiny CV gives them the format, templates, validation, publishing, and export path to turn that content into a polished artifact.
+                  Give your agent the Tiny CV guide and API. It can interview you, draft the markdown, choose a template, validate the structure, publish the link, and export a PDF when you ask.
                 </p>
                 <p className="mt-4 text-[0.98rem] leading-7 font-semibold text-slate-700">
-                  Use bearer API keys for durable integrations. Use x402 or MPP Agent Finish when an agent needs one paid, no-account call for a hosted resume, claim link, and PDF job.
+                  Use bearer API keys for app integrations. Use x402 or MPP Agent Finish for a one-call paid flow that returns a hosted resume, edit claim link, and PDF job.
                 </p>
                 <div className="mt-10 flex flex-wrap gap-4">
                   <LandingPrimaryLink href={TINYCV_AGENT_GUIDE_PATH}>
-                    Read agent docs
+                    Read agent guide
                   </LandingPrimaryLink>
                   <Link
                     className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-7 py-3.5 text-[0.98rem] font-bold text-slate-950 transition hover:bg-slate-50"
