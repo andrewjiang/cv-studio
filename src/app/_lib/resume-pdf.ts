@@ -31,6 +31,11 @@ export async function generateResumePdf(input: BrowserPdfInput): Promise<ResumeP
 
 export function buildPublishedResumePrintUrl(origin: string, slug: string) {
   const url = new URL(`/${encodeURIComponent(slug)}`, normalizeOrigin(origin));
+  return ensurePublishedResumePrintUrl(url.toString());
+}
+
+export function ensurePublishedResumePrintUrl(publicUrl: string) {
+  const url = new URL(publicUrl);
   url.searchParams.set("print", "1");
   return url.toString();
 }
@@ -39,13 +44,15 @@ export const getPdfRenderOrigin = getBrowserRenderOrigin;
 export { resolveLocalChromeExecutablePath };
 
 async function renderPublicResumeUrlToPdf(publicUrl: string) {
+  const printUrl = ensurePublishedResumePrintUrl(publicUrl);
+
   return withBrowserPage(async (page) => {
     await page.setViewport({
       deviceScaleFactor: 1,
       height: 1056,
       width: 816,
     });
-    await page.goto(publicUrl, {
+    await page.goto(printUrl, {
       timeout: getBrowserTimeoutMs(),
       waitUntil: "networkidle0",
     });

@@ -148,20 +148,63 @@ async function bootstrapProject(runId) {
 
 async function runVisualComparison({ actualPdfPath, publicUrl }) {
   const expectedPdfPath = path.join(artifactDir, "pdf-renderer-expected.pdf");
-  const diffPngPath = path.join(artifactDir, "pdf-renderer-diff.png");
+  const publicPrintPdfPath = path.join(artifactDir, "pdf-renderer-public-print.pdf");
   const printUrl = addPrintParam(publicUrl);
 
   await assertPdftoppmAvailable();
   await writeFile(expectedPdfPath, await renderExpectedPdf(printUrl));
+  await writeFile(publicPrintPdfPath, await renderExpectedPdf(publicUrl));
 
+  const jobComparison = await comparePdfRasters({
+    actualName: "pdf-renderer-check",
+    actualPdfPath,
+    diffPngPath: path.join(artifactDir, "pdf-renderer-diff.png"),
+    expectedPdfPath,
+    label: "PDF job visual diff",
+  });
+  const publicPrintComparison = await comparePdfRasters({
+    actualName: "pdf-renderer-public-print",
+    actualPdfPath: publicPrintPdfPath,
+    diffPngPath: path.join(artifactDir, "pdf-renderer-public-print-diff.png"),
+    expectedPdfPath,
+    label: "Public page print visual diff",
+  });
+
+  return {
+    actualPngPath: jobComparison.actualPngPath,
+    changedPixels: jobComparison.changedPixels,
+    diffPngPath: jobComparison.diffPngPath,
+    diffRatio: jobComparison.diffRatio,
+    expectedPdfPath,
+    expectedPngPath: jobComparison.expectedPngPath,
+    printUrl,
+    publicPrint: {
+      changedPixels: publicPrintComparison.changedPixels,
+      diffPngPath: publicPrintComparison.diffPngPath,
+      diffRatio: publicPrintComparison.diffRatio,
+      pdfPath: publicPrintPdfPath,
+      pngPath: publicPrintComparison.actualPngPath,
+      url: publicUrl,
+    },
+    threshold: visualDiffThreshold,
+  };
+}
+
+async function comparePdfRasters({
+  actualName,
+  actualPdfPath,
+  diffPngPath,
+  expectedPdfPath,
+  label,
+}) {
   const expectedPngPath = await rasterizeFirstPage(expectedPdfPath, "pdf-renderer-expected");
-  const actualPngPath = await rasterizeFirstPage(actualPdfPath, "pdf-renderer-check");
+  const actualPngPath = await rasterizeFirstPage(actualPdfPath, actualName);
   const expectedPng = PNG.sync.read(await readFile(expectedPngPath));
   const actualPng = PNG.sync.read(await readFile(actualPngPath));
 
   assert(
     expectedPng.width === actualPng.width && expectedPng.height === actualPng.height,
-    `Expected and actual PDF rasters have different dimensions: ${expectedPng.width}x${expectedPng.height} vs ${actualPng.width}x${actualPng.height}.`,
+    `${label} rasters have different dimensions: ${expectedPng.width}x${expectedPng.height} vs ${actualPng.width}x${actualPng.height}.`,
   );
 
   const diffPng = new PNG({
@@ -184,7 +227,7 @@ async function runVisualComparison({ actualPdfPath, publicUrl }) {
   await writeFile(diffPngPath, PNG.sync.write(diffPng));
   assert(
     diffRatio <= visualDiffThreshold,
-    `PDF visual diff ratio ${(diffRatio * 100).toFixed(3)}% exceeded ${(visualDiffThreshold * 100).toFixed(3)}%.`,
+    `${label} ratio ${(diffRatio * 100).toFixed(3)}% exceeded ${(visualDiffThreshold * 100).toFixed(3)}%.`,
   );
 
   return {
@@ -192,10 +235,7 @@ async function runVisualComparison({ actualPdfPath, publicUrl }) {
     changedPixels,
     diffPngPath,
     diffRatio,
-    expectedPdfPath,
     expectedPngPath,
-    printUrl,
-    threshold: visualDiffThreshold,
   };
 }
 
