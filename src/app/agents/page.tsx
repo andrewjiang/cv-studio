@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/agents",
   },
-  description: "Agent guide for interviewing, drafting, validating, publishing, and exporting a one-page Tiny CV resume.",
+  description: "Guide for agents that write, validate, publish, hand off, and export Tiny CV resumes.",
   openGraph: {
-    description: "Agent guide for interviewing, drafting, validating, publishing, and exporting a one-page Tiny CV resume.",
+    description: "Guide for agents that write, validate, publish, hand off, and export Tiny CV resumes.",
     title: "Tiny CV Agent Guide",
     url: "/agents",
   },
@@ -158,10 +158,10 @@ export default function AgentsPage() {
               className="mt-6 max-w-[11ch] text-[3.25rem] leading-[0.9] font-bold tracking-[-0.045em] sm:text-[4.8rem]"
               style={{ fontFamily: "var(--font-display-newsreader)" }}
             >
-              Take the resume to the finish line.
+              Let your agent write your resume.
             </h1>
             <p className="mt-6 max-w-xl text-[1.08rem] leading-8 font-medium text-slate-600">
-              This is the canonical Tiny CV guide for agents that interview a user, choose a template, draft markdown, validate it, publish a clean link, and export a PDF when asked.
+              Use this guide when you want an agent to interview you, draft a clean Tiny CV resume, validate it, publish the link, hand you an edit link, and export a PDF when asked.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
