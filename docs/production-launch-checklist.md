@@ -242,6 +242,8 @@ Before sharing publicly:
 - `/agents` loads and shows the agent instruction plus template/interview guidance.
 - `/openapi.json` loads and includes `/api/v1/paid/agent-finish`.
 - `/api/v1/openapi.json` loads.
+- MPP paid-route `WWW-Authenticate` challenges use `realm="tiny.cv"`, not a `*.vercel.app` deployment host.
+- x402Scan registration uses the service origin `https://tiny.cv` so it reads root `/openapi.json`, not `/api/v1/openapi.json`.
 - `pnpm test:pdf` passes against production.
 - Vercel logs show no repeated function failures.
 - X launch checklist is reviewed: `docs/x-launch-checklist.md`.

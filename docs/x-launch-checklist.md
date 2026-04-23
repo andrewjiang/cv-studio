@@ -9,6 +9,7 @@ Use this after production smoke tests pass and before posting publicly.
 - `/account` supports sign up, sign in, workspace claiming, checkout, and plan status.
 - `/agents`, `/developers`, and `/documentation` load without errors.
 - `/openapi.json` and `/api/v1/openapi.json` load.
+- MPPScan and x402Scan registration use `https://tiny.cv` as the service origin. Do not register `/api/v1/openapi.json`; that schema intentionally includes free and bearer-token routes.
 
 ## Paid Plans
 
