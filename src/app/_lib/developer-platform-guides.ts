@@ -134,15 +134,9 @@ Platforms: Vercel, AWS, Postgres
 export const TINYCV_AGENT_GUIDE_PATH = "/agents";
 export const TINYCV_AGENT_GUIDE_URL = "https://tiny.cv/agents";
 
-export const TINYCV_AGENT_INSTRUCTION = `Read the Tiny CV documentation first: ${TINYCV_AGENT_GUIDE_URL}
+export const TINYCV_AGENT_INSTRUCTION = `Read the Tiny CV agent guide first: ${TINYCV_AGENT_GUIDE_URL}
 
-Help me create a complete one-page resume in Tiny CV. Interview me for missing details, choose the best template, draft the markdown, validate it, publish the public link, and export a PDF if I ask.
-
-If I want to keep editing the markdown myself, return the Tiny CV edit claim link so I can open it in the editor and save it to my account.
-
-Before publishing or making a paid Agent Finish call, show me the final markdown, selected template, and any unverified facts. Ask for approval unless I already explicitly authorized autonomous publishing and payment.
-
-Do not invent employers, dates, credentials, metrics, or links. Ask when something is missing.`;
+Help me create a complete one-page Tiny CV resume. Follow the guide, ask for missing facts, do not invent anything, and only publish, pay, or export a PDF after I approve the final draft.`;
 
 export const TINYCV_AGENT_FINISH_GUIDE = `# Tiny CV Agent Guide
 
