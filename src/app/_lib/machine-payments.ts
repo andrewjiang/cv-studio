@@ -50,6 +50,7 @@ export type MachinePaymentConfig = {
   mpp: {
     intent: string;
     method: string;
+    realm: string | null;
     secretKey: string | null;
     tempoCurrency: string | null;
     tempoDecimals: number;
@@ -160,6 +161,7 @@ export function readMachinePaymentConfig(env: EnvLike = process.env): MachinePay
     mpp: {
       intent: env.TINYCV_MPP_INTENT?.trim() || "charge",
       method: env.TINYCV_MPP_METHOD?.trim() || "tempo",
+      realm: resolveMppRealm(env),
       secretKey: trimOptional(env.MPP_SECRET_KEY),
       tempoCurrency: trimOptional(env.TINYCV_MPP_TEMPO_CURRENCY),
       tempoDecimals: parsePositiveIntegerEnv(env.TINYCV_MPP_TEMPO_DECIMALS, 6),
@@ -216,6 +218,12 @@ export function getMachinePaymentConfigurationIssues(
     issues.push("Set MPP_SECRET_KEY.");
   } else if (isPlaceholder(config.mpp.secretKey)) {
     issues.push("MPP_SECRET_KEY must not be a placeholder.");
+  }
+
+  if (!config.mpp.realm) {
+    issues.push("Set TINYCV_MPP_REALM, MPP_REALM, or TINYCV_APP_URL so MPP challenges use the public service host.");
+  } else if (nodeEnv === "production" && config.mpp.realm.endsWith(".vercel.app")) {
+    issues.push("MPP realm must be the public service host, not a Vercel deployment host.");
   }
 
   if (config.mpp.method !== "tempo") {
@@ -937,6 +945,7 @@ function getX402Server(config: MachinePaymentConfig) {
 function getMppServer(config: MachinePaymentConfig) {
   const fingerprint = [
     config.mpp.secretKey,
+    config.mpp.realm,
     config.mpp.tempoCurrency,
     config.mpp.tempoDecimals,
     config.mpp.tempoRecipient,
@@ -956,6 +965,7 @@ function getMppServer(config: MachinePaymentConfig) {
         testnet: config.mpp.testnet,
       }),
     ],
+    realm: config.mpp.realm ?? undefined,
     secretKey: config.mpp.secretKey ?? undefined,
   }) as unknown as MppChargeServer;
 
@@ -1274,6 +1284,35 @@ function formatUsdAmount(raw: string) {
 
 function trimFixedAmount(raw: string) {
   return raw.replace(/\.?0+$/, "");
+}
+
+function resolveMppRealm(env: EnvLike) {
+  const explicitRealm = trimOptional(env.TINYCV_MPP_REALM) ?? trimOptional(env.MPP_REALM);
+
+  if (explicitRealm) {
+    return normalizeMppRealm(explicitRealm);
+  }
+
+  return normalizeMppRealm(
+    trimOptional(env.TINYCV_APP_URL)
+    ?? trimOptional(env.NEXT_PUBLIC_TINYCV_APP_URL)
+    ?? trimOptional(env.NEXT_PUBLIC_SITE_URL),
+  );
+}
+
+function normalizeMppRealm(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return value
+      .replace(/^https?:\/\//i, "")
+      .replace(/\/.*$/, "")
+      .trim() || null;
+  }
 }
 
 function parsePositiveIntegerEnv(value: string | undefined, fallback: number) {

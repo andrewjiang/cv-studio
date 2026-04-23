@@ -185,6 +185,13 @@ function checkMachinePayments() {
   const mppMethod = env("TINYCV_MPP_METHOD") || "tempo";
   const mppIntent = env("TINYCV_MPP_INTENT") || "charge";
   const mppTestnet = env("TINYCV_MPP_TEMPO_TESTNET") || "true";
+  const mppRealm = normalizeRealm(
+    env("TINYCV_MPP_REALM")
+      || env("MPP_REALM")
+      || env("TINYCV_APP_URL")
+      || env("NEXT_PUBLIC_TINYCV_APP_URL")
+      || env("NEXT_PUBLIC_SITE_URL"),
+  );
 
   if (!evmAddress && !solanaAddress) {
     fail("machine-payments-x402-address", "Set TINYCV_X402_EVM_ADDRESS or TINYCV_X402_SOLANA_ADDRESS before enabling machine payments.");
@@ -210,6 +217,14 @@ function checkMachinePayments() {
     fail("machine-payments-mpp-secret", "Set MPP_SECRET_KEY before enabling machine payments.");
   } else {
     requireStrongSecret("MPP_SECRET_KEY", 32);
+  }
+
+  if (!mppRealm) {
+    fail("machine-payments-mpp-realm", "Set TINYCV_MPP_REALM, MPP_REALM, or TINYCV_APP_URL so MPP challenges use the public service host.");
+  } else if (mppRealm.endsWith(".vercel.app")) {
+    fail("machine-payments-mpp-realm", "MPP realm must be the public service host, not a Vercel deployment host.");
+  } else {
+    pass("machine-payments-mpp-realm", `MPP realm is ${mppRealm}.`);
   }
 
   if (mppMethod !== "tempo") {
@@ -247,4 +262,19 @@ function checkMachinePayments() {
 
 function isPlaceholder(value) {
   return value && /^(change-me|replace-me|todo|placeholder|0x0+)$/i.test(value);
+}
+
+function normalizeRealm(value) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return value
+      .replace(/^https?:\/\//i, "")
+      .replace(/\/.*$/, "")
+      .trim() || null;
+  }
 }

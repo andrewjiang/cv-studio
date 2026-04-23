@@ -184,7 +184,7 @@ All paid machine routes require `Idempotency-Key` for real calls and support x40
 
 Machine-payment outputs use standard Tiny CV public URLs and claim links. They do not reserve premium `*.tiny.cv` names, do not grant Pro or Founder Pass entitlements, and do not support paid webhooks.
 
-Discovery is available at root `/openapi.json` for AgentCash and MPPScan. The root document is intentionally focused on the paid machine-payment surface to avoid scanner ambiguity around free docs/templates routes. The full developer API schema remains available at `/api/v1/openapi.json`:
+Discovery is available at root `/openapi.json` for AgentCash, MPPScan, and x402Scan. Register the service origin, for example `https://tiny.cv`, not the full developer schema URL. The root document is intentionally focused on the paid machine-payment surface to avoid scanner ambiguity around free docs/templates routes. The full developer API schema remains available at `/api/v1/openapi.json`:
 
 ```bash
 npx -y @agentcash/discovery@latest discover https://your-origin.com
@@ -293,7 +293,7 @@ pnpm db:migrate
 
 Runtime schema sync is available for local development, but production should run explicit migrations instead.
 
-To enable machine payments, set `TINYCV_MACHINE_PAYMENTS_ENABLED=true` plus real x402 wallet and MPP Tempo configuration. Production readiness fails if this feature is enabled with missing secrets, placeholder addresses, testnet defaults, or runtime schema sync.
+To enable machine payments, set `TINYCV_MACHINE_PAYMENTS_ENABLED=true` plus real x402 wallet and MPP Tempo configuration. Set `TINYCV_MPP_REALM=tiny.cv` or make sure `TINYCV_APP_URL=https://tiny.cv`; MPP challenges must use the public service host, not the Vercel deployment host, so MPPScan can attribute stats correctly. Production readiness fails if this feature is enabled with missing secrets, placeholder addresses, testnet defaults, deployment-host MPP realms, or runtime schema sync.
 
 Before deploying, verify production environment readiness:
 
