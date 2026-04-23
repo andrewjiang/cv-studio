@@ -179,6 +179,31 @@ textarea {
     background: white;
   }
 
+  .public-resume-page,
+  .public-resume-shell {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  .public-resume-mobile {
+    display: none !important;
+  }
+
+  .public-resume-desktop {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    width: auto !important;
+    min-height: 0 !important;
+  }
+
   .studio-workspace,
   .studio-grid,
   .preview-column,

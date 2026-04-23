@@ -27,13 +27,13 @@ export async function PublicResumeRenderer({
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#faf7f1_0%,#f4efe8_100%)] text-slate-900">
-      <div className="mx-auto flex min-h-screen w-full max-w-[112rem] flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <div className="lg:hidden">
+    <main className="public-resume-page min-h-screen bg-[linear-gradient(180deg,#faf7f1_0%,#f4efe8_100%)] text-slate-900">
+      <div className="public-resume-shell mx-auto flex min-h-screen w-full max-w-[112rem] flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+        <div className="public-resume-mobile lg:hidden">
           <ResumeMobileSheet document={document} />
         </div>
 
-        <div className="hidden flex-1 items-start justify-center lg:flex">
+        <div className="public-resume-desktop hidden flex-1 items-start justify-center lg:flex">
           <ResumeDesktopSheet document={document} fitScale={resume.fitScale} />
         </div>
 
