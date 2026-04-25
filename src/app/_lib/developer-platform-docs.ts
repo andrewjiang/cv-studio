@@ -128,7 +128,7 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "bearer",
     category: "Core",
-    description: "Validate markdown or JSON input without persisting anything. Use quality_gate: \"publish\" before publishing or making a paid Agent Finish call.",
+    description: "Validate markdown or JSON input without persisting anything. Use quality_gate: \"publish\" before publishing or making a paid Agent Finish call. In experience-like sections, use *Location, Remote, or website | Dates* on the italic metadata line.",
     exampleRequestBody: {
       input_format: "json",
       quality_gate: "publish",
@@ -142,6 +142,19 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
           {
             paragraphs: ["Designer with strong systems and product instincts."],
             type: "summary",
+          },
+          {
+            entries: [
+              {
+                bullets: ["Led product design for a new workflow experience."],
+                meta_left: "Remote",
+                meta_right: "2022 - Present",
+                title: "Senior Product Designer",
+                title_extras: ["Northstar"],
+              },
+            ],
+            title: "Experience",
+            type: "entries",
           },
         ],
       },
@@ -202,7 +215,7 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "machine-payment",
     category: "Agent",
-    description: "Lower-level no-account paid path for agents. Submit publish-ready markdown or JSON with Idempotency-Key, receive a 402 challenge, then retry with either x402 PAYMENT-SIGNATURE or MPP Authorization: Payment. Invalid publish-ready markdown returns 400 before any payment challenge. The resume is published immediately with a standard public URL and a claimable edit link by default. Premium *.tiny.cv URL ownership is not included.",
+    description: "Lower-level no-account paid path for agents. Submit publish-ready markdown or JSON with Idempotency-Key, receive a 402 challenge, then retry with either x402 PAYMENT-SIGNATURE or MPP Authorization: Payment. Invalid publish-ready markdown returns 400 before any payment challenge. In experience-like sections, use *Location, Remote, or website | Dates* on the italic metadata line. The resume is published immediately with a standard public URL and a claimable edit link by default. Premium *.tiny.cv URL ownership is not included.",
     exampleRequestBody: {
       client_reference_id: "agent-run-2026-04-21",
       input_format: "markdown",
@@ -244,7 +257,7 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "machine-payment",
     category: "Agent",
-    description: "Recommended one-off paid path for autonomous agents. One x402 or MPP payment turns publish-ready resume markdown or JSON into a Tiny CV package: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Invalid publish-ready markdown returns 400 before any payment challenge. Agent Finish always creates a claim link. This does not reserve a premium *.tiny.cv URL; that remains a human Founder Pass benefit.",
+    description: "Recommended one-off paid path for autonomous agents. One x402 or MPP payment turns publish-ready resume markdown or JSON into a Tiny CV package: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Invalid publish-ready markdown returns 400 before any payment challenge. In experience-like sections, use *Location, Remote, or website | Dates* on the italic metadata line. Agent Finish always creates a claim link. This does not reserve a premium *.tiny.cv URL; that remains a human Founder Pass benefit.",
     exampleRequestBody: {
       client_reference_id: "agent-run-2026-04-21",
       input_format: "markdown",
@@ -384,7 +397,7 @@ export const DEVELOPER_ENDPOINT_DOCS: DeveloperEndpointDoc[] = [
   {
     auth: "bearer",
     category: "Core",
-    description: "Publish the current draft snapshot and get the public URL. Send Idempotency-Key so retries return the same publish result. API publish is strict: validate with quality_gate: \"publish\" first, fix malformed markdown, and expect a 503 if browser fit measurement is unavailable.",
+    description: "Publish the current draft snapshot and get the public URL. Send Idempotency-Key so retries return the same publish result. API publish is strict: validate with quality_gate: \"publish\" first, fix malformed markdown, use *Location, Remote, or website | Dates* for experience metadata, and expect a 503 if browser fit measurement is unavailable.",
     exampleRequestBody: {
       return_edit_claim_url: true,
       webhook_url: "https://example.com/tinycv/webhooks",
@@ -551,6 +564,11 @@ export const DEVELOPER_DOC_RESOURCES = [
     note: "Canonical input contract for Tiny CV markdown.",
   },
   {
+    href: "/examples/founder",
+    label: "Template examples",
+    note: "Canonical full-resume examples. Start at /examples/founder and swap founder for engineer, designer, or sales.",
+  },
+  {
     href: "/api/v1/spec/json-schema",
     label: "JSON schema",
     note: "Structured input for agents that start from profile data.",
@@ -709,6 +727,7 @@ export function buildLlmsManifest(origin: string) {
     `- [llms-full.txt](${origin}/llms-full.txt): single-file Tiny CV docs bundle.`,
     `- [Templates](${origin}/api/v1/templates): list built-in templates.`,
     `- [Validate](${origin}/api/v1/resumes/validate): use quality_gate="publish" before publishing or paid Agent Finish.`,
+    `- [Template examples](${origin}/examples/founder): canonical full-resume examples. Swap founder for engineer, designer, or sales.`,
     `- [Agent Finish](${origin}/api/v1/paid/agent-finish): no-account x402 or MPP endpoint for a standard hosted resume, claim link, queued PDF job, and receipt.`,
     `- [Paid create + publish](${origin}/api/v1/paid/resumes): lower-level no-account x402 or MPP endpoint for creating a standard public resume.`,
     `- [Paid PDF jobs](${origin}/api/v1/paid/resumes/{resume_id}/pdf-jobs): lower-level no-account x402 or MPP endpoint for PDF generation.`,

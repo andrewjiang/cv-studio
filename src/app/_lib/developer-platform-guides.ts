@@ -42,7 +42,9 @@ Frameworks: React, Next.js, Node.js
 - Always include \`## Summary\` for publish-ready resumes.
 - Top-level sections use \`##\`.
 - Resume entries inside sections use \`###\`.
-- Entry metadata goes on the next italic line, usually in the form \`*Location | Dates*\`.
+- For experience-like sections, entry metadata goes on the next italic line in the form \`*Location, Remote, or website | Dates*\`.
+- Education may use a date-only italic line.
+- Project-like sections may omit metadata entirely.
 - Bullets should be separate lines beginning with \`-\`. Tiny CV also parses \`*\`, \`•\`, \`–\`, and \`—\` line bullets, but agents should emit \`-\`.
 - Do not write inline dot-separated lists like \`Role one • Role two • Role three\`.
 - A \`Skills\` section should use \`Label: value\` rows.
@@ -111,6 +113,69 @@ Product Manager, Sprig (2015 - 2016) • Cofounder and CEO, Bayes Impact ...
 - Outcome-focused bullet
 - Another bullet
 \`\`\`
+
+## Experience metadata structure
+
+Good:
+
+\`\`\`md
+## Experience
+### Founder & Investor | Weekend Fund
+*Miami, FL | Apr 2017 - Present*
+- Founded an early-stage venture fund focused on backing emerging startups.
+\`\`\`
+
+Also acceptable:
+
+\`\`\`md
+## Experience
+### Writer | ryanhoover.me
+*[ryanhoover.me](https://ryanhoover.me) | Jun 2012 - Present*
+- Publishes essays on tech, products, and curiosity.
+\`\`\`
+
+Bad:
+
+\`\`\`md
+## Experience
+### Founder & Investor | Weekend Fund
+*Apr 2017 - Present*
+- Founded an early-stage venture fund focused on backing emerging startups.
+\`\`\`
+
+For experience-like sections, the italic line should be \`*Location, Remote, or website | Dates*\`.
+
+## Education structure
+
+\`\`\`md
+## Education
+### University of Oregon Lundquist College of Business
+*2005 - 2009*
+B.S., Entrepreneurship Concentration; Minor in Computer Information Technology
+\`\`\`
+
+Education may use a date-only italic line.
+
+## Projects / selected work structure
+
+\`\`\`md
+## Projects
+### Tiny CV Agent Finish | Next.js, TypeScript, PostgreSQL
+- Designed an idempotent API flow that turns markdown into a hosted resume, claim link, and queued PDF job.
+\`\`\`
+
+Project-like sections may omit metadata entirely.
+
+## Full examples
+
+- \`GET /api/v1/templates/engineer\`
+- \`GET /api/v1/templates/designer\`
+- \`GET /api/v1/templates/sales\`
+- \`GET /api/v1/templates/founder\`
+- \`https://tiny.cv/examples/engineer\`
+- \`https://tiny.cv/examples/designer\`
+- \`https://tiny.cv/examples/sales\`
+- \`https://tiny.cv/examples/founder\`
 
 ## Summary / paragraph pattern
 
@@ -200,6 +265,32 @@ If unsure, choose the template that matches the job the user wants next, not the
 - Always include a \`## Summary\` section before publishing.
 - Use separate \`-\` bullet lines. Do not use inline \`•\` lists.
 
+## Entry structure by section
+
+Experience:
+
+\`\`\`md
+### Role | Company
+*Location, Remote, or website | Dates*
+- Bullet
+\`\`\`
+
+Education:
+
+\`\`\`md
+### School | Degree
+*Dates*
+\`\`\`
+
+Projects:
+
+\`\`\`md
+### Project | Stack
+- Bullet
+\`\`\`
+
+In experience-like sections, do not use a date-only italic line. Put location, Remote, or website on the left and dates on the right.
+
 ## Publish-ready markdown checklist
 
 - \`#\` candidate name.
@@ -207,6 +298,7 @@ If unsure, choose the template that matches the job the user wants next, not the
 - Contact line under the headline.
 - \`## Summary\` with one concise paragraph.
 - \`## Experience\` with \`###\` entries.
+- Experience metadata uses \`*Location, Remote, or website | Dates*\`.
 - Separate \`-\` bullet lines.
 - No inline \`•\` or \`·\` lists.
 - Validate with \`quality_gate: "publish"\`.
@@ -215,7 +307,7 @@ If unsure, choose the template that matches the job the user wants next, not the
 
 1. Read the docs: \`${TINYCV_AGENT_GUIDE_URL}\`, \`/api/v1/spec/markdown\`, and \`/api/v1/openapi.json\`. Use \`/openapi.json\` for paid x402/MPP discovery.
 2. Choose a template with \`GET /api/v1/templates\`.
-3. Draft Tiny CV markdown using the chosen template and the markdown guide.
+3. Draft Tiny CV markdown using the chosen template, the markdown guide, and the full examples at \`/examples/engineer\`, \`/examples/designer\`, \`/examples/sales\`, and \`/examples/founder\`.
 4. Validate with \`POST /api/v1/resumes/validate\` using \`quality_gate: "publish"\` before publishing or paying.
 5. If the user only wants markdown, stop and show the markdown.
 6. If the user wants a public link and the agent can pay, use \`POST /api/v1/paid/agent-finish\` with x402 or MPP.
@@ -280,6 +372,10 @@ export const TINYCV_AGENT_COOKBOOK = `# Tiny CV Agent Cookbook
 - Use JSON if your agent starts from structured profile data.
 - Do not invent employers, dates, credentials, metrics, or links.
 - Send an \`Idempotency-Key\` on create, update, publish, and PDF job requests.
+- Experience entries should use \`### Role | Company\` and then \`*Location, Remote, or website | Dates*\`.
+- Education entries can use a date-only italic line.
+- Projects and selected work can omit metadata.
+- If validation returns an experience metadata error, fix the italic line before publish or payment.
 - Before publishing or paying, show the selected template, final markdown, unverified facts, and next action. Ask for approval unless the user already authorized autonomous publish/payment.
 - Resolve validation errors before asking the user to approve publish/payment.
 - Keep the public URL as the default output for end users.

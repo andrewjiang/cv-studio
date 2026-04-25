@@ -24,6 +24,18 @@ Los Angeles, CA | [andrew@example.com](mailto:andrew@example.com)
 ## Additional Experience
 Product Manager, Sprig (2015 - 2016) • Cofounder and CEO, Bayes Impact (Apr 2014 - Apr 2015)`;
 
+const BAD_EXPERIENCE_METADATA_MARKDOWN = `# Alex Morgan
+Founder & Product Engineer
+San Francisco, CA | [alex@example.com](mailto:alex@example.com)
+
+## Summary
+Product-minded builder with experience across product, engineering, and go-to-market.
+
+## Experience
+### Founder & Investor | Weekend Fund
+*Apr 2017 - Present*
+- Founded an early-stage venture fund.`;
+
 describe("developer-resume-input", () => {
   it("validates markdown input and returns normalized markdown", () => {
     const result = validateResumeInput({
@@ -205,5 +217,101 @@ describe("developer-resume-input", () => {
     expect(result.valid).toBe(true);
     expect(result.publish_ready).toBe(true);
     expect(result.publish_errors).toHaveLength(0);
+  });
+
+  it("blocks markdown with bad experience metadata at the publish gate", () => {
+    const result = validateResumeInput({
+      input_format: "markdown",
+      markdown: BAD_EXPERIENCE_METADATA_MARKDOWN,
+      quality_gate: "publish",
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.publish_ready).toBe(false);
+    expect(result.publish_errors.map((error) => error.code)).toContain("experience_entry_date_in_wrong_slot");
+    expect(result.errors.map((error) => error.code)).toContain("experience_entry_date_in_wrong_slot");
+  });
+
+  it("surfaces bad experience metadata as draft warnings", () => {
+    const result = validateResumeInput({
+      input_format: "markdown",
+      markdown: BAD_EXPERIENCE_METADATA_MARKDOWN,
+      quality_gate: "draft",
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.publish_ready).toBe(false);
+    expect(result.errors).toHaveLength(0);
+    expect(result.quality_warnings.map((warning) => warning.code)).toContain("experience_entry_date_in_wrong_slot");
+    expect(result.warnings.map((warning) => warning.code)).toContain("experience_entry_date_in_wrong_slot");
+  });
+
+  it("accepts JSON experience entries with explicit left and right metadata", () => {
+    const result = validateResumeInput({
+      input_format: "json",
+      quality_gate: "publish",
+      resume: {
+        contact: [{ kind: "email", value: "maya@example.com" }],
+        headline: "Founder & Product Engineer",
+        name: "Maya Chen",
+        sections: [
+          {
+            paragraphs: ["Designer with experience across product, systems, and prototyping."],
+            type: "summary",
+          },
+          {
+            entries: [
+              {
+                bullets: ["Founded an early-stage venture fund."],
+                meta_left: "Miami, FL",
+                meta_right: "Apr 2017 - Present",
+                title: "Founder & Investor",
+                title_extras: ["Weekend Fund"],
+              },
+            ],
+            title: "Experience",
+            type: "entries",
+          },
+        ],
+      },
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.publish_ready).toBe(true);
+    expect(result.publish_errors).toHaveLength(0);
+  });
+
+  it("rejects JSON experience entries with the date in meta_left", () => {
+    const result = validateResumeInput({
+      input_format: "json",
+      quality_gate: "publish",
+      resume: {
+        contact: [{ kind: "email", value: "maya@example.com" }],
+        headline: "Founder & Product Engineer",
+        name: "Maya Chen",
+        sections: [
+          {
+            paragraphs: ["Designer with experience across product, systems, and prototyping."],
+            type: "summary",
+          },
+          {
+            entries: [
+              {
+                bullets: ["Founded an early-stage venture fund."],
+                meta_left: "Apr 2017 - Present",
+                title: "Founder & Investor",
+                title_extras: ["Weekend Fund"],
+              },
+            ],
+            title: "Experience",
+            type: "entries",
+          },
+        ],
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.publish_ready).toBe(false);
+    expect(result.publish_errors.map((error) => error.code)).toContain("experience_entry_date_in_wrong_slot");
   });
 });

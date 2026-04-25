@@ -306,7 +306,7 @@ export function buildOpenApiSpec(
       title: "Tiny CV Developer API",
       version: "1.0.0",
       description: "Create, validate, publish, and export Tiny CV resumes for users and agents.",
-      "x-guidance": "Agents can use bearer-token /api/v1 endpoints for project-owned workflows, or no-account paid /api/v1/paid endpoints with x402 or MPP. Use POST /api/v1/resumes/validate with quality_gate: \"publish\" before publish/payment. The headline is not the summary: keep the line after # name under 80 characters and put narrative positioning in ## Summary. Do not use inline bullet-dot lists; use separate - bullet lines. Bearer API keys are for durable projects, webhooks, and usage history. x402/MPP is for one-off agent execution with no account or API key. Before publishing or making a paid Agent Finish call, resolve validation errors, show the selected template, final markdown, unverified facts, and next action; ask for approval unless the user explicitly authorized autonomous publishing/payment. Use /api/v1/paid/agent-finish when an agent needs to turn resume markdown or JSON into a claimable hosted Tiny CV plus a queued PDF job. If a human wants to keep editing the markdown, return the editor_claim_url from Agent Finish, from paid create, or from bearer create/publish with return_edit_claim_url=true. Machine-payment calls do not include premium *.tiny.cv namespace ownership, Pro entitlements, or paid webhooks; a human Founder Pass is required for permanent premium URL identity.",
+      "x-guidance": "Agents can use bearer-token /api/v1 endpoints for project-owned workflows, or no-account paid /api/v1/paid endpoints with x402 or MPP. Use POST /api/v1/resumes/validate with quality_gate: \"publish\" before publish/payment. The headline is not the summary: keep the line after # name under 80 characters and put narrative positioning in ## Summary. For experience-like sections, use *Location, Remote, or website | Dates* on the italic line. Education may use date-only metadata; projects may omit metadata. Do not use inline bullet-dot lists; use separate - bullet lines. Bearer API keys are for durable projects, webhooks, and usage history. x402/MPP is for one-off agent execution with no account or API key. Before publishing or making a paid Agent Finish call, resolve validation errors, show the selected template, final markdown, unverified facts, and next action; ask for approval unless the user explicitly authorized autonomous publishing/payment. Use /api/v1/paid/agent-finish when an agent needs to turn resume markdown or JSON into a claimable hosted Tiny CV plus a queued PDF job. If a human wants to keep editing the markdown, return the editor_claim_url from Agent Finish, from paid create, or from bearer create/publish with return_edit_claim_url=true. Machine-payment calls do not include premium *.tiny.cv namespace ownership, Pro entitlements, or paid webhooks; a human Founder Pass is required for permanent premium URL identity.",
     },
     "x-discovery": {
       ownershipProofs: parseDiscoveryOwnershipProofs(),
@@ -451,7 +451,7 @@ export function buildOpenApiSpec(
       },
       "/api/v1/resumes/validate": {
         post: {
-          description: "Validate markdown or JSON resume input without persisting it. Use quality_gate: \"publish\" before publishing or making paid Agent Finish calls.",
+          description: "Validate markdown or JSON resume input without persisting it. Use quality_gate: \"publish\" before publishing or making paid Agent Finish calls. Experience-like sections should use *Location, Remote, or website | Dates* on the italic metadata line.",
           requestBody: jsonRequestBody("#/components/schemas/ValidateResumeRequest"),
           responses: {
             "200": jsonResponse("Validation result", "#/components/schemas/ValidateResumeResponse"),
@@ -497,11 +497,11 @@ export function buildOpenApiSpec(
       },
       "/api/v1/resumes/{resume_id}/publish": {
         post: {
-          description: "Publish the current draft snapshot and return a public URL. Requires Idempotency-Key. API publish is strict: the resume must pass the publish quality gate and browser fit measurement.",
+          description: "Publish the current draft snapshot and return a public URL. Requires Idempotency-Key. API publish is strict: the resume must pass the publish quality gate and browser fit measurement. Experience-like sections should use *Location, Remote, or website | Dates* on the italic metadata line.",
           parameters: [resumeIdParam, idempotencyKeyHeader],
           responses: {
             "200": { description: "Resume published" },
-            "400": { description: "Missing idempotency key or invalid publish-ready markdown. Example codes: missing_summary, headline_too_long, inline_bullet_separator." },
+            "400": { description: "Missing idempotency key or invalid publish-ready markdown. Example codes: missing_summary, headline_too_long, inline_bullet_separator, experience_entry_date_in_wrong_slot." },
             "503": { description: "Browser fit measurement unavailable. Example code: browser_fit_unavailable." },
             ...standardErrors,
           },
@@ -523,12 +523,12 @@ export function buildOpenApiSpec(
       },
       "/api/v1/paid/resumes": {
         post: {
-          description: "No-account machine-payment endpoint that creates, publishes, and returns a standard public Tiny CV resume URL. The response includes a claimable edit link by default, but does not reserve a premium *.tiny.cv URL. Invalid publish-ready markdown returns 400 before any 402 payment challenge.",
+          description: "No-account machine-payment endpoint that creates, publishes, and returns a standard public Tiny CV resume URL. The response includes a claimable edit link by default, but does not reserve a premium *.tiny.cv URL. Invalid publish-ready markdown returns 400 before any 402 payment challenge. Experience-like sections should use *Location, Remote, or website | Dates* on the italic metadata line.",
           parameters: [idempotencyKeyHeader],
           requestBody: jsonRequestBody("#/components/schemas/PaidCreateResumeRequest"),
           responses: {
             "201": jsonResponse("Created and published paid resume", "#/components/schemas/PaidCreateResumeResponse"),
-            "400": { description: "Invalid input, missing idempotency key, or invalid publish-ready markdown. Example codes: missing_summary, headline_too_long, inline_bullet_separator." },
+            "400": { description: "Invalid input, missing idempotency key, or invalid publish-ready markdown. Example codes: missing_summary, headline_too_long, inline_bullet_separator, experience_entry_date_in_wrong_slot." },
             "402": paymentRequiredResponse,
             "429": rateLimitResponse,
             "503": { description: "Machine payments are disabled/not configured, or browser fit measurement is unavailable. Example code: browser_fit_unavailable." },
@@ -540,12 +540,12 @@ export function buildOpenApiSpec(
       },
       "/api/v1/paid/agent-finish": {
         post: {
-          description: "No-account x402/MPP endpoint for agents that need a finished Tiny CV package in one paid operation: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Agent Finish always creates a claim link. It does not include premium *.tiny.cv namespace ownership. Invalid publish-ready markdown returns 400 before any 402 payment challenge.",
+          description: "No-account x402/MPP endpoint for agents that need a finished Tiny CV package in one paid operation: standard hosted URL, claimable edit link, queued PDF job, and payment receipt. Agent Finish always creates a claim link. It does not include premium *.tiny.cv namespace ownership. Invalid publish-ready markdown returns 400 before any 402 payment challenge. Experience-like sections should use *Location, Remote, or website | Dates* on the italic metadata line.",
           parameters: [idempotencyKeyHeader],
           requestBody: jsonRequestBody("#/components/schemas/PaidCreateResumeRequest"),
           responses: {
             "202": jsonResponse("Agent Finish package queued", "#/components/schemas/PaidAgentFinishResponse"),
-            "400": { description: "Invalid input, missing idempotency key, or invalid publish-ready markdown. Example codes: missing_summary, headline_too_long, inline_bullet_separator." },
+            "400": { description: "Invalid input, missing idempotency key, or invalid publish-ready markdown. Example codes: missing_summary, headline_too_long, inline_bullet_separator, experience_entry_date_in_wrong_slot." },
             "402": paymentRequiredResponse,
             "429": rateLimitResponse,
             "503": { description: "Machine payments are disabled/not configured, or browser fit measurement is unavailable. Example code: browser_fit_unavailable." },

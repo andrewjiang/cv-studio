@@ -76,12 +76,40 @@ const workflowSteps = [
   "Return the public URL, edit claim URL when useful, and PDF job or PDF URL if requested.",
 ];
 
+const structureExamples = [
+  {
+    code: `### Founder & Investor | Weekend Fund
+*Miami, FL | Apr 2017 - Present*
+- Built...`,
+    title: "Experience",
+  },
+  {
+    code: `### University of Oregon Lundquist College of Business
+*2005 - 2009*
+B.S., Entrepreneurship Concentration; Minor in Computer Information Technology`,
+    title: "Education",
+  },
+  {
+    code: `### Tiny CV Agent Finish | Next.js, TypeScript, PostgreSQL
+- Designed...`,
+    title: "Projects",
+  },
+];
+
+const structureExampleLinks = [
+  { href: "/examples/engineer", label: "Engineer example" },
+  { href: "/examples/founder", label: "Founder example" },
+  { href: "/examples/designer", label: "Designer example" },
+  { href: "/examples/sales", label: "Sales example" },
+];
+
 const publishReadyChecklist = [
   "# candidate name",
   "Headline under 80 characters",
   "Contact line under the headline",
   "## Summary with one concise paragraph",
   "## Experience with ### entries",
+  "*Location, Remote, or website | Dates* for experience metadata",
   "Separate - bullet lines",
   "No inline • or · lists",
   "Validate with quality_gate: \"publish\"",
@@ -248,6 +276,37 @@ export default function AgentsPage() {
               <p className="text-[1rem] leading-7 font-semibold text-slate-800">
               Do not invent {formatList(noInventItems)}. If a number would help but the user cannot verify it, use truthful scale language instead.
             </p>
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-black/8 pt-12 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <SectionIntro
+            eyebrow="Structure"
+            title="Copy the right shape."
+            body="Agents should imitate these entry patterns exactly. Experience needs left-side context and right-side dates. Education can use date-only metadata. Projects can skip metadata."
+          />
+          <div className="min-w-0 space-y-4">
+            <div className="min-w-0 grid gap-4 md:grid-cols-3">
+              {structureExamples.map((example) => (
+                <article className="min-w-0 rounded-[1.25rem] border border-black/8 bg-white p-5 shadow-sm" key={example.title}>
+                  <p className="text-base font-bold tracking-tight text-slate-950">{example.title}</p>
+                  <pre className="mt-4 w-full overflow-x-auto rounded-[0.9rem] bg-[#fbf7f0] p-4 font-mono text-[0.8rem] leading-6 text-slate-800">
+                    {example.code}
+                  </pre>
+                </article>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {structureExampleLinks.map((item) => (
+                <Link
+                  className="inline-flex items-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-bold text-[#065f46] shadow-sm transition hover:border-black/15 hover:text-[#044e34]"
+                  href={item.href}
+                  key={item.href}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
 

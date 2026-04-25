@@ -15,8 +15,12 @@ export type ResumeQualityIssue = {
 export const MAX_PUBLISH_HEADLINE_CHARS = 80;
 
 const SUMMARY_TITLE_PATTERN = /^summary$/i;
+const EXPERIENCE_SECTION_TITLE_PATTERN = /\b(experience|employment|work history|career history)\b/i;
+const EDUCATION_SECTION_TITLE_PATTERN = /^education$/i;
+const PROJECT_SECTION_TITLE_PATTERN = /\b(projects?|selected work|selected projects|case studies)\b/i;
 const INLINE_BULLET_SEPARATOR_PATTERN = /\s(?:•|·|&bull;)\s/i;
 const UNSUPPORTED_BULLET_MARKER_PATTERN = /(^|\n)\s*(?:•\S|·\s+|·\S)/;
+const RESUME_DATE_PATTERN = /\b(?:19|20)\d{2}\b|\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t)?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|present|current|now)\b/i;
 
 export function evaluateResumeQuality(input: {
   document: ResumeDocument;
@@ -80,6 +84,10 @@ function getPublishQualityIssues(document: ResumeDocument, markdown: string) {
   }
 
   for (const section of document.sections) {
+    if (isExperienceLikeSectionTitle(section.title)) {
+      issues.push(...getExperienceEntryIssues(section));
+    }
+
     if (
       SUMMARY_TITLE_PATTERN.test(section.title) ||
       section.skillGroups.length > 0 ||
@@ -107,4 +115,63 @@ function getPublishQualityIssues(document: ResumeDocument, markdown: string) {
   }
 
   return issues;
+}
+
+function getExperienceEntryIssues(section: ResumeDocument["sections"][number]) {
+  return section.entries.flatMap((entry, entryIndex) => {
+    const path = `markdown.sections.${section.id}.entries[${entryIndex}].meta`;
+    const metaLeft = entry.metaLeft ?? "";
+    const metaRight = entry.metaRight ?? "";
+    const hasMeta = Boolean(metaLeft.trim() || metaRight.trim());
+
+    if (!hasMeta) {
+      return [{
+        code: "experience_entry_missing_meta",
+        message: "Experience entries must include an italic metadata line in the form *Location, remote, or website | Dates*.",
+        path,
+      }];
+    }
+
+    if (looksLikeResumeDate(metaLeft) && !looksLikeResumeDate(metaRight)) {
+      return [{
+        code: "experience_entry_date_in_wrong_slot",
+        message: "Experience entries must use *Location, remote, or website | Dates*. Put the date on the right.",
+        path,
+      }];
+    }
+
+    if (looksLikeResumeDate(metaRight) && !metaLeft.trim()) {
+      return [{
+        code: "experience_entry_missing_context",
+        message: "Experience entries need left-side context before the date, such as a location, Remote, or a public website.",
+        path,
+      }];
+    }
+
+    if (!looksLikeResumeDate(metaRight)) {
+      return [{
+        code: "experience_entry_missing_dates",
+        message: "Experience entries must include dates on the right side of the italic metadata line.",
+        path,
+      }];
+    }
+
+    return [];
+  });
+}
+
+export function isExperienceLikeSectionTitle(title: string) {
+  return EXPERIENCE_SECTION_TITLE_PATTERN.test(title);
+}
+
+export function isEducationSectionTitle(title: string) {
+  return EDUCATION_SECTION_TITLE_PATTERN.test(title);
+}
+
+export function isProjectLikeSectionTitle(title: string) {
+  return PROJECT_SECTION_TITLE_PATTERN.test(title);
+}
+
+export function looksLikeResumeDate(value: string) {
+  return RESUME_DATE_PATTERN.test(value);
 }
