@@ -10,15 +10,19 @@ describe("developer-platform-guides", () => {
     expect(TINYCV_MARKDOWN_GUIDE).toContain("Experience metadata structure");
     expect(TINYCV_MARKDOWN_GUIDE).toContain("Education structure");
     expect(TINYCV_MARKDOWN_GUIDE).toContain("Projects / selected work structure");
+    expect(TINYCV_MARKDOWN_GUIDE).toContain("Role coverage and Additional Experience");
     expect(TINYCV_MARKDOWN_GUIDE).toContain("/examples/engineer");
   });
 
   it("teaches the experience metadata rule in the agent guide", () => {
     expect(TINYCV_AGENT_FINISH_GUIDE).toContain("Location, Remote, or website | Dates");
+    expect(TINYCV_AGENT_FINISH_GUIDE).toContain("most recent ~4 substantive roles");
+    expect(TINYCV_AGENT_FINISH_GUIDE).toContain("Additional Experience");
   });
 
   it("keeps structure guardrails in the cookbook", () => {
     expect(TINYCV_AGENT_COOKBOOK).toContain("Location, Remote, or website | Dates");
     expect(TINYCV_AGENT_COOKBOOK).toContain("Projects and selected work can omit metadata");
+    expect(TINYCV_AGENT_COOKBOOK).toContain("most recent ~4 substantive roles");
   });
 });
