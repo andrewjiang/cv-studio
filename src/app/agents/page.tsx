@@ -61,6 +61,43 @@ const templateGuidance = [
   },
 ];
 
+const roleCoverageGuidance = [
+  "Default to only the most recent ~4 substantive roles as full entries.",
+  "Each standalone role should usually have at least 2 meaningful lines, and preferably 3-4 when the user can support them.",
+  "Older or thinner roles can collapse into Additional Experience, or be omitted if they do not help the current story.",
+  "Do not keep very old roles unless they materially strengthen the narrative for the target role.",
+];
+
+const roleCoverageExamples = [
+  {
+    code: `## Experience
+### Founder | Meridian Labs
+*Remote | 2021 - Present*
+- Built the first product surface and shipped the company to revenue.
+- Closed the first enterprise customers and turned early demand into repeatable proof.
+
+## Additional Experience
+- Analyst, Summit Partners (2016 - 2018)
+- Research Assistant, Civic Data Lab (2014 - 2016)`,
+    title: "Good",
+  },
+  {
+    code: `## Experience
+### Founder | Meridian Labs
+*Remote | 2021 - Present*
+- Built the first product surface.
+
+### Analyst | Summit Partners
+*Boston, MA | 2016 - 2018*
+- Worked on investments.
+
+### Research Assistant | Civic Data Lab
+*2014 - 2016*
+- Helped with research.`,
+    title: "Bad",
+  },
+];
+
 const workflowSteps = [
   "Read this guide, /api/v1/spec/markdown, and /openapi.json.",
   "Choose the template that fits the user's next target role.",
@@ -263,6 +300,33 @@ export default function AgentsPage() {
                 <p className="mt-3 text-sm leading-6 font-semibold text-slate-800">{template.signal}</p>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-black/8 pt-12 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <SectionIntro
+            eyebrow="Coverage"
+            title="Give each role enough proof."
+            body="Tiny CV reads better when agents keep only the roles that matter, and give each full entry enough substance to justify the space."
+          />
+          <div className="min-w-0 space-y-4">
+            <div className="grid gap-3">
+              {roleCoverageGuidance.map((item) => (
+                <div className="rounded-[1rem] border border-black/8 bg-white px-5 py-4 shadow-sm" key={item}>
+                  <p className="text-sm font-semibold leading-6 text-slate-800">{item}</p>
+                </div>
+              ))}
+            </div>
+            <div className="min-w-0 grid gap-4 md:grid-cols-2">
+              {roleCoverageExamples.map((example) => (
+                <article className="min-w-0 rounded-[1.25rem] border border-black/8 bg-white p-5 shadow-sm" key={example.title}>
+                  <p className="text-base font-bold tracking-tight text-slate-950">{example.title}</p>
+                  <pre className="mt-4 w-full overflow-x-auto rounded-[0.9rem] bg-[#fbf7f0] p-4 font-mono text-[0.8rem] leading-6 text-slate-800">
+                    {example.code}
+                  </pre>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 

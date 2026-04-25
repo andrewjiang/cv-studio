@@ -166,6 +166,50 @@ Education may use a date-only italic line.
 
 Project-like sections may omit metadata entirely.
 
+## Role coverage and Additional Experience
+
+Good:
+
+\`\`\`md
+## Experience
+### Founder | Meridian Labs
+*Remote | 2021 - Present*
+- Built the first product surface and shipped the company to revenue.
+- Closed the first enterprise customers and turned early demand into repeatable proof.
+
+### Product Lead | Atlas
+*New York, NY | 2018 - 2021*
+- Led product strategy for the company&apos;s core workflow.
+- Improved activation and expansion through clearer onboarding and pricing.
+
+## Additional Experience
+- Analyst, Summit Partners (2016 - 2018)
+- Research Assistant, Civic Data Lab (2014 - 2016)
+\`\`\`
+
+Bad:
+
+\`\`\`md
+## Experience
+### Founder | Meridian Labs
+*Remote | 2021 - Present*
+- Built the first product surface and shipped the company to revenue.
+
+### Product Lead | Atlas
+*New York, NY | 2018 - 2021*
+- Led product strategy.
+
+### Analyst | Summit Partners
+*Boston, MA | 2016 - 2018*
+- Worked on investments.
+
+### Research Assistant | Civic Data Lab
+*2014 - 2016*
+- Helped with research.
+\`\`\`
+
+Default to the most recent substantive roles as full entries. Collapse older or thinner roles into \`## Additional Experience\`, or omit them when they no longer strengthen the story.
+
 ## Full examples
 
 - \`GET /api/v1/templates/engineer\`
@@ -254,6 +298,10 @@ If unsure, choose the template that matches the job the user wants next, not the
 
 - Keep the resume to one page.
 - Lead with the target role and strongest proof.
+- Default to only the most recent ~4 substantive roles as full entries.
+- Each standalone role should usually earn at least 2 meaningful lines, and preferably 3 to 4 when the user has the evidence.
+- Older or thinner roles can collapse into \`## Additional Experience\`, or be omitted if they do not help the current narrative.
+- Do not include very old roles unless they materially strengthen the story for the target job.
 - Use 2 to 4 bullets per recent role.
 - Start bullets with concrete verbs.
 - Prefer outcomes over task lists.
@@ -371,6 +419,9 @@ export const TINYCV_AGENT_COOKBOOK = `# Tiny CV Agent Cookbook
 - Use markdown if your agent already produces polished text.
 - Use JSON if your agent starts from structured profile data.
 - Do not invent employers, dates, credentials, metrics, or links.
+- Default to the most recent ~4 substantive roles as full entries, then compress the rest.
+- Each full role should usually have at least 2 meaningful lines. If a role only supports one thin line, move it to \`Additional Experience\` or cut it.
+- Do not keep very old roles just to fill space. Keep them only when they materially strengthen the current narrative.
 - Send an \`Idempotency-Key\` on create, update, publish, and PDF job requests.
 - Experience entries should use \`### Role | Company\` and then \`*Location, Remote, or website | Dates*\`.
 - Education entries can use a date-only italic line.
