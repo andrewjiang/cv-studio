@@ -117,7 +117,7 @@ Neither API path grants permanent premium URL ownership. The premium `name.tiny.
 4. Request a PDF job if you need a file artifact.
 5. Optionally request a one-time edit claim URL so the end user can keep editing in Tiny CV.
 
-Draft creation is intentionally permissive. API publishing is strict: validate with `quality_gate: "publish"` before `POST /api/v1/resumes/:resume_id/publish`, `POST /api/v1/paid/resumes`, or `POST /api/v1/paid/agent-finish`. Publish-ready markdown needs a short headline under 80 characters, contact info, a `## Summary`, proper `###` entries, and separate `-` bullet lines instead of inline `•` lists.
+Draft creation is intentionally permissive. API publishing is strict: validate with `quality_gate: "publish"` before `POST /api/v1/resumes/:resume_id/publish`, `POST /api/v1/paid/resumes`, or `POST /api/v1/paid/agent-finish`. Publish-ready markdown needs a short headline under 80 characters, contact info, a `## Summary`, proper `###` entries, `*Location, Remote, or website | Dates*` for experience-style metadata, and separate `-` bullet lines instead of inline `•` lists.
 
 ### Public endpoints
 

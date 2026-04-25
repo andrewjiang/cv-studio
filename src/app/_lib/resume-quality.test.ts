@@ -72,6 +72,20 @@ Leadership: Product strategy, business development, fundraising, GTM, customer s
 Technical: JavaScript, Python, Solidity, LLM systems, prompt design, inference optimization
 Design & Analytics: Figma, Photoshop, SQL, R, Excel / VBA`;
 
+const VALID_PUBLISH_PREFIX = `# Alex Morgan
+Founder & Product Engineer
+San Francisco, CA | [alex@example.com](mailto:alex@example.com)
+
+## Summary
+Product-minded builder with experience across product, engineering, and go-to-market.
+`;
+
+function buildPublishMarkdown(body: string) {
+  return `${VALID_PUBLISH_PREFIX}
+
+${body}`.trim();
+}
+
 describe("resume-quality", () => {
   it("blocks the Andrew sample at the publish gate with specific errors", () => {
     const result = evaluateResumeQuality({
@@ -129,5 +143,144 @@ describe("resume-quality", () => {
 
     expect(result.publishReady).toBe(true);
     expect(result.errors).toHaveLength(0);
+  });
+
+  it("rejects date-only experience metadata at the publish gate", () => {
+    const markdown = buildPublishMarkdown(`## Experience
+### Founder & Investor | Weekend Fund
+*Apr 2017 - Present*
+- Founded an early-stage venture fund.`);
+
+    const result = evaluateResumeQuality({
+      document: parseCvMarkdown(markdown),
+      gate: "publish",
+      markdown,
+    });
+
+    expect(result.publishReady).toBe(false);
+    expect(result.errors.map((error) => error.code)).toContain("experience_entry_date_in_wrong_slot");
+  });
+
+  it("rejects reversed experience metadata at the publish gate", () => {
+    const markdown = buildPublishMarkdown(`## Experience
+### Founder & Investor | Weekend Fund
+*Apr 2017 - Present | Miami, FL*
+- Founded an early-stage venture fund.`);
+
+    const result = evaluateResumeQuality({
+      document: parseCvMarkdown(markdown),
+      gate: "publish",
+      markdown,
+    });
+
+    expect(result.errors.map((error) => error.code)).toContain("experience_entry_date_in_wrong_slot");
+  });
+
+  it("rejects experience metadata with missing left-side context", () => {
+    const markdown = buildPublishMarkdown(`## Experience
+### Founder & Investor | Weekend Fund
+* | Apr 2017 - Present*
+- Founded an early-stage venture fund.`);
+
+    const result = evaluateResumeQuality({
+      document: parseCvMarkdown(markdown),
+      gate: "publish",
+      markdown,
+    });
+
+    expect(result.errors.map((error) => error.code)).toContain("experience_entry_missing_context");
+  });
+
+  it("rejects experience metadata with missing dates", () => {
+    const markdown = buildPublishMarkdown(`## Experience
+### Founder & Investor | Weekend Fund
+*Miami, FL*
+- Founded an early-stage venture fund.`);
+
+    const result = evaluateResumeQuality({
+      document: parseCvMarkdown(markdown),
+      gate: "publish",
+      markdown,
+    });
+
+    expect(result.errors.map((error) => error.code)).toContain("experience_entry_missing_dates");
+  });
+
+  it("rejects experience entries with no metadata line", () => {
+    const markdown = buildPublishMarkdown(`## Experience
+### Founder & Investor | Weekend Fund
+- Founded an early-stage venture fund.`);
+
+    const result = evaluateResumeQuality({
+      document: parseCvMarkdown(markdown),
+      gate: "publish",
+      markdown,
+    });
+
+    expect(result.errors.map((error) => error.code)).toContain("experience_entry_missing_meta");
+  });
+
+  it("passes proper experience metadata at the publish gate", () => {
+    const markdown = buildPublishMarkdown(`## Experience
+### Founder & Investor | Weekend Fund
+*Miami, FL | Apr 2017 - Present*
+- Founded an early-stage venture fund.`);
+
+    const result = evaluateResumeQuality({
+      document: parseCvMarkdown(markdown),
+      gate: "publish",
+      markdown,
+    });
+
+    expect(result.publishReady).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("keeps education date-only metadata publish-valid", () => {
+    const markdown = buildPublishMarkdown(`## Education
+### University of Oregon Lundquist College of Business
+*2005 - 2009*
+B.S., Entrepreneurship Concentration`);
+
+    const result = evaluateResumeQuality({
+      document: parseCvMarkdown(markdown),
+      gate: "publish",
+      markdown,
+    });
+
+    expect(result.publishReady).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("keeps project sections without metadata publish-valid", () => {
+    const markdown = buildPublishMarkdown(`## Projects
+### Tiny CV Agent Finish | Next.js, TypeScript, PostgreSQL
+- Designed an idempotent API flow.`);
+
+    const result = evaluateResumeQuality({
+      document: parseCvMarkdown(markdown),
+      gate: "publish",
+      markdown,
+    });
+
+    expect(result.publishReady).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("downgrades bad experience metadata to draft warnings", () => {
+    const markdown = buildPublishMarkdown(`## Experience
+### Founder & Investor | Weekend Fund
+*Apr 2017 - Present*
+- Founded an early-stage venture fund.`);
+
+    const result = evaluateResumeQuality({
+      document: parseCvMarkdown(markdown),
+      gate: "draft",
+      markdown,
+    });
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.publishReady).toBe(false);
+    expect(result.warnings.map((warning) => warning.code)).toContain("experience_entry_date_in_wrong_slot");
   });
 });
