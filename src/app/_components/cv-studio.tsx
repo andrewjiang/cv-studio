@@ -65,6 +65,7 @@ import type {
   TemplateKey,
   WorkspacePayload,
 } from "@/app/_lib/hosted-resume-types";
+import { downloadPdfFromUrl } from "@/app/_lib/pdf-download-client";
 import { buildResumePdfDownloadUrl } from "@/app/_lib/resume-print-url";
 import { getResumeTemplate } from "@/app/_lib/resume-templates";
 import { UserMenu } from "./user-menu";
@@ -493,14 +494,21 @@ export function CvStudio({
       return;
     }
 
-    const downloadWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
+    setNotice({ kind: "success", message: "Generating PDF..." });
 
     if (!(await mutateResume({ successMessage: null }))) {
-      downloadWindow?.close();
       return;
     }
 
-    openDownloadUrl(buildResumePdfDownloadUrl(window.location.href), downloadWindow);
+    try {
+      await downloadPdfFromUrl(buildResumePdfDownloadUrl(window.location.href));
+      setNotice({ kind: "success", message: "PDF downloaded." });
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Unable to download this PDF.",
+      });
+    }
   };
 
   const measureFit = useEffectEvent(() => {
@@ -1991,18 +1999,6 @@ function resolveAbsoluteUrl(link: string | null) {
   } catch {
     return null;
   }
-}
-
-function openDownloadUrl(url: string, targetWindow: Window | null = null) {
-  const downloadWindow = targetWindow ?? window.open(url, "_blank", "noopener,noreferrer");
-
-  if (downloadWindow) {
-    downloadWindow.opener = null;
-    downloadWindow.location.href = url;
-    return;
-  }
-
-  window.location.assign(url);
 }
 
 function shouldUseDedicatedPrintView() {
