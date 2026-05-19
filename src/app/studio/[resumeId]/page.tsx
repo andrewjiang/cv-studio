@@ -2,8 +2,10 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { CvStudio } from "@/app/_components/cv-studio";
 import { EditorLinkAttachBridge } from "@/app/_components/editor-link-attach-bridge";
+import { ResumePrintView } from "@/app/_components/resume-print-view";
 import { attachWorkspaceResumeToUser } from "@/app/_lib/account-store";
 import { auth } from "@/app/_lib/auth";
+import { parseCvMarkdown } from "@/app/_lib/cv-markdown";
 import {
   getStudioBootstrap,
   HostedResumeStoreUnavailableError,
@@ -18,10 +20,10 @@ export default async function HostedStudioPage({
   searchParams,
 }: {
   params: Promise<{ resumeId: string }>;
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ autoprint?: string; print?: string; token?: string }>;
 }) {
   const { resumeId } = await params;
-  const { token } = await searchParams;
+  const { autoprint, print, token } = await searchParams;
 
   if (token) {
     let resume = null;
@@ -81,6 +83,19 @@ export default async function HostedStudioPage({
       userId: session.user.id,
       workspaceId,
     });
+  }
+
+  const isPrintView = print === "1" || print === "true";
+  const isAutoPrintView = isPrintView && (autoprint === "1" || autoprint === "true");
+
+  if (isPrintView) {
+    return (
+      <ResumePrintView
+        autoPrint={isAutoPrintView}
+        document={parseCvMarkdown(payload.resume.markdown)}
+        fitScale={payload.resume.fitScale}
+      />
+    );
   }
 
   return (

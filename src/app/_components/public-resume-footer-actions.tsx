@@ -1,6 +1,7 @@
 "use client";
 
 import { DownloadIcon } from "@/app/_components/cv-studio-ui";
+import { ensureResumeAutoPrintUrl } from "@/app/_lib/resume-print-url";
 import Link from "next/link";
 
 export function PublicResumeFooterActions({
@@ -10,6 +11,15 @@ export function PublicResumeFooterActions({
   pageWidth: number;
   showBranding: boolean;
 }) {
+  const handleDownloadPdf = () => {
+    if (!shouldUseDedicatedPrintView()) {
+      window.print();
+      return;
+    }
+
+    openPrintView(ensureResumeAutoPrintUrl(window.location.href));
+  };
+
   if (!showBranding) {
     return (
       <footer
@@ -18,7 +28,7 @@ export function PublicResumeFooterActions({
       >
         <button
           className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 text-[0.82rem] font-medium text-slate-600 underline-offset-4 transition hover:text-slate-950 hover:underline sm:min-h-0 sm:min-w-0"
-          onClick={() => window.print()}
+          onClick={handleDownloadPdf}
           type="button"
         >
           <DownloadIcon className="h-[0.92rem] w-[0.92rem]" />
@@ -39,7 +49,7 @@ export function PublicResumeFooterActions({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.82rem] font-medium text-slate-600">
         <button
           className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 underline-offset-4 transition hover:text-slate-950 hover:underline sm:min-h-0 sm:min-w-0"
-          onClick={() => window.print()}
+          onClick={handleDownloadPdf}
           type="button"
         >
           <DownloadIcon className="h-[0.92rem] w-[0.92rem]" />
@@ -62,4 +72,19 @@ export function PublicResumeFooterActions({
       </div>
     </footer>
   );
+}
+
+function openPrintView(url: string) {
+  const printWindow = window.open(url, "_blank", "noopener,noreferrer");
+
+  if (printWindow) {
+    printWindow.opener = null;
+    return;
+  }
+
+  window.location.assign(url);
+}
+
+function shouldUseDedicatedPrintView() {
+  return window.matchMedia("(max-width: 1023px)").matches;
 }

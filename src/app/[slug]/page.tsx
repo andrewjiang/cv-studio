@@ -47,7 +47,7 @@ export default async function PublicResumePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ print?: string }>;
+  searchParams?: Promise<{ autoprint?: string; print?: string }>;
 }) {
   const requestHeaders = await headers();
   const hostResolution = await resolveHost(
@@ -64,6 +64,7 @@ export default async function PublicResumePage({
 
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
+  const autoPrint = resolvedSearchParams.autoprint;
   const print = resolvedSearchParams.print;
   let resume = null;
 
@@ -82,6 +83,7 @@ export default async function PublicResumePage({
   }
 
   const isPrintView = print === "1" || print === "true";
+  const isAutoPrintView = isPrintView && (autoPrint === "1" || autoPrint === "true");
 
-  return <PublicResumeRenderer print={isPrintView} resume={resume} />;
+  return <PublicResumeRenderer autoPrint={isAutoPrintView} print={isPrintView} resume={resume} />;
 }

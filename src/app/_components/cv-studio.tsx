@@ -65,6 +65,7 @@ import type {
   TemplateKey,
   WorkspacePayload,
 } from "@/app/_lib/hosted-resume-types";
+import { ensureResumeAutoPrintUrl } from "@/app/_lib/resume-print-url";
 import { getResumeTemplate } from "@/app/_lib/resume-templates";
 import { UserMenu } from "./user-menu";
 
@@ -347,18 +348,17 @@ export function CvStudio({
 
   const applyRemotePayload = (
     payload: HostedResumeResponse,
-    syncResult: "published" | "saved",
     requestMarkdown?: string,
+    successMessage?: string | null,
   ) => {
     setWorkspaceState(payload.workspace);
     setActiveResume(payload.resume);
     setPublicLink(payload.publicUrl);
     setRemoteSyncState({ kind: "idle" });
-    setNotice(
-      syncResult === "published"
-        ? { kind: "success", message: "Published. Link is ready." }
-        : { kind: "success", message: "Changes saved." },
-    );
+
+    if (successMessage) {
+      setNotice({ kind: "success", message: successMessage });
+    }
 
     if (
       requestMarkdown === undefined ||
@@ -372,9 +372,11 @@ export function CvStudio({
   const mutateResume = async ({
     publish = false,
     silent = false,
+    successMessage = publish ? "Published. Link is ready." : "Changes saved.",
   }: {
     publish?: boolean;
     silent?: boolean;
+    successMessage?: string | null;
   } = {}) => {
     const requestMarkdown = markdownRef.current;
     const requestResume = activeResumeRef.current;
@@ -409,16 +411,22 @@ export function CvStudio({
       }
 
       if (requestId !== requestIdRef.current) {
-        return;
+        return null;
       }
 
-      applyRemotePayload(payload, publish ? "published" : "saved", requestMarkdown);
+      applyRemotePayload(
+        payload,
+        requestMarkdown,
+        successMessage,
+      );
+      return payload;
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to sync this resume.";
 
       setRemoteSyncState({ kind: "error", message });
       setNotice({ kind: "error", message });
+      return null;
     }
   };
 
@@ -477,6 +485,19 @@ export function CvStudio({
 
     await navigator.clipboard.writeText(absoluteUrl);
     setNotice({ kind: "success", message: `Copied ${absoluteUrl}` });
+  };
+
+  const downloadPdf = async () => {
+    if (!shouldUseDedicatedPrintView()) {
+      window.print();
+      return;
+    }
+
+    if (!(await mutateResume({ successMessage: null }))) {
+      return;
+    }
+
+    openPrintView(ensureResumeAutoPrintUrl(window.location.href));
   };
 
   const measureFit = useEffectEvent(() => {
@@ -1199,7 +1220,7 @@ export function CvStudio({
               <button
                 aria-label="Download PDF"
                 className={mobileCompactIconButtonClass}
-                onClick={() => window.print()}
+                onClick={() => void downloadPdf()}
                 title="Download PDF"
                 type="button"
               >
@@ -1322,7 +1343,7 @@ export function CvStudio({
                 ) : null}
                 <button
                   className={textActionLinkClass}
-                  onClick={() => window.print()}
+                  onClick={() => void downloadPdf()}
                   type="button"
                 >
                   <DownloadIcon />
@@ -1967,6 +1988,21 @@ function resolveAbsoluteUrl(link: string | null) {
   } catch {
     return null;
   }
+}
+
+function openPrintView(url: string) {
+  const printWindow = window.open(url, "_blank", "noopener,noreferrer");
+
+  if (printWindow) {
+    printWindow.opener = null;
+    return;
+  }
+
+  window.location.assign(url);
+}
+
+function shouldUseDedicatedPrintView() {
+  return window.matchMedia("(max-width: 1023px)").matches;
 }
 
 function describeRemoteSyncState(
