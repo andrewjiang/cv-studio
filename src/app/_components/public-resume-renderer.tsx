@@ -1,14 +1,17 @@
 import { PublicResumeFooterActions } from "@/app/_components/public-resume-footer-actions";
 import { ResumeDesktopSheet, ResumeMobileSheet } from "@/app/_components/resume-live-document";
+import { ResumePrintView } from "@/app/_components/resume-print-view";
 import { getPageMetrics } from "@/app/_lib/cv-fit";
 import { parseCvMarkdown } from "@/app/_lib/cv-markdown";
 import { canRemoveBrandingForResume } from "@/app/_lib/entitlements";
 import type { HostedResumePublicRecord } from "@/app/_lib/hosted-resume-types";
 
 export async function PublicResumeRenderer({
+  autoPrint = false,
   print = false,
   resume,
 }: {
+  autoPrint?: boolean;
   print?: boolean;
   resume: HostedResumePublicRecord;
 }) {
@@ -17,13 +20,7 @@ export async function PublicResumeRenderer({
   const hideBranding = await canRemoveBrandingForResume(resume.id);
 
   if (print) {
-    return (
-      <main className="bg-white text-slate-900">
-        <ResumeDesktopSheet document={document} fitScale={resume.fitScale} interactive={false} />
-
-        <style media="print">{`@page { size: ${document.style.pageSize}; margin: 0; }`}</style>
-      </main>
-    );
+    return <ResumePrintView autoPrint={autoPrint} document={document} fitScale={resume.fitScale} />;
   }
 
   return (

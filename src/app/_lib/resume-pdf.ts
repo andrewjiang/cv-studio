@@ -7,6 +7,7 @@ import {
   withBrowserPage,
 } from "@/app/_lib/browser-renderer";
 import { parseCvMarkdown } from "@/app/_lib/cv-markdown";
+import { ensureResumePrintUrl } from "@/app/_lib/resume-print-url";
 
 type ResumePdfResult = {
   contentType: string;
@@ -35,9 +36,7 @@ export function buildPublishedResumePrintUrl(origin: string, slug: string) {
 }
 
 export function ensurePublishedResumePrintUrl(publicUrl: string) {
-  const url = new URL(publicUrl);
-  url.searchParams.set("print", "1");
-  return url.toString();
+  return ensureResumePrintUrl(publicUrl);
 }
 
 export const getPdfRenderOrigin = getBrowserRenderOrigin;

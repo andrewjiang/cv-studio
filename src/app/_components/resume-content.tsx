@@ -377,6 +377,20 @@ function ContactIcon({
     );
   }
 
+  if (platform === "phone") {
+    return (
+      <svg {...commonProps}>
+        <path
+          d="M7.72 4.75h2.06l1.12 3.05-1.4 1.28a12.24 12.24 0 0 0 5.42 5.42l1.28-1.4 3.05 1.12v2.06a1.6 1.6 0 0 1-1.6 1.6h-.95A11.95 11.95 0 0 1 6.12 7.3v-.95a1.6 1.6 0 0 1 1.6-1.6Z"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+      </svg>
+    );
+  }
+
   if (platform === "website") {
     return (
       <svg {...commonProps}>

@@ -67,6 +67,15 @@ function normalizeContactLink(label: string, href: string): ResumeContactItem {
       : `https://${href}`;
   const emailLikeLabel = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(label);
 
+  if (href.startsWith("tel:")) {
+    return {
+      href: normalizedHref,
+      kind: "phone",
+      label,
+      platform: "phone",
+    };
+  }
+
   if (href.startsWith("mailto:") || emailLikeLabel) {
     return {
       href: normalizedHref,
