@@ -69,6 +69,53 @@ describe("resume-pdf", () => {
     });
   });
 
+  it("renders PDFs from an explicit render URL", async () => {
+    const page = {
+      emulateMediaType: vi.fn(),
+      goto: vi.fn(),
+      pdf: vi.fn(async () => new Uint8Array([37, 80, 68, 70])),
+      setViewport: vi.fn(),
+    };
+
+    browserRendererMock.withBrowserPage.mockImplementation(async (callback) => callback(page));
+
+    await generateResumePdf({
+      markdown: "# Jane Doe\nProduct Engineer",
+      renderUrl: "https://tiny.cv/studio/resume_123/pdf-render?workspace=workspace_123&token=v1.abc",
+    });
+
+    expect(page.goto).toHaveBeenCalledWith(
+      "https://tiny.cv/studio/resume_123/pdf-render?workspace=workspace_123&token=v1.abc&print=1",
+      {
+        timeout: 30_000,
+        waitUntil: "networkidle0",
+      },
+    );
+  });
+
+  it("returns attachment PDF responses", async () => {
+    const page = {
+      emulateMediaType: vi.fn(),
+      goto: vi.fn(),
+      pdf: vi.fn(async () => new Uint8Array([37, 80, 68, 70])),
+      setViewport: vi.fn(),
+    };
+
+    browserRendererMock.withBrowserPage.mockImplementation(async (callback) => callback(page));
+
+    const pdf = await generateResumePdf({
+      markdown: "# Jane Doe\nProduct Engineer",
+      publicUrl: "https://tiny.cv/SteadyBlueHeron",
+    });
+
+    const { buildResumePdfResponse } = await import("@/app/_lib/resume-pdf");
+    const response = buildResumePdfResponse(pdf);
+
+    expect(response.headers.get("Content-Type")).toBe("application/pdf");
+    expect(response.headers.get("Content-Disposition")).toBe('attachment; filename="jane-doe.pdf"');
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([37, 80, 68, 70]));
+  });
+
   it("uses explicit app origin first", () => {
     process.env.TINYCV_APP_URL = "https://tiny.cv/";
 

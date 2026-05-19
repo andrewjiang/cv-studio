@@ -1,7 +1,7 @@
 "use client";
 
 import { DownloadIcon } from "@/app/_components/cv-studio-ui";
-import { ensureResumeAutoPrintUrl } from "@/app/_lib/resume-print-url";
+import { buildResumePdfDownloadUrl } from "@/app/_lib/resume-print-url";
 import Link from "next/link";
 
 export function PublicResumeFooterActions({
@@ -17,7 +17,7 @@ export function PublicResumeFooterActions({
       return;
     }
 
-    openPrintView(ensureResumeAutoPrintUrl(window.location.href));
+    openDownloadUrl(buildResumePdfDownloadUrl(window.location.href));
   };
 
   if (!showBranding) {
@@ -74,11 +74,12 @@ export function PublicResumeFooterActions({
   );
 }
 
-function openPrintView(url: string) {
-  const printWindow = window.open(url, "_blank", "noopener,noreferrer");
+function openDownloadUrl(url: string, targetWindow: Window | null = null) {
+  const downloadWindow = targetWindow ?? window.open(url, "_blank", "noopener,noreferrer");
 
-  if (printWindow) {
-    printWindow.opener = null;
+  if (downloadWindow) {
+    downloadWindow.opener = null;
+    downloadWindow.location.href = url;
     return;
   }
 

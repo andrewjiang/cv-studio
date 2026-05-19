@@ -10,3 +10,11 @@ export function ensureResumeAutoPrintUrl(rawUrl: string) {
   url.searchParams.set("autoprint", "1");
   return url.toString();
 }
+
+export function buildResumePdfDownloadUrl(rawUrl: string) {
+  const url = new URL(rawUrl);
+  url.pathname = `${url.pathname.replace(/\/+$/, "")}/pdf`;
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}

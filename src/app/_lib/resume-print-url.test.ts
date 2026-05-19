@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildResumePdfDownloadUrl,
   ensureResumeAutoPrintUrl,
   ensureResumePrintUrl,
 } from "@/app/_lib/resume-print-url";
@@ -17,6 +18,15 @@ describe("resume-print-url", () => {
   it("adds autoprint on top of print mode", () => {
     expect(ensureResumeAutoPrintUrl("https://tiny.cv/SteadyBlueHeron?utm_source=agent")).toBe(
       "https://tiny.cv/SteadyBlueHeron?utm_source=agent&print=1&autoprint=1",
+    );
+  });
+
+  it("builds direct PDF download URLs for public and studio pages", () => {
+    expect(buildResumePdfDownloadUrl("https://tiny.cv/SteadyBlueHeron?print=1")).toBe(
+      "https://tiny.cv/SteadyBlueHeron/pdf",
+    );
+    expect(buildResumePdfDownloadUrl("https://tiny.cv/studio/resume_123?mode=preview#top")).toBe(
+      "https://tiny.cv/studio/resume_123/pdf",
     );
   });
 });

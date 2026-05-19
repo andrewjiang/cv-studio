@@ -17,15 +17,21 @@ type ResumePdfResult = {
 
 type BrowserPdfInput = {
   markdown: string;
-  publicUrl: string;
+  publicUrl?: string;
+  renderUrl?: string;
 };
 
 export async function generateResumePdf(input: BrowserPdfInput): Promise<ResumePdfResult> {
   const document = parseCvMarkdown(input.markdown);
+  const renderUrl = input.renderUrl ?? input.publicUrl;
+
+  if (!renderUrl) {
+    throw new Error("Expected a URL to render the resume PDF.");
+  }
 
   return {
     contentType: "application/pdf",
-    data: await renderPublicResumeUrlToPdf(input.publicUrl),
+    data: await renderResumeUrlToPdf(renderUrl),
     fileName: `${slugifyFilename(document.name || "resume")}.pdf`,
   };
 }
@@ -42,8 +48,18 @@ export function ensurePublishedResumePrintUrl(publicUrl: string) {
 export const getPdfRenderOrigin = getBrowserRenderOrigin;
 export { resolveLocalChromeExecutablePath };
 
-async function renderPublicResumeUrlToPdf(publicUrl: string) {
-  const printUrl = ensurePublishedResumePrintUrl(publicUrl);
+export function buildResumePdfResponse(pdf: ResumePdfResult) {
+  return new Response(new Blob([pdf.data as BlobPart], { type: pdf.contentType }), {
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Disposition": `attachment; filename="${pdf.fileName}"`,
+      "Content-Type": pdf.contentType,
+    },
+  });
+}
+
+async function renderResumeUrlToPdf(renderUrl: string) {
+  const printUrl = ensureResumePrintUrl(renderUrl);
 
   return withBrowserPage(async (page) => {
     await page.setViewport({
