@@ -65,7 +65,7 @@ import type {
   TemplateKey,
   WorkspacePayload,
 } from "@/app/_lib/hosted-resume-types";
-import { ensureResumeAutoPrintUrl } from "@/app/_lib/resume-print-url";
+import { buildResumePdfDownloadUrl } from "@/app/_lib/resume-print-url";
 import { getResumeTemplate } from "@/app/_lib/resume-templates";
 import { UserMenu } from "./user-menu";
 
@@ -493,11 +493,14 @@ export function CvStudio({
       return;
     }
 
+    const downloadWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
+
     if (!(await mutateResume({ successMessage: null }))) {
+      downloadWindow?.close();
       return;
     }
 
-    openPrintView(ensureResumeAutoPrintUrl(window.location.href));
+    openDownloadUrl(buildResumePdfDownloadUrl(window.location.href), downloadWindow);
   };
 
   const measureFit = useEffectEvent(() => {
@@ -1990,11 +1993,12 @@ function resolveAbsoluteUrl(link: string | null) {
   }
 }
 
-function openPrintView(url: string) {
-  const printWindow = window.open(url, "_blank", "noopener,noreferrer");
+function openDownloadUrl(url: string, targetWindow: Window | null = null) {
+  const downloadWindow = targetWindow ?? window.open(url, "_blank", "noopener,noreferrer");
 
-  if (printWindow) {
-    printWindow.opener = null;
+  if (downloadWindow) {
+    downloadWindow.opener = null;
+    downloadWindow.location.href = url;
     return;
   }
 
