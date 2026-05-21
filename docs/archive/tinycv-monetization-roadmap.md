@@ -1,5 +1,7 @@
 # Tiny CV Monetization Roadmap
 
+Historical founder-planning notes. This file is not contributor documentation and does not define the public support policy for the repository.
+
 ## Position
 
 Tiny CV is a markdown-first resume builder and hoster for people who want one clean page, a shareable link, and role-specific versions without fighting a document editor.

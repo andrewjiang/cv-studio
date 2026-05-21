@@ -124,6 +124,8 @@ function getAuthSecret() {
   return (
     process.env.BETTER_AUTH_SECRET?.trim() ||
     process.env.TINYCV_PLATFORM_SECRET?.trim() ||
+    // Local development stays bootable without extra setup, but production
+    // must provide explicit secrets and pass the readiness checks.
     (process.env.VERCEL ? undefined : "tinycv-local-better-auth-secret-do-not-use-in-production")
   );
 }

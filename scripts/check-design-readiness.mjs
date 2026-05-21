@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -230,18 +230,49 @@ function listChangedFiles(baseRef) {
 }
 
 function listTrackedFrontendFiles() {
-  return gitLines(["ls-files", "src/app"]);
+  const trackedFiles = gitLines(["ls-files", "src/app"]);
+
+  if (trackedFiles.length > 0) {
+    return trackedFiles;
+  }
+
+  return walkFiles("src/app");
 }
 
 function gitLines(args) {
   try {
-    return execFileSync("git", args, { encoding: "utf8" })
+    return execFileSync("git", args, {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    })
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter(Boolean);
   } catch {
     return [];
   }
+}
+
+function walkFiles(directory) {
+  if (!existsSync(directory)) {
+    return [];
+  }
+
+  const entries = readdirSync(directory, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const entryPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      files.push(...walkFiles(entryPath));
+      continue;
+    }
+
+    files.push(entryPath);
+  }
+
+  return files;
 }
 
 const invokedPath = process.argv[1] ? pathToFileURL(process.argv[1]).href : "";

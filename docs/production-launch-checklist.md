@@ -1,26 +1,21 @@
-# Tiny CV Production Launch Checklist
+# Tiny CV Deployment Guide
 
-This is the operational checklist for the next launch wave: get Tiny CV running safely on Vercel with the API, jobs, browser-measured API publish fit, and PDF export enabled.
+This guide is the public production checklist for self-hosting Tiny CV with durable storage, background jobs, and optional premium integrations.
 
-## What Andrew Should Set Up
+## Deployment Targets
 
-### 1. Vercel
+Tiny CV works best when you treat the deployment as two layers:
 
-- Production project: `lockinbot/cvstudio`.
-- Current production URL: `https://cvstudio-brown.vercel.app`.
-- Add the production domain when ready.
-- Use Pro if you want cron recovery more than once per day. Hobby supports cron, but only once daily.
-- Enable Fluid Compute if available for the project.
+- core app: Next.js server that handles the editor, API, auth, and public resumes
+- background/browser layer: a worker or scheduled caller plus Chromium access for publish-fit measurement and PDF jobs
 
-### 2. Postgres
+You can run both on one machine for small deployments or split them across services later.
 
-Use Neon, Supabase, or another managed Postgres.
+## Minimum Production Setup
 
-You need:
+### 1. Database
 
-- pooled production connection string for `DATABASE_URL`
-- direct connection string locally when running migrations, if your provider recommends that split
-- backups enabled
+Use managed Postgres or another production-grade Postgres deployment.
 
 Before deploy:
 
@@ -28,20 +23,15 @@ Before deploy:
 DATABASE_URL="postgresql://..." pnpm db:migrate
 ```
 
-### 3. Browserless Or CDP-Compatible Chrome
+Recommended:
 
-API publish fit measurement and PDF jobs should use a remote browser in production.
+- a pooled `DATABASE_URL` for the app
+- backups enabled
+- a direct migration connection if your provider recommends that split
 
-Set one of:
+### 2. Required Secrets
 
-- `TINYCV_BROWSER_WS_ENDPOINT`
-- `BROWSERLESS_WS_ENDPOINT`
-
-Local Chrome paths are fine for local testing, but not the preferred Vercel production path. The browser must be able to load `TINYCV_APP_URL` plus protected `/internal/resume-fit/:resumeId` routes.
-
-### 4. Production Secrets
-
-Generate secrets with:
+Generate strong secrets, for example:
 
 ```bash
 openssl rand -base64 32
@@ -56,55 +46,70 @@ Set:
 - `CRON_SECRET`
 - `BETTER_AUTH_SECRET`
 
-Set:
+Set these URLs as well:
 
 - `TINYCV_APP_URL=https://your-production-domain`
 - `BETTER_AUTH_URL=https://your-production-domain`
+
+Production expectations:
+
 - `TINYCV_RUNTIME_SCHEMA_SYNC=false`
 - `TINYCV_RATE_LIMIT_DISABLED=false`
 
-Optional, but recommended before public self-serve API keys:
+Before going live, run:
 
-- `NEXT_PUBLIC_TINYCV_TURNSTILE_SITE_KEY`
-- `TINYCV_TURNSTILE_SECRET_KEY`
+```bash
+pnpm check:prod
+```
 
-### 5. Future Wave Accounts
+### 3. Browser-Backed Jobs
 
-For the account/claiming wave, decide the auth provider.
+API publish-fit measurement and async PDF jobs need Chromium access.
 
-Recommended default:
+Set one of:
 
-- Better Auth or Auth.js for low-cost control
+- `TINYCV_BROWSER_WS_ENDPOINT`
+- `BROWSERLESS_WS_ENDPOINT`
+- `TINYCV_CHROME_EXECUTABLE_PATH`
 
-Fastest managed path:
+Remote CDP or Browserless is the preferred production path. Local Chrome paths are fine for local testing and simpler self-hosted environments.
 
-- Clerk
+The browser must be able to load `TINYCV_APP_URL` and protected `/internal/resume-fit/:resumeId` routes.
 
-If using OAuth login, create apps for:
+### 4. Background Job Processing
 
-- Google
-- GitHub
+Protect `/api/v1/jobs/process` with `TINYCV_WORKER_SECRET` or `CRON_SECRET`.
 
-Better Auth callback URLs:
+Example invocation:
 
-- `https://your-production-domain/api/auth/callback/google`
-- `https://your-production-domain/api/auth/callback/github`
+```bash
+curl -X POST https://your-domain.com/api/v1/jobs/process \
+  -H "Authorization: Bearer $TINYCV_WORKER_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"pdf_job_limit":1,"webhook_limit":10}'
+```
 
-Set provider credentials only when ready:
+Use a scheduled runner, cron, or worker queue to call this endpoint regularly. The app also schedules best-effort background processing after create, update, publish, and PDF requests, but the worker endpoint is the recovery path.
+
+## Optional Integrations
+
+### OAuth
+
+Only configure these when you want social login:
 
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `GITHUB_CLIENT_ID`
 - `GITHUB_CLIENT_SECRET`
 
-### 6. Stripe Payments
+Callback URLs:
 
-Stripe checkout is wired for signed-in users.
+- `https://your-production-domain/api/auth/callback/google`
+- `https://your-production-domain/api/auth/callback/github`
 
-Create test-mode products/prices first:
+### Billing
 
-- Founder Pass product, one-time `$100`, for permanent premium Tiny CV identity
-- Annual Pro product, `$40/year`, for active premium publishing and higher limits
+Stripe is optional and only required for premium plan flows.
 
 Set:
 
@@ -117,133 +122,41 @@ Optional:
 
 - `TINYCV_FOUNDER_PASS_LIMIT=100`
 
-Webhook endpoint:
+### Machine Payments
 
-```text
-https://your-production-domain/api/billing/stripe/webhook
-```
+Machine payments are disabled by default.
 
-Subscribe to:
+To enable them, set `TINYCV_MACHINE_PAYMENTS_ENABLED=true` and then configure the required x402 and MPP environment variables from `.env.example`.
 
-- `checkout.session.completed`
-- `customer.subscription.created`
-- `customer.subscription.updated`
-- `customer.subscription.deleted`
+Production readiness fails if machine payments are enabled with:
 
-Configure Stripe Customer Portal if subscription management should be available from `/account`:
+- missing secrets
+- placeholder wallet values
+- testnet defaults
+- deployment-host MPP realms
 
-- Settings -> Billing -> Customer portal
-- enable payment method updates, invoice history, and subscription cancellation/change behavior
+## Production Smoke Checks
 
-### 7. Future Wave Subdomains
-
-For `name.tiny.cv`, prepare:
-
-- production domain on Vercel
-- wildcard DNS record for `*.tiny.cv`
-- reserved names list before user claiming ships
-
-## Repo Commands
-
-Check local quality:
-
-```bash
-pnpm test
-pnpm lint
-pnpm check:design
-pnpm build
-```
-
-Check production env readiness:
+Core:
 
 ```bash
 pnpm check:prod
+pnpm test
+pnpm lint
+pnpm build
 ```
 
-Smoke-test API PDF rendering against a running deployment:
+With full infrastructure configured:
 
 ```bash
-TINYCV_ACCOUNT_TEST_BASE_URL=https://your-production-domain \
-pnpm test:account
-
-TINYCV_BILLING_TEST_BASE_URL=https://your-production-domain \
-pnpm test:billing
-
-TINYCV_BRANDING_TEST_BASE_URL=https://your-production-domain \
-DATABASE_URL=postgresql://... \
-pnpm test:branding
-
-TINYCV_API_FIT_TEST_BASE_URL=https://your-production-domain \
-TINYCV_API_KEY=tcv_live_... \
-pnpm test:api-fit
-
-TINYCV_PDF_TEST_BASE_URL=https://your-production-domain \
-TINYCV_API_KEY=tcv_live_... \
-TINYCV_WORKER_SECRET=... \
-pnpm test:pdf
+TINYCV_ACCOUNT_TEST_BASE_URL=https://your-production-domain pnpm test:account
+TINYCV_BILLING_TEST_BASE_URL=https://your-production-domain pnpm test:billing
+TINYCV_BRANDING_TEST_BASE_URL=https://your-production-domain DATABASE_URL=postgresql://... pnpm test:branding
+TINYCV_PDF_TEST_BASE_URL=https://your-production-domain TINYCV_API_KEY=tcv_live_... TINYCV_WORKER_SECRET=... pnpm test:pdf
 ```
 
-Optional visual PDF parity check:
+## Notes
 
-```bash
-TINYCV_PDF_TEST_BASE_URL=https://your-production-domain \
-TINYCV_API_KEY=tcv_live_... \
-TINYCV_WORKER_SECRET=... \
-pnpm test:pdf:visual
-```
-
-## Vercel Cron
-
-The repo ships a conservative daily cron in `vercel.json`:
-
-```json
-{
-  "path": "/api/v1/jobs/process",
-  "schedule": "0 8 * * *"
-}
-```
-
-This avoids failing Hobby deployments. On Vercel Pro, change it to a more responsive cadence:
-
-```json
-{
-  "path": "/api/v1/jobs/process",
-  "schedule": "*/5 * * * *"
-}
-```
-
-The worker route also supports manual calls:
-
-```bash
-curl -X POST https://your-production-domain/api/v1/jobs/process \
-  -H "Authorization: Bearer $TINYCV_WORKER_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"pdf_job_limit":1,"webhook_limit":10}'
-```
-
-## Launch Gate
-
-Before sharing publicly:
-
-- `/` loads the landing page.
-- `/new` creates a resume.
-- `/account` allows account creation and sign in.
-- `/account?billing=success` shows a clear checkout confirmation.
-- `POST /api/account/claim-workspace` attaches anonymous drafts to the signed-in user.
-- `POST /api/billing/checkout` creates Founder Pass and Annual Pro checkout sessions.
-- Founder Pass availability renders on `/` and `/account`, and checkout rejects new Founder purchases after the configured limit.
-- Paid account-owned public resumes hide Tiny CV branding.
-- `usage_events` records signup/sign-in, account claim, checkout start/complete, workspace publish, API publish, and PDF job events.
-- Subscription accounts can open Stripe Customer Portal from `/account`.
-- `/cvs/:resumeId/open` reattaches an account-owned draft to the current browser and opens Studio.
-- `/studio/[resumeId]` saves and publishes.
-- `/:slug` renders the public page.
-- `/developers` loads.
-- `/agents` loads and shows the agent instruction plus template/interview guidance.
-- `/openapi.json` loads and includes `/api/v1/paid/agent-finish`.
-- `/api/v1/openapi.json` loads.
-- MPP paid-route `WWW-Authenticate` challenges use `realm="tiny.cv"`, not a `*.vercel.app` deployment host.
-- x402Scan registration uses the service origin `https://tiny.cv` so it reads root `/openapi.json`, not `/api/v1/openapi.json`.
-- `pnpm test:pdf` passes against production.
-- Vercel logs show no repeated function failures.
-- X launch checklist is reviewed: `docs/x-launch-checklist.md`.
+- File-backed local mode is for development and lightweight evaluation, not durable production storage.
+- Premium branding, subdomain ownership, and billing flows are optional layers on top of the core app.
+- If you expose the public developer API, make sure rate limits and Turnstile settings match your threat model.
