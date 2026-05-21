@@ -1,5 +1,7 @@
 # Tiny CV X Launch Checklist
 
+Historical launch checklist kept for context. This file is not part of the recommended self-host or contribution path.
+
 Use this after production smoke tests pass and before posting publicly.
 
 ## Product

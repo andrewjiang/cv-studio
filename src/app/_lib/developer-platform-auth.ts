@@ -119,6 +119,8 @@ function getPlatformSecret() {
     );
   }
 
+  // Development-only fallbacks keep the repo easy to boot locally. Public and
+  // production deployments should always set an explicit platform secret.
   return process.env.TINYCV_EDITOR_SECRET ??
     process.env.DATABASE_URL ??
     "tinycv-development-platform-secret";

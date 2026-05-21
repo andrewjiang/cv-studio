@@ -1,31 +1,26 @@
 # Tiny CV
 
-Tiny CV is an open-source, markdown-first resume builder that keeps your resume on one printable page.
+Tiny CV is an open-core, markdown-first resume builder for people who want one clean printable page, a shareable public URL, and an editing model that stays close to the document itself.
 
-Write in markdown, tune the styling with a few safe controls, preview the result on a real sheet of paper, and publish a clean public link when it is ready.
+This repository contains the core Tiny CV app:
 
-It also ships with a developer platform:
-
-- REST API under `/api/v1`
-- Remote MCP endpoint under `/api/v1/mcp`
-- Project API keys for agents and third-party products
-- Experimental no-account x402/MPP Agent Finish endpoints for one-off agent calls
-- Markdown-canonical resume creation with optional structured JSON input
-- Explicit draft -> publish flow
-- Async PDF jobs
-- One-time edit claim links for handing a draft back to a user
-
-Live app: https://cvstudio-brown.vercel.app
+- the web editor and public resume pages
+- the hosted draft and publish flows
+- the developer API under `/api/v1`
+- the remote MCP endpoint under `/api/v1/mcp`
+- optional browser-backed PDF and publish-fit jobs
 
 ![Tiny CV desktop editor](docs/cv-studio-desktop.png)
 
+## Paths
+
+- Use the product: write and publish one-page resumes with a live paper preview.
+- Self-host the core: run Tiny CV in file-backed local mode or with a Postgres database.
+- Build integrations: create drafts, publish resumes, and request PDFs over REST or MCP.
+
 ## Why it feels different
 
-Most resume tools are either:
-
-- rigid form builders
-- generic rich text editors
-- template marketplaces with too many knobs and not enough structure
+Most resume tools are either rigid form builders, generic rich text editors, or template marketplaces with too many knobs.
 
 Tiny CV is built around a simpler model:
 
@@ -34,187 +29,104 @@ Tiny CV is built around a simpler model:
 - fitting to one page is automatic
 - the published version stays focused on the resume itself
 
-It is designed for people who would rather edit a document than fight a WYSIWYG.
-
-## What it does
+## What ships in this repo
 
 - Markdown-first editing with a live paper preview
 - One-page fit using Pretext-assisted estimation plus DOM verification
 - Letter and legal page support
-- Style presets for different resume moods without breaking printability
-- PDF export from the browser print flow
-- Server-backed anonymous workspaces, so drafts survive refreshes and browser back
 - Public share links and private edit links
 - Resume templates for engineers, designers, sales roles, and founders
-- Mobile editing and mobile resume viewing that are adapted for smaller screens
-- Developer API and MCP tools for agent-created resumes
+- Mobile editing and mobile resume viewing
 - Optional accounts for claiming anonymous drafts across browsers
+- Project-authenticated API keys for durable integrations
+- Optional x402/MPP endpoints for one-off paid agent execution
 
-## Screenshots
+## Open-Core Boundary
 
-### Editor
+This repo is intended to be publishable as an open-core app.
 
-![Desktop editor and preview](docs/cv-studio-desktop.png)
+- The open-source core is the editor, renderer, templates, draft/publish model, API, MCP server, and self-host path.
+- Optional commercial layers include premium branding removal, paid plans, premium subdomain ownership, and hosted-service operations.
+- Some optional commercial code paths remain in the repo so the hosted product and the public codebase stay close, but self-hosters can ignore those integrations unless they want them.
 
-### Print output
+## Support Matrix
 
-![Print-ready resume output](docs/cv-studio-print.png)
+| Mode | What you get | Requires | Intended use |
+| --- | --- | --- | --- |
+| File-backed local mode | Editor, preview, templates, local publishing flows | Nothing beyond Node and pnpm | Fast local development and simple self-hosting |
+| Database-backed mode | Durable workspaces, accounts, account-owned resumes, full developer API | Postgres | Serious self-hosting and production deployments |
+| Browser-backed jobs | Chromium-measured publish fit and async PDF jobs | `TINYCV_BROWSER_WS_ENDPOINT` or `TINYCV_CHROME_EXECUTABLE_PATH` | Production PDF/export parity |
+| Billing and machine payments | Stripe checkout, premium entitlements, x402/MPP paid endpoints | Extra provider credentials | Optional commercial add-ons |
 
-## How it works
-
-Tiny CV keeps three concerns separate:
-
-1. Content
-   The resume body is plain markdown.
-2. Presentation
-   Fonts, dividers, density, paper size, and margins live in frontmatter and UI controls.
-3. Fit
-   The app estimates scale, measures the real DOM, and adjusts until the resume fits the printable area.
-
-That separation is what keeps the editor, preview, PDF export, and shared page aligned.
-
-## Hosted model
-
-Tiny CV is now fully server-backed.
-
-- Every browser gets an anonymous workspace via an `httpOnly` cookie
-- Drafts live in the database, not `localStorage`
-- `/studio/[resumeId]` is the editor route
-- `/:slug` is the public published resume
-- Private edit links can attach an existing resume back into the current workspace
-- Signed-in users can claim an anonymous workspace and reopen owned drafts on another browser
-
-For local development without a database, the app falls back to a file-backed store in `.data/hosted-resumes.json`.
-
-## Accounts
-
-Tiny CV uses Better Auth for the account layer.
-
-- Auth route: `/api/auth/[...all]`
-- Account dashboard: `/account`
-- Workspace claim endpoint: `POST /api/account/claim-workspace`
-- Account-owned CV library: `/cvs`
-- Account-owned resume opener: `/cvs/:resumeId/open`
-
-Email/password auth is enabled by default. Google and GitHub sign-in are enabled when their OAuth env vars are present.
-
-## Developer platform
-
-Tiny CV now has a project-authenticated API-first platform for agents and integrations.
-
-The API surface has two intentionally different entry points:
-
-- Bearer-token API keys are for developers and products that want durable projects, webhook identity, usage history, and repeat integrations.
-- x402/MPP paid endpoints are for no-account agent execution when an autonomous agent needs to complete one paid task immediately.
-
-Neither API path grants permanent premium URL ownership. The premium `name.tiny.cv` identity belongs to paid human plans.
-
-### Core model
-
-1. Validate markdown or structured JSON input.
-2. Create a draft resume.
-3. Publish the draft to get a public URL.
-4. Request a PDF job if you need a file artifact.
-5. Optionally request a one-time edit claim URL so the end user can keep editing in Tiny CV.
-
-Draft creation is intentionally permissive. API publishing is strict: validate with `quality_gate: "publish"` before `POST /api/v1/resumes/:resume_id/publish`, `POST /api/v1/paid/resumes`, or `POST /api/v1/paid/agent-finish`. Publish-ready markdown needs a short headline under 80 characters, contact info, a `## Summary`, proper `###` entries, `*Location, Remote, or website | Dates*` for experience-style metadata, and separate `-` bullet lines instead of inline `•` lists.
-
-### Public endpoints
-
-- `GET /agents`
-- `GET /api/v1/templates`
-- `GET /api/v1/templates/:key`
-- `GET /api/v1/spec/markdown`
-- `GET /api/v1/spec/json-schema`
-- `GET /openapi.json`
-- `GET /api/v1/openapi.json`
-- `POST /api/v1/projects/bootstrap`
-- `POST /api/v1/resumes/validate`
-- `POST /api/v1/resumes`
-- `GET /api/v1/resumes/:resume_id`
-- `PATCH /api/v1/resumes/:resume_id`
-- `POST /api/v1/resumes/:resume_id/publish`
-- `POST /api/v1/resumes/:resume_id/pdf-jobs`
-- `POST /api/v1/paid/agent-finish`
-- `POST /api/v1/paid/resumes`
-- `POST /api/v1/paid/resumes/:resume_id/pdf-jobs`
-- `GET /api/v1/pdf-jobs/:job_id`
-- `POST /api/v1/edit-claims/:claim_id/consume`
-- `POST /api/v1/mcp`
-
-### Operational endpoints
-
-- `POST /api/v1/jobs/process`
-
-This endpoint is for cron/worker execution, not public client use. Protect it with `TINYCV_WORKER_SECRET`.
-
-### Auth
-
-The developer API uses project-scoped bearer tokens:
-
-```http
-Authorization: Bearer tcv_live_xxxxxxxxx
-Idempotency-Key: your-request-key
-```
-
-`Idempotency-Key` is required for draft create, draft update, publish, and PDF job creation.
-Rate-limited responses return `429` with a `Retry-After` header.
-
-Create a project and first API key with:
+## Quick Start
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/projects/bootstrap \
-  -H "Content-Type: application/json" \
-  -H "x-tinycv-bootstrap-secret: $TINYCV_PLATFORM_BOOTSTRAP_SECRET" \
-  -d '{"name":"My Agent"}'
+pnpm install
+pnpm dev
 ```
 
-### Machine payments
+Open `http://localhost:3000`.
 
-Tiny CV also exposes an experimental no-account paid path for agents. This is best thought of as Agent Finish: the agent brings resume content, Tiny CV turns it into a claimable hosted artifact.
+No `.env.local` file is required for the core experience. Without `DATABASE_URL`, Tiny CV falls back to a file-backed local store at `.data/hosted-resumes.json`.
 
-- Agent guide: `https://tiny.cv/agents`
-- `POST /api/v1/paid/agent-finish` creates and publishes a standard hosted resume, returns a claimable edit link, queues a PDF job, and returns a payment receipt. Default price: `$0.25`.
-- `POST /api/v1/paid/resumes` creates a resume from markdown or JSON, publishes it immediately, and returns the public URL. Default price: `$0.10`.
-- `POST /api/v1/paid/resumes/:resume_id/pdf-jobs` queues a PDF job for a paid, published resume. Default price: `$0.25`.
-
-Agent Finish is the recommended one-call bundle. Calling the lower-level publish and PDF routes separately costs more by default, while the publish-only route stays available when an agent only needs a public link.
-
-All paid machine routes require `Idempotency-Key` for real calls and support x402 plus MPP. Paid create/publish and Agent Finish reject malformed publish-ready markdown with `400` before payment when the request includes its idempotency key. Scanner-style unpaid probes can receive `402` before body validation so MPPScan and AgentCash can verify the live payment challenge. A first unpaid request returns `402` with x402 `PAYMENT-REQUIRED`, MPP `WWW-Authenticate: Payment`, and `Cache-Control: no-store`; retry with the protocol-specific payment header.
-
-Machine-payment outputs use standard Tiny CV public URLs and claim links. They do not reserve premium `*.tiny.cv` names, do not grant Pro or Founder Pass entitlements, and do not support paid webhooks.
-
-Discovery is available at root `/openapi.json` for AgentCash, MPPScan, and x402Scan. Register the service origin, for example `https://tiny.cv`, not the full developer schema URL. The root document is intentionally focused on the paid machine-payment surface to avoid scanner ambiguity around free docs/templates routes. The full developer API schema remains available at `/api/v1/openapi.json`:
+If you want a clean dev restart:
 
 ```bash
-npx -y @agentcash/discovery@latest discover https://your-origin.com
-npx -y @agentcash/discovery@latest check https://your-origin.com/api/v1/paid/agent-finish
-npx -y @agentcash/discovery@latest check https://your-origin.com/api/v1/paid/resumes
+pnpm dev:restart
 ```
 
-Machine payments are disabled by default and do not affect Stripe billing, Pro entitlements, bearer-token endpoints, or MCP tools.
+## Local Development
 
-### MCP
+### Core local mode
 
-Tiny CV exposes a remote MCP server over HTTP JSON-RPC at `/api/v1/mcp`.
+This is the easiest way to evaluate the project.
 
-Available tools include:
+```bash
+pnpm install
+pnpm dev
+```
 
-- `tinycv_list_templates`
-- `tinycv_get_template`
-- `tinycv_get_markdown_guide`
-- `tinycv_get_json_schema`
-- `tinycv_validate_resume`
-- `tinycv_create_resume_draft`
-- `tinycv_update_resume_draft`
-- `tinycv_publish_resume`
-- `tinycv_request_pdf`
-- `tinycv_get_resume_status`
-- `tinycv_get_pdf_job_status`
+You get the editor, templates, preview, and file-backed draft persistence without configuring a database, billing, OAuth, or background browser workers.
 
-Developer-facing docs are available at `/developers`.
+### Full-stack local mode
 
-## Resume format
+If you want accounts, the durable API, or production-like storage, copy the example env file and fill in the required values:
+
+```bash
+cp .env.example .env.local
+```
+
+Minimum values for a database-backed local setup:
+
+```bash
+DATABASE_URL=postgresql://...
+TINYCV_EDITOR_SECRET=replace-with-a-random-local-secret
+TINYCV_PLATFORM_SECRET=replace-with-at-least-32-random-characters
+TINYCV_PLATFORM_BOOTSTRAP_SECRET=replace-with-a-random-local-secret
+BETTER_AUTH_SECRET=replace-with-at-least-32-random-characters
+TINYCV_APP_URL=http://localhost:3000
+BETTER_AUTH_URL=http://localhost:3000
+TINYCV_RUNTIME_SCHEMA_SYNC=false
+```
+
+Run migrations before enabling database-backed flows:
+
+```bash
+pnpm db:migrate
+```
+
+Optional features such as OAuth, Stripe billing, and machine payments can stay unset until you actually need them.
+
+## Security And Local Fallbacks
+
+The example env file intentionally contains placeholders that are unsafe outside local development.
+
+- Local development allows a few convenience fallbacks for auth, platform, and worker secrets so the repo is easy to boot on a fresh clone.
+- Those fallbacks are development-only conveniences, not recommended configuration.
+- Production deployments must set explicit secrets, disable placeholder values, and pass `pnpm check:prod`.
+- If you expose `/api/v1/jobs/process`, protect it with `TINYCV_WORKER_SECRET` or `CRON_SECRET`.
+
+## Resume Format
 
 The core markdown shape is intentionally small:
 
@@ -237,7 +149,7 @@ Short summary paragraph.
 - Built a markdown-first resume editor with one-page preview and PDF export.
 ```
 
-Optional style preferences are stored in frontmatter:
+Optional style preferences live in frontmatter:
 
 ```md
 ---
@@ -252,104 +164,48 @@ showSectionDivider: true
 ---
 ```
 
-## Local development
+## Developer Platform
 
-```bash
-pnpm install
-pnpm dev
-```
+Tiny CV exposes two integration surfaces:
 
-Open `http://localhost:3000`.
+- REST API under `/api/v1`
+- remote MCP server over HTTP JSON-RPC at `/api/v1/mcp`
 
-If you want a clean dev restart:
+Common public endpoints:
 
-```bash
-pnpm dev:restart
-```
+- `GET /api/v1/templates`
+- `GET /api/v1/spec/markdown`
+- `GET /api/v1/spec/json-schema`
+- `POST /api/v1/resumes/validate`
+- `POST /api/v1/resumes`
+- `POST /api/v1/resumes/:resume_id/publish`
+- `POST /api/v1/resumes/:resume_id/pdf-jobs`
+- `POST /api/v1/mcp`
 
-## Environment
+Optional paid agent endpoints also exist under `/api/v1/paid`. They are off by default and do not need to be configured for normal self-hosting.
 
-Create `.env.local` only if you want a real database in development:
+## Deployment
 
-```bash
-DATABASE_URL=postgresql://...
-TINYCV_EDITOR_SECRET=change-me
-TINYCV_PLATFORM_SECRET=replace-with-at-least-32-random-characters
-TINYCV_PLATFORM_BOOTSTRAP_SECRET=change-me
-TINYCV_RUNTIME_SCHEMA_SYNC=false
-BETTER_AUTH_SECRET=change-me
-BETTER_AUTH_URL=http://localhost:3000
-TINYCV_MACHINE_PAYMENTS_ENABLED=false
-```
+For production setup, environment variables, workers, and hardening steps, see [docs/production-launch-checklist.md](docs/production-launch-checklist.md).
 
-Without `DATABASE_URL`, Tiny CV uses a local file-backed store for development.
-The developer platform requires `DATABASE_URL`.
+High-level deployment requirements:
 
-Run migrations before enabling the developer API in production:
-
-```bash
-pnpm db:migrate
-```
-
-Runtime schema sync is available for local development, but production should run explicit migrations instead.
-
-To enable machine payments, set `TINYCV_MACHINE_PAYMENTS_ENABLED=true` plus real x402 wallet and MPP Tempo configuration. Set `TINYCV_MPP_REALM=tiny.cv` or make sure `TINYCV_APP_URL=https://tiny.cv`; MPP challenges must use the public service host, not the Vercel deployment host, so MPPScan can attribute stats correctly. Production readiness fails if this feature is enabled with missing secrets, placeholder addresses, testnet defaults, deployment-host MPP realms, or runtime schema sync.
-
-Before deploying, verify production environment readiness:
-
-```bash
-pnpm check:prod
-```
-
-The full production checklist lives in [docs/production-launch-checklist.md](docs/production-launch-checklist.md).
-
-PDF generation, API publish fit measurement, and webhook delivery rely on durable worker/browser infrastructure. API publishes measure the real resume DOM in Chromium before storing `published_fit_scale`, so API-created public pages use the same fit behavior as Studio. PDF jobs render the published resume's `?print=1` view in Chromium, so the exported file uses the same React/CSS as the public page. Configure one of:
-
-- `TINYCV_BROWSER_WS_ENDPOINT` for Browserless or another CDP-compatible browser service
-- `TINYCV_CHROME_EXECUTABLE_PATH` for a local/dedicated Chrome binary
-
-Also set `TINYCV_APP_URL` to the public app origin so the worker can load published resume URLs.
-
-On Vercel, configure a cron or scheduled worker to call:
-
-```bash
-curl -X POST https://your-domain.com/api/v1/jobs/process \
-  -H "Authorization: Bearer $TINYCV_WORKER_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"pdf_job_limit":1,"webhook_limit":10}'
-```
-
-Vercel Cron sends `GET` requests, so the same endpoint also supports cron configuration. The repo uses a conservative once-daily cron so Hobby deployments do not fail:
-
-```json
-{
-  "crons": [
-    {
-      "path": "/api/v1/jobs/process",
-      "schedule": "0 8 * * *"
-    }
-  ]
-}
-```
-
-On Vercel Pro, change the schedule to `*/5 * * * *` if you want faster job recovery.
-
-Set `CRON_SECRET` or `TINYCV_WORKER_SECRET` in Vercel to protect the cron invocation.
-
-The app also schedules best-effort background processing after create/update/publish/PDF requests, but the worker endpoint is the recovery path.
+- Postgres for durable production storage
+- explicit secrets for editor, platform, auth, and worker flows
+- Chromium access for browser-measured publish fit and PDF jobs
+- a scheduled job or worker invocation for `/api/v1/jobs/process`
 
 ## Verification
+
+Core checks:
 
 ```bash
 pnpm test
 pnpm lint
-pnpm check:design
 pnpm build
 ```
 
-`pnpm check:design` runs automatically as part of `pnpm lint`; `pnpm build` runs the all-files version before compiling. The check fails dark brand-green buttons that do not use the shared primary button class or `!text-white`.
-
-To verify the browser-backed PDF path end to end, start the app with a database, `TINYCV_APP_URL`, and worker/browser configuration, then run:
+Additional infra-backed checks:
 
 ```bash
 pnpm test:account
@@ -357,19 +213,11 @@ pnpm test:api-fit
 pnpm test:pdf
 ```
 
-`test:account` creates an anonymous workspace draft, signs up a test account, claims the workspace, opens the claimed resume through the account route, and verifies Studio renders the expected template content.
+`test:account`, `test:api-fit`, and `test:pdf` require the corresponding database, browser, and app configuration to be present.
 
-`test:api-fit` creates and publishes a dense resume through `/api/v1`, opens the public URL in Chromium, and asserts the browser-measured resume has no overflow and a reasonable bottom gap.
+## Contributing
 
-`test:pdf` creates a draft through `/api/v1`, publishes it, queues a PDF job, polls for completion, downloads the artifact, and asserts that the generated PDF is a valid one-page Letter document. It writes the downloaded file and a JSON report to `.data/`.
-
-For local visual parity checks, install Poppler and run:
-
-```bash
-pnpm test:pdf:visual
-```
-
-This renders the same public `?print=1` page directly, rasterizes both PDFs, and writes expected, actual, and diff PNGs to `.data/`.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Stack
 
@@ -381,13 +229,6 @@ This renders the same public `?print=1` page directly, rasterizes both PDFs, and
 - `react-markdown`
 - `remark-gfm`
 - Vitest
-
-## Roadmap
-
-- Full account system on top of the current anonymous workspace model
-- Better template previews
-- More share-page customization
-- Cleaner import/export flows for existing resumes
 
 ## License
 

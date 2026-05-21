@@ -2,6 +2,7 @@ import "server-only";
 
 import { safeEquals } from "@/app/_lib/developer-platform-auth";
 
+// Development-only fallback so local browser/PDF flows can run on a fresh clone.
 const LOCAL_WORKER_SECRET = "tinycv-local-worker-secret";
 
 export function getAllowedWorkerSecrets(input: {
