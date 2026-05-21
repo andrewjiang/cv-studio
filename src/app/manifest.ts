@@ -1,11 +1,10 @@
 import type { MetadataRoute } from "next";
-
-const description = "Write in markdown, preview on paper, publish a clean CV link, and export a PDF.";
+import { TINYCV_APP_DESCRIPTION } from "@/app/_lib/site-metadata";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     background_color: "#fbf7f0",
-    description,
+    description: TINYCV_APP_DESCRIPTION,
     display: "standalone",
     icons: [
       {
@@ -14,9 +13,14 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/x-icon",
       },
       {
-        src: "/icon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        src: "/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
       },
       {
         src: "/apple-icon.png",

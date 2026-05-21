@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { authClient } from "@/app/_lib/auth-client";
 import { brandPrimaryButtonClass } from "./button-classes";
@@ -13,13 +14,15 @@ export const appHeaderInnerClass =
 
 export function AppHeaderBrand({ className = "" }: { className?: string }) {
   return (
-    <Link className={`group inline-flex min-h-11 items-center gap-2 ${className}`} href="/">
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#065f46] text-white shadow-sm transition group-hover:scale-105">
-        <span className="text-[0.65rem] font-bold tracking-tight">CV</span>
-      </div>
-      <p className="text-[0.85rem] font-bold uppercase tracking-[0.28em] text-slate-950">
-        Tiny CV
-      </p>
+    <Link className={`group inline-flex min-h-11 items-center ${className}`} href="/">
+      <Image
+        alt="Tiny CV"
+        className="h-8 w-auto transition group-hover:scale-[1.02]"
+        height={130}
+        priority
+        src="/tinycv_logo.png"
+        width={400}
+      />
     </Link>
   );
 }

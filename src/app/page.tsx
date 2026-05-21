@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { PublicResumeRenderer } from "@/app/_components/public-resume-renderer";
+import {
+  buildPublicResumeMetadata,
+  PublicResumeRenderer,
+} from "@/app/_components/public-resume-renderer";
 import { TinyCvLandingPage } from "@/app/_components/tinycv-landing-page";
 import { getBillingLaunchState } from "@/app/_lib/billing";
 import { getWorkspace } from "@/app/_lib/hosted-resume-store";
@@ -8,6 +12,21 @@ import { resolveHost } from "@/app/_lib/resume-domains";
 import { readWorkspaceCookie } from "@/app/_lib/workspace-cookie";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const requestHeaders = await headers();
+  const hostResolution = await resolveHost(
+    requestHeaders.get("x-forwarded-host") || requestHeaders.get("host"),
+  );
+
+  if (hostResolution.kind === "resume_domain") {
+    return await buildPublicResumeMetadata(hostResolution.resume, {
+      canonicalPath: "/",
+    });
+  }
+
+  return {};
+}
 
 export default async function Home() {
   const requestHeaders = await headers();
