@@ -1,10 +1,13 @@
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
 import path from "node:path";
 
 const repoRoot = process.cwd();
 const lockPath = path.join(repoRoot, ".next", "dev", "lock");
 const appPagePath = path.join(repoRoot, "src", "app", "page.tsx");
+const require = createRequire(import.meta.url);
+const nextBinPath = require.resolve("next/dist/bin/next");
 
 const restart = process.argv.includes("--restart");
 const existing = readLockFile(lockPath);
@@ -24,7 +27,7 @@ if (existing && isProcessAlive(existing.pid)) {
   cleanDevState();
 }
 
-const child = spawn("pnpm", ["exec", "next", "dev"], {
+const child = spawn(process.execPath, [nextBinPath, "dev"], {
   cwd: repoRoot,
   stdio: "inherit",
 });

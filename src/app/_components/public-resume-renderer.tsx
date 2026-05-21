@@ -5,6 +5,7 @@ import { getPageMetrics } from "@/app/_lib/cv-fit";
 import { parseCvMarkdown } from "@/app/_lib/cv-markdown";
 import { canRemoveBrandingForResume } from "@/app/_lib/entitlements";
 import type { HostedResumePublicRecord } from "@/app/_lib/hosted-resume-types";
+import { getTinyCvSocialCardImage } from "@/app/_lib/site-metadata";
 
 export async function PublicResumeRenderer({
   autoPrint = false,
@@ -42,14 +43,42 @@ export async function PublicResumeRenderer({
   );
 }
 
-export async function buildPublicResumeMetadata(resume: HostedResumePublicRecord) {
+export async function buildPublicResumeMetadata(
+  resume: HostedResumePublicRecord,
+  options?: {
+    canonicalPath?: string;
+  },
+) {
   const document = parseCvMarkdown(resume.markdown);
   const hideBranding = await canRemoveBrandingForResume(resume.id);
+  const description = hideBranding
+    ? `${document.name}'s resume.`
+    : `${document.name}'s resume, published with Tiny CV.`;
+  const title = `${document.name} | Resume`;
+  const canonicalPath = options?.canonicalPath ?? `/${resume.slug}`;
+  const socialCardImage = getTinyCvSocialCardImage();
 
   return {
-    description: hideBranding
-      ? `${document.name}'s resume.`
-      : `${document.name}'s resume, published with Tiny CV.`,
-    title: `${document.name} | Resume`,
+    alternates: {
+      canonical: canonicalPath,
+    },
+    description,
+    openGraph: {
+      description,
+      images: [socialCardImage],
+      siteName: "Tiny CV",
+      title,
+      type: "profile",
+      url: canonicalPath,
+    },
+    title,
+    twitter: {
+      card: "summary_large_image",
+      creator: "@andrewjiang",
+      description,
+      images: [socialCardImage],
+      site: "@andrewjiang",
+      title,
+    },
   };
 }

@@ -7,14 +7,17 @@ import {
   Source_Sans_3,
   Source_Serif_4,
 } from "next/font/google";
+import {
+  getTinyCvAppUrl,
+  getTinyCvSocialCardImage,
+  TINYCV_APP_DESCRIPTION,
+  TINYCV_SITE_NAME,
+} from "@/app/_lib/site-metadata";
 import "./globals.css";
 
-const appDescription = "Write in markdown, preview on paper, publish a clean CV link, and export a PDF.";
-const appUrl =
-  process.env.TINYCV_APP_URL?.trim() ||
-  process.env.NEXT_PUBLIC_TINYCV_APP_URL?.trim() ||
-  process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-  "https://tiny.cv";
+const appDescription = TINYCV_APP_DESCRIPTION;
+const appUrl = getTinyCvAppUrl();
+const socialCardImage = getTinyCvSocialCardImage();
 
 const uiSans = Source_Sans_3({
   variable: "--font-ui-sans",
@@ -52,10 +55,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  applicationName: "Tiny CV",
-  authors: [{ name: "Tiny CV" }],
+  applicationName: TINYCV_SITE_NAME,
+  authors: [{ name: TINYCV_SITE_NAME }],
   category: "productivity",
-  creator: "Tiny CV",
+  creator: TINYCV_SITE_NAME,
   description: appDescription,
   keywords: [
     "resume builder",
@@ -69,13 +72,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   openGraph: {
     description: appDescription,
+    images: [socialCardImage],
     locale: "en_US",
-    siteName: "Tiny CV",
+    siteName: TINYCV_SITE_NAME,
     title: "Tiny CV - The resume builder that stays on one page.",
     type: "website",
     url: "/",
   },
-  publisher: "Tiny CV",
+  publisher: TINYCV_SITE_NAME,
   robots: {
     follow: true,
     googleBot: {
@@ -95,6 +99,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     creator: "@andrewjiang",
     description: appDescription,
+    images: [socialCardImage],
     site: "@andrewjiang",
     title: "Tiny CV - The resume builder that stays on one page.",
   },

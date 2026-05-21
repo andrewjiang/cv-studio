@@ -278,14 +278,15 @@ export function TinyCvLandingPage({
 
           <footer className="border-t border-black/5 bg-black/[0.01] px-5 py-16 sm:px-8 lg:px-12 mt-20">
             <div className="mx-auto max-w-[80rem] flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-              <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#065f46] text-white">
-                  <span className="text-[0.55rem] font-bold">CV</span>
-                </div>
-                <p className="text-sm font-bold uppercase tracking-widest text-slate-950">
-                  Tiny CV
-                </p>
-              </div>
+              <Link className="inline-flex min-h-11 items-center" href="/">
+                <Image
+                  alt="Tiny CV"
+                  className="h-7 w-auto"
+                  height={130}
+                  src="/tinycv_logo.png"
+                  width={400}
+                />
+              </Link>
 
               <nav className="flex flex-wrap gap-x-8 gap-y-4 text-sm font-bold text-slate-500">
                 <Link className="transition hover:text-slate-950" href="/documentation">
