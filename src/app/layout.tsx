@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import {
   IBM_Plex_Mono,
   IBM_Plex_Sans,
@@ -13,11 +14,13 @@ import {
   TINYCV_APP_DESCRIPTION,
   TINYCV_SITE_NAME,
 } from "@/app/_lib/site-metadata";
+import { GoogleAnalytics } from "@/app/_components/google-analytics";
 import "./globals.css";
 
 const appDescription = TINYCV_APP_DESCRIPTION;
 const appUrl = getTinyCvAppUrl();
 const socialCardImage = getTinyCvSocialCardImage();
+const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
 
 const uiSans = Source_Sans_3({
   variable: "--font-ui-sans",
@@ -121,7 +124,16 @@ export default function RootLayout({
       lang="en"
       className={`${uiSans.variable} ${displaySerif.variable} ${uiSansAlt.variable} ${displaySerifAlt.variable} ${uiSansTechnical.variable} ${uiMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {gaMeasurementId ? <GoogleAnalytics measurementId={gaMeasurementId} /> : null}
+      </body>
+      {gaMeasurementId ? (
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+          strategy="afterInteractive"
+        />
+      ) : null}
     </html>
   );
 }

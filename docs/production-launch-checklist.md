@@ -107,6 +107,10 @@ Callback URLs:
 - `https://your-production-domain/api/auth/callback/google`
 - `https://your-production-domain/api/auth/callback/github`
 
+### Analytics
+
+Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` to the GA4 web stream measurement ID for the production site. Leave it unset in local development unless you intentionally want local page views in GA4.
+
 ### Billing
 
 Stripe is optional and only required for premium plan flows.
