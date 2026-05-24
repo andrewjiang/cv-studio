@@ -1,7 +1,7 @@
 ---
 title: "A one-page resume is a forcing function, not a rule"
 description: "The point of one page is not obedience. It is making the resume choose the strongest evidence for the role in front of you."
-date: "2026-05-24"
+date: "2026-05-21"
 author: "Andrew Jiang"
 category: "Resume Writing"
 slug: "one-page-resume-forcing-function"
