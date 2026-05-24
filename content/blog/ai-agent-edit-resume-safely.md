@@ -1,7 +1,7 @@
 ---
 title: "The safest way to let an AI agent edit your resume"
 description: "Agents can improve a resume, but only if they work from real evidence, propose reviewable edits, and never get permission to invent facts."
-date: "2026-05-24"
+date: "2026-05-23"
 author: "Andrew Jiang"
 category: "Agents"
 slug: "ai-agent-edit-resume-safely"

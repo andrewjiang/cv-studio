@@ -1,7 +1,7 @@
 ---
 title: "Your resume needs a source of truth"
 description: "Multiple resume versions are useful only when they come from one trusted record of your roles, dates, proof, links, and claims."
-date: "2026-05-24"
+date: "2026-05-22"
 author: "Andrew Jiang"
 category: "Career Materials"
 slug: "resume-source-of-truth"
