@@ -9,6 +9,7 @@ import { brandPrimaryButtonClass } from "@/app/_components/button-classes";
 import { ResumePaperPreview } from "@/app/_components/resume-paper-preview";
 import { ResumeDocumentContent, fontFamilyForChoice } from "@/app/_components/resume-content";
 import { AppHeader } from "./app-header";
+import { SiteFooter } from "./site-footer";
 import { ArrowRightIcon, CheckIcon, GitHubIcon, LayoutIcon, FileTextIcon, GlobeIcon, CodeIcon } from "./icons";
 import { parseCvMarkdown, resolveMobileResumeTypography } from "@/app/_lib/cv-markdown";
 import {
@@ -276,38 +277,7 @@ export function TinyCvLandingPage({
             </section>
           </div>
 
-          <footer className="border-t border-black/5 bg-black/[0.01] px-5 py-16 sm:px-8 lg:px-12 mt-20">
-            <div className="mx-auto max-w-[80rem] flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-              <Link className="inline-flex min-h-11 items-center" href="/">
-                <Image
-                  alt="Tiny CV"
-                  className="h-7 w-auto"
-                  height={130}
-                  src="/tinycv_logo.png"
-                  width={400}
-                />
-              </Link>
-
-              <nav className="flex flex-wrap gap-x-8 gap-y-4 text-sm font-bold text-slate-500">
-                <Link className="transition hover:text-slate-950" href="/documentation">
-                  Documentation
-                </Link>
-                <Link className="transition hover:text-slate-950" href="/api/v1/openapi.json">
-                  OpenAPI
-                </Link>
-                <Link className="transition hover:text-slate-950" href={GITHUB_REPO_URL} target="_blank">
-                  GitHub
-                </Link>
-                <Link className="transition hover:text-slate-950" href="https://x.com/andrewjiang" target="_blank">
-                  Twitter
-                </Link>
-              </nav>
-
-              <p className="text-sm font-medium text-slate-400">
-                &copy; 2026 Tiny CV. Built by andrewjiang.
-              </p>
-            </div>
-          </footer>
+          <SiteFooter />
     </main>
   );
 }
