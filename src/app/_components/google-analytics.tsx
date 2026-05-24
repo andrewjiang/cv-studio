@@ -16,27 +16,29 @@ interface GoogleAnalyticsProps {
 
 export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
   const pathname = usePathname();
-  const initializedMeasurementId = useRef<string | null>(null);
+  const previousPath = useRef<string | null>(null);
 
   useEffect(() => {
     if (!measurementId) return;
 
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = window.gtag || ((...args: unknown[]) => {
-      window.dataLayer?.push(args);
-    });
+    const pagePath = `${pathname}${window.location.search}`;
 
-    if (initializedMeasurementId.current !== measurementId) {
-      window.gtag("js", new Date());
-      window.gtag("config", measurementId, { send_page_view: false });
-      initializedMeasurementId.current = measurementId;
+    if (previousPath.current === null) {
+      previousPath.current = pagePath;
+      return;
     }
 
-    window.gtag("config", measurementId, {
+    if (previousPath.current === pagePath || typeof window.gtag !== "function") {
+      return;
+    }
+
+    window.gtag("event", "page_view", {
       page_location: window.location.href,
-      page_path: `${pathname}${window.location.search}`,
+      page_path: pagePath,
       page_title: document.title,
     });
+
+    previousPath.current = pagePath;
   }, [measurementId, pathname]);
 
   return null;
