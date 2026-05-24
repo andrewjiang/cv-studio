@@ -5,7 +5,7 @@ date: "2026-05-22"
 author: "Andrew Jiang"
 category: "Career Materials"
 slug: "resume-source-of-truth"
-heroImage: "/blog/resume-source-of-truth-hero.webp"
+heroImage: "/blog/resume-source-of-truth-hero-v2.webp"
 ---
 
 Your resume needs a source of truth before it needs another version.

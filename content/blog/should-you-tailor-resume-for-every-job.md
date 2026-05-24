@@ -5,7 +5,7 @@ date: "2026-05-24"
 author: "Andrew Jiang"
 category: "Job Search"
 slug: "should-you-tailor-resume-for-every-job"
-heroImage: "/blog/should-you-tailor-resume-for-every-job-hero.webp"
+heroImage: "/blog/should-you-tailor-resume-for-every-job-hero-v2.webp"
 ---
 
 You should tailor your resume for serious opportunities, but you should not rebuild your resume from scratch for every posting.

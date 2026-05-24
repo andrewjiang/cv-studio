@@ -5,7 +5,7 @@ date: "2026-05-21"
 author: "Andrew Jiang"
 category: "Resume Writing"
 slug: "one-page-resume-forcing-function"
-heroImage: "/blog/one-page-resume-forcing-function-hero.webp"
+heroImage: "/blog/one-page-resume-forcing-function-hero-v2.webp"
 ---
 
 A one-page resume is useful because it forces a decision.

@@ -5,7 +5,7 @@ date: "2026-05-23"
 author: "Andrew Jiang"
 category: "Agents"
 slug: "ai-agent-edit-resume-safely"
-heroImage: "/blog/ai-agent-edit-resume-safely-hero.webp"
+heroImage: "/blog/ai-agent-edit-resume-safely-hero-v2.webp"
 ---
 
 The safest way to let an AI agent edit your resume is to make it edit evidence, not invent a candidate.
