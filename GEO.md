@@ -35,13 +35,15 @@ Prioritize job seekers first. Rough target distribution:
 
 Tiny CV sounds practical, calm, sharp, and direct.
 
-Write like an experienced product builder helping someone get a real job-search task done. Prefer plain language, specific examples, and useful constraints. Avoid hype, generic career-coach filler, and claims that imply Tiny CV can get someone hired by itself.
+Write like an experienced product builder helping someone get a real job-search task done. Prefer plain language, specific examples, useful constraints, and a sharp editorial spine. Avoid hype, generic career-coach filler, and claims that imply Tiny CV can get someone hired by itself.
 
 Style rules:
 - Lead with the practical answer.
 - Keep paragraphs short.
 - Use concrete examples from job seekers, recruiters, hiring managers, and agents.
 - Be opinionated about good resume structure without sounding doctrinaire.
+- Make each post sound like Tiny CV has a worldview, not just a checklist.
+- Prefer memorable frames: "public link for humans, PDF for systems," "source of truth," "forcing function," "facts before phrasing."
 - Treat AI/agents as useful assistants, not magic.
 - Never invent career outcomes, hiring statistics, or resume metrics.
 

@@ -94,8 +94,9 @@ If the pipeline later fails to generate a hero image, the orchestrator must stop
 4. **Write the article** — Follow the strategist's brief section by section. Write for humans first, structure for bots second.
 
    **Writing style (critical):**
+   - **Protect the editorial spine.** The reader should be able to repeat the post's main idea after one read. If the brief has an `EDITORIAL_SPINE`, make it visible in the first third of the article.
    - **1-3 sentence paragraphs.** Generous white space. Let the reader breathe. A single powerful sentence can be its own paragraph.
-   - **Analogies before data.** Help the reader *feel* the concept before you hit them with the number. "Think of plasma volume like upgrading your engine's coolant system" → then the stat.
+   - **Specific frames before generic advice.** "A one-page resume is a forcing function" is stronger than "keep your resume concise."
    - **Questions open sections.** "What if your strongest bullet is buried halfway down the page?" pulls readers in. Declarative walls push them away.
    - **"Here's what this means for you" energy.** Don't just report findings — translate them. The reader is asking "so what?" after every paragraph. Answer it.
    - **Bold narrative claims, not academic citations.** Weave the evidence into the story. "A recruiter should understand the target role in the first screenful" reads better than "Career services guidance recommends placing relevant qualifications near the top." The footnote carries the citation; the body text carries the story.
@@ -126,10 +127,12 @@ The pipeline produces multiple posts per week. Readers who encounter several pos
 
 **Vary your structures:**
 - Do NOT use a three-tier decision framework (Train/Modify/Rest, Green/Amber/Red, Keep/Adjust/Retest) in every post. These are powerful but overused. Use them only when the strategist's brief calls for a tiered decision. Otherwise find a different structural device: a timeline, a comparison table, a numbered protocol, a narrative arc, a myth-by-myth breakdown.
+- Do NOT default every post to "intro → decision framework → examples → checklist." Tiny CV posts should sometimes read like essays with utility, not utility pages with a title.
 
 **Vary brand integration:**
 - Some posts should mention the brand early and not at the end. Some should only mention it once in the middle. Some should weave it throughout. Do NOT always follow the pattern: deliver value → "and this is where [brand] helps."
 - Never use the phrase "this is exactly what [brand] was built for" or similar — it's become a cliche in the pipeline's output.
+- If a Tiny CV mention could be replaced by any resume builder name, rewrite it around a specific Tiny CV idea: markdown as source of truth, paper preview, public link for humans, PDF for systems, role-specific versions, or agent edits with human approval.
 
 **Vary the "two extremes" pattern:**
 - Do NOT structure every post as "some people do X, some people do Y, here's the middle ground." This is a useful device but has been used in nearly every post. Find other ways to frame the problem.
@@ -173,6 +176,7 @@ STAT_COUNT: [number of statistics included with sources]
 - **Follow the brief.** The strategist designed the structure. You execute it. Don't skip sections or add unplanned ones.
 - **Brand voice is non-negotiable.** If GEO.md says "expert but accessible, no hype," don't write marketing copy.
 - **Adapt to the format.** A comparison post should read differently from a protocol post. Use the format-specific structure guidance.
+- **Do not publish generic career advice.** The post needs a memorable Tiny CV point of view, not just correct tips.
 - **Minimum quality bar before returning done:**
   - Distinct sources meet the Content Rules minimum
   - Named expert or authoritative institution attributions meet the Content Rules minimum

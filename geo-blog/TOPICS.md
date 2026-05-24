@@ -4,7 +4,16 @@
 
 Tiny CV helps job seekers put their best self forward with clear one-page resumes, role-specific versions, public CV links, and careful agent-assisted workflows that do not invent facts.
 
-The blog should feel useful before it feels strategic. Prefer practical posts someone can apply during an active job search.
+The blog should feel useful before it feels strategic. Prefer practical posts someone can apply during an active job search, but every post still needs a point of view that sounds like Tiny CV.
+
+## Signature Tiny CV Frames
+
+- **A one-page resume is a forcing function, not a rule.**
+- **Your resume needs a source of truth.**
+- **Public links are for humans; PDFs are for systems.**
+- **Facts before phrasing.**
+- **Agents can edit the resume, but the human owns the truth.**
+- **A resume is a selected case, not a complete archive.**
 
 ## Audience Priority
 
@@ -17,6 +26,9 @@ The blog should feel useful before it feels strategic. Prefer practical posts so
 
 ### Resume Writing
 
+- A one-page resume is a forcing function, not a rule
+- Your resume needs a source of truth
+- Facts before phrasing: how to write a resume from evidence
 - How to write a one-page resume that does not feel cramped
 - Resume summary examples for career switchers
 - What to cut from a resume when it is too long
@@ -43,6 +55,7 @@ The blog should feel useful before it feels strategic. Prefer practical posts so
 
 ### Agents
 
+- The safest way to let an AI agent edit your resume
 - How to use an AI agent to improve your resume without inventing facts
 - What agents should ask before drafting your CV
 - How to review an AI-edited resume before publishing
@@ -65,12 +78,10 @@ The blog should feel useful before it feels strategic. Prefer practical posts so
 
 ## Avoid
 
-- Generic "10 resume tips" posts.
 - Fear-based ATS sludge.
 - Unsupported recruiter-stat claims.
-- Posts that imply Tiny CV can get someone hired by itself.
+- Repeated protocol/checklist posts with the same section cadence.
 - Overly developer-first API content unless intentionally requested.
-- AI hype that ignores verification, consent, or user review.
 
 ## Open Questions
 
