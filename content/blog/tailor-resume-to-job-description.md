@@ -5,6 +5,7 @@ date: "2026-05-24"
 author: "Andrew Jiang"
 category: "Resume Writing"
 slug: "tailor-resume-to-job-description"
+heroImage: "/blog/tailor-resume-to-job-description-hero.webp"
 ---
 
 Tailor your resume by changing the order, emphasis, and wording of true experience, not by copying the job description into your document.
