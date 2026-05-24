@@ -49,21 +49,36 @@ Style rules:
 
 ## Visual Identity
 
-photography_style: Editorial product photography and clean document-focused compositions.
-mood: Warm, focused, quiet, premium, and useful.
+photography_style: Do not use photography. Use concept-first editorial illustration.
+default_art_style: ink_green_editorial
+visual_system: Monochrome ink linework with forest-green accents on warm cream paper. Occasional muted amber or clay accents are allowed when they clarify the metaphor.
+mood: Calm, sharp, editorial, useful, slightly clever.
 color_palette:
 - paper: #fbf7f0
 - forest: #065f46
 - deep_forest: #0f241d
 - slate: #0f172a
 - warm_white: #ffffff
-lighting_preference: Soft natural light with gentle contrast.
-subject_style: Real paper, laptops, minimal desks, writing tools, printed resumes, browser/editor surfaces, and focused work scenes.
+lighting_preference: Not photographic lighting. Use drawn contrast, negative space, and paper texture.
+subject_style: Symbolic diagrams, document metaphors, visual stakes, and simple editorial cartoons. Every image should make the post's core idea visible in one glance.
+alternate_art_styles:
+- isometric_diagram: Use only when the post needs a clear system, flow, branching structure, or comparison diagram.
+- tiny_world: Use sparingly when the metaphor benefits from playful spatial storytelling.
+hero_concept_rules:
+- Start from the post's editorial spine, not the topic label.
+- Build one dominant visual metaphor.
+- The image should answer: "What is the tension, decision, or contrast in this post?"
+- Prefer visible stakes: safe vs unsafe, one vs many, source vs drift, human review vs AI invention, public link vs PDF.
+- The metaphor should be understandable in two seconds.
+- Avoid generic resumes, laptops, desks, pens, and document stacks unless they are part of a clear metaphor.
 hero_constraints:
 - No text, letters, titles, captions, UI labels, logos, watermarks, or readable handwriting baked into generated images.
+- No photorealistic stock desk scenes.
+- No generic SaaS illustration.
+- No decorative document systems without a visible idea.
 - Prefer generous negative space.
 - Keep the composition calm and editorial, not stock-photo cheerful.
-- Use real-world subjects, not abstract gradients or floating shapes.
+- Must work as a 16:9 hero with headline overlay.
 
 ## Content Rules
 
