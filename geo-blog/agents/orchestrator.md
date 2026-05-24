@@ -19,6 +19,7 @@ The direction may also be `auto`, in which case the researcher chooses the highe
 Use these repo files as source of truth:
 
 - Brand and content strategy: `GEO.md`
+- Editorial topic plan: `geo-blog/TOPICS.md`
 - Blog content directory: `content/blog`
 - Blog index route: `src/app/blog/page.tsx`
 - Blog post route: `src/app/blog/[slug]/page.tsx`
@@ -42,7 +43,9 @@ Never read `.env.local`. The image agent may rely on `OPENAI_API_KEY` and `OPENA
 No GEO.md found in this project. This file is required to run the geo-blog pipeline.
 ```
 
-2. Read 2-3 recent posts from `content/blog`. Extract:
+2. Read `geo-blog/TOPICS.md` if it exists. Treat it as the editorial backlog and topic-planning layer. If it does not exist, continue with `GEO.md` and existing posts only.
+
+3. Read 2-3 recent posts from `content/blog`. Extract:
    - Frontmatter schema
    - File naming conventions
    - Content style and structure patterns
@@ -54,8 +57,9 @@ If no existing posts exist, warn the user:
 No existing posts found. Writer will rely solely on GEO.md for formatting conventions.
 ```
 
-3. Parse the user's direction and store this working context:
+4. Parse the user's direction and store this working context:
    - `brand_context`: `GEO.md`, organized by section
+   - `topic_plan`: `geo-blog/TOPICS.md`, or "none"
    - `repo_conventions`: patterns learned from existing posts
    - `direction`: user topic/direction
    - `existing_posts`: post titles, slugs, categories, and rough topic coverage
@@ -77,6 +81,9 @@ GEO GOAL:
 
 CATEGORIES:
 {brand_context.categories}
+
+TOPIC PLAN:
+{topic_plan}
 
 CONTENT DIRECTORY:
 {brand_context.content_structure.content_directory}

@@ -69,7 +69,17 @@ You generate hero images for GEO blog posts using OpenAI GPT Image generation. Y
 
    "A photorealistic editorial photograph of [specific subject derived from article]. Shot at f/2.8 on an 85mm lens with shallow depth of field. [Specific environment/setting]. Dramatic natural lighting, slightly underexposed. Color grading in deep navy and electric blue tones. Rule of thirds composition with the subject positioned right of center. The top-left quadrant must be clean and dark (no objects, minimal detail) to allow text overlay. Ultra-sharp subject with cinematic background bokeh. No text, watermarks, or logos in the image."
 
-4. **Call OpenAI image generation** — Use the OpenAI Images API. Expect `OPENAI_API_KEY` to be available in the environment. Use `OPENAI_IMAGE_MODEL` if set, otherwise default to `gpt-image-2`:
+4. **Load OpenAI credentials** — Use the OpenAI key from the environment. If `OPENAI_API_KEY` is not already set, load it from the repo's `.env.local` without printing the file or echoing the secret:
+
+```bash
+set -a
+[ -f .env.local ] && . ./.env.local
+set +a
+```
+
+Never display `OPENAI_API_KEY` in logs, prompts, errors, or final output.
+
+5. **Call OpenAI image generation** — Use the OpenAI Images API. Use `OPENAI_IMAGE_MODEL` if set, otherwise default to `gpt-image-2`:
 
 ```bash
 curl -s -X POST \
@@ -86,11 +96,11 @@ curl -s -X POST \
 
 The API should return a base64-encoded image at `data[0].b64_json`.
 
-5. **Save the image** — Decode the base64 response and save:
+6. **Save the image** — Decode the base64 response and save:
    - PNG: `/tmp/{slug}-hero.png`
    - WebP: `/tmp/{slug}-hero.webp` (convert from PNG using `sips` on macOS or `cwebp` if available)
 
-6. **Retry on failure** — If the API call fails (rate limit, auth error, network), retry once. If it fails again, return with `hero_png: none` and the error.
+7. **Retry on failure** — If the API call fails (rate limit, auth error, network), retry once. If it fails again, return with `hero_png: none` and the error.
 
 ## Output Format
 
@@ -113,11 +123,12 @@ ERROR: [specific error message from the API]
 
 ## Rules
 
-- **No text baked into the image.** The hero constraint from GEO.md is absolute — no text, titles, or captions rendered in the image itself.
+- **No text baked into the image.** The hero constraint from GEO.md is absolute: no text, letters, titles, captions, UI labels, logos, watermarks, or readable handwriting rendered in the image itself. If the scene includes documents, they must use abstract lines only.
+- **Use cache-busting filenames when replacing an existing hero.** If regenerating an image after a post already references `{slug}-hero.webp`, save the replacement as `{slug}-hero-v2.webp` (or the next available suffix) and update the post frontmatter. Do not reuse a public image URL for a materially different image.
 - **Top-left must be clean and dark.** This is where the blog title overlays. Enforce this in every prompt.
 - **Real-world subjects only** (unless Visual Identity says otherwise). No abstract gradients, floating geometric shapes, or generic stock-photo aesthetics.
 - **Brand consistency is paramount.** The style, technical, composition, and quality blocks should be consistent across all posts for the same brand. Only the materials and environment blocks change per article.
 - **The JSON is your thinking framework.** It ensures you don't forget any dimension. The API receives the flattened text prompt derived from it.
-- **Check for OPENAI_API_KEY.** If the environment variable is not set, fail immediately with a clear message.
+- **Check for OPENAI_API_KEY after loading `.env.local`.** If the environment variable is not set, fail immediately with a clear message.
 
 After writing the file, verify it exists by reading the first 5 lines.

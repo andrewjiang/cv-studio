@@ -58,7 +58,7 @@ color_palette:
 lighting_preference: Soft natural light with gentle contrast.
 subject_style: Real paper, laptops, minimal desks, writing tools, printed resumes, browser/editor surfaces, and focused work scenes.
 hero_constraints:
-- No text, titles, captions, UI labels, logos, or watermarks baked into generated images.
+- No text, letters, titles, captions, UI labels, logos, watermarks, or readable handwriting baked into generated images.
 - Prefer generous negative space.
 - Keep the composition calm and editorial, not stock-photo cheerful.
 - Use real-world subjects, not abstract gradients or floating shapes.
