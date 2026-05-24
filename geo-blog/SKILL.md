@@ -181,23 +181,23 @@ Agent tool:
 Wait for all three. Extract:
 - `factcheck_status` (pass/fail), `factcheck_issues`
 - `optimizer_status` (pass/fail), `geo_score`, `optimizer_issues`
-- `hero_png`, `hero_webp`, `prompt_used`
+- `designer_status` (pass/fail), `hero_png`, `hero_webp`, `prompt_used`, `error`
 
 ## Retry Gate
 
 ```
-IF factcheck_status == fail OR optimizer_status == fail:
+IF factcheck_status == fail OR optimizer_status == fail OR designer_status == fail:
   retry_count += 1
   IF retry_count <= 2:
     Collect failure feedback from failed checks
     Cache results from passed checks (do not re-run them)
-    If designer returned no images due to API failure, note it for re-dispatch
     Report to user: "Verification failed (attempt {retry_count}/3). Retrying writer with feedback..."
-    GO TO Phase 3 (include failure feedback in writer prompt)
-    Then re-run only the failed Phase 4 checks (plus designer if it failed)
+    If factchecker or optimizer failed, GO TO Phase 3 (include failure feedback in writer prompt)
+    Then re-run only the failed Phase 4 checks
+    If only designer failed, do not rewrite the article; re-run designer with the same title, slug, category, and visual identity
   ELSE:
     Report to user: "Writer failed verification after 3 attempts. Remaining issues:"
-    List all outstanding issues from factchecker and optimizer
+    List all outstanding issues from factchecker, optimizer, and designer
     STOP
 ```
 
@@ -208,6 +208,8 @@ Run preflight checks before dispatching:
 - Verify `factcheck_status` == pass
 - Verify `optimizer_status` == pass
 - Verify `geo_score` >= 8
+- Verify `designer_status` == pass
+- Verify `hero_png` and `hero_webp` exist and are non-empty
 
 If any preflight check fails, report the issue to the user and stop.
 
@@ -266,4 +268,3 @@ Citations: {citation_count}
 Word Count: {word_count}
 Hero Image: {yes/no}
 ```
-
