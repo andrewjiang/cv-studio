@@ -108,4 +108,4 @@ heroImage: "/blog/post-slug-hero.webp"
 ---
 ```
 
-`heroImage` is optional. Omit it when no generated image is available.
+For GEO blog pipeline runs, `heroImage` is required. The application can render legacy posts without it, but new generated posts must include a generated WebP hero image and matching copied asset before publication.

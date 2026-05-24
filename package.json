@@ -11,6 +11,7 @@
     "check:design": "node scripts/check-design-readiness.mjs --changed",
     "check:design:all": "node scripts/check-design-readiness.mjs --all",
     "check:prod": "node scripts/check-production-readiness.mjs",
+    "generate:blog-hero": "node scripts/generate-blog-hero.mjs",
     "start": "next start",
     "lint": "eslint && node scripts/check-design-readiness.mjs --changed",
     "test": "vitest run",

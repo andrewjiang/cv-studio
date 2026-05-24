@@ -72,7 +72,7 @@ Adapt your article structure to the FORMAT. Do not use the same template for eve
    - Category
    - Description/excerpt (write a compelling 1-2 sentence summary)
    - Slug
-   - `heroImage` only when the post is expected to have a generated hero image; use the hero image template from Content Structure, substituting the slug
+   - `heroImage` using the hero image template from Content Structure, substituting the slug. Tiny CV GEO posts require generated hero images.
    - Any other fields present in existing post frontmatter
 
 For Tiny CV, the app expects this frontmatter shape:
@@ -89,7 +89,7 @@ heroImage: "/blog/post-slug-hero.webp"
 ---
 ```
 
-If the pipeline later fails to generate a hero image, the publisher will remove `heroImage` before publishing.
+If the pipeline later fails to generate a hero image, the orchestrator must stop before publishing. Do not remove `heroImage` as a fallback.
 
 4. **Write the article** — Follow the strategist's brief section by section. Write for humans first, structure for bots second.
 
@@ -180,4 +180,3 @@ STAT_COUNT: [number of statistics included with sources]
   - If you can't meet these minimums, explain what's missing rather than returning low-quality output
 
 After writing the file, verify it exists by reading the first 5 lines.
-

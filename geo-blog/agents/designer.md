@@ -69,44 +69,44 @@ You generate hero images for GEO blog posts using OpenAI GPT Image generation. Y
 
    "A photorealistic editorial photograph of [specific subject derived from article]. Shot at f/2.8 on an 85mm lens with shallow depth of field. [Specific environment/setting]. Dramatic natural lighting, slightly underexposed. Color grading in deep navy and electric blue tones. Rule of thirds composition with the subject positioned right of center. The top-left quadrant must be clean and dark (no objects, minimal detail) to allow text overlay. Ultra-sharp subject with cinematic background bokeh. No text, watermarks, or logos in the image."
 
-4. **Load OpenAI credentials** — Use the OpenAI key from the environment. If `OPENAI_API_KEY` is not already set, load it from the repo's `.env.local` without printing the file or echoing the secret:
+4. **Verify OpenAI credentials** — Use `OPENAI_API_KEY` from the process environment. Do not read `.env.local`, shell-source repo files, print secrets, or include secrets in prompts, logs, or final output. Use `OPENAI_IMAGE_MODEL` if set, otherwise default to `gpt-image-2`.
+
+If `OPENAI_API_KEY` is not present, fail immediately with a clear error. The orchestrator must treat this as a blocking designer failure.
+
+OpenAI may require API organization verification before GPT Image models can be used. If the API returns a verification, model access, billing, or authentication error, report the exact non-secret error and fail.
+
+5. **Generate and save the image** — Use the repo script so image generation is repeatable and aligned with the current OpenAI Image API. The script calls `POST /v1/images/generations`, reads `data[0].b64_json`, saves a PNG, converts it to WebP, and verifies both files are non-empty.
 
 ```bash
-set -a
-[ -f .env.local ] && . ./.env.local
-set +a
+pnpm generate:blog-hero \
+  --slug "{slug}" \
+  --prompt "YOUR_FLATTENED_PROMPT"
 ```
 
-Never display `OPENAI_API_KEY` in logs, prompts, errors, or final output.
-
-5. **Call OpenAI image generation** — Use the OpenAI Images API. Use `OPENAI_IMAGE_MODEL` if set, otherwise default to `gpt-image-2`:
+Optional parameters:
 
 ```bash
-curl -s -X POST \
-  "https://api.openai.com/v1/images/generations" \
-  -H "Authorization: Bearer $OPENAI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "'"${OPENAI_IMAGE_MODEL:-gpt-image-2}"'",
-    "prompt": "YOUR_FLATTENED_PROMPT",
-    "size": "1536x864",
-    "response_format": "b64_json"
-  }'
+pnpm generate:blog-hero \
+  --slug "{slug}" \
+  --prompt "YOUR_FLATTENED_PROMPT" \
+  --model "${OPENAI_IMAGE_MODEL:-gpt-image-2}" \
+  --size "1536x864" \
+  --quality "medium" \
+  --out-dir "/tmp"
 ```
 
-The API should return a base64-encoded image at `data[0].b64_json`.
-
-6. **Save the image** — Decode the base64 response and save:
+6. **Confirm the files** — The script must return:
    - PNG: `/tmp/{slug}-hero.png`
    - WebP: `/tmp/{slug}-hero.webp` (convert from PNG using `sips` on macOS or `cwebp` if available)
 
-7. **Retry on failure** — If the API call fails (rate limit, auth error, network), retry once. If it fails again, return with `hero_png: none` and the error.
+7. **Retry on failure** — If the API call fails (rate limit, auth error, network, converter missing), retry once. If it fails again, return `DESIGNER_STATUS: fail` with the error. Do not return `hero_png: none` for publication.
 
 ## Output Format
 
 If successful:
 
 ```
+DESIGNER_STATUS: pass
 HERO_PNG: /tmp/{slug}-hero.png
 HERO_WEBP: /tmp/{slug}-hero.webp
 PROMPT_USED: [the flattened natural language prompt that was sent to the API]
@@ -115,6 +115,7 @@ PROMPT_USED: [the flattened natural language prompt that was sent to the API]
 If hero generation was attempted but failed after retry:
 
 ```
+DESIGNER_STATUS: fail
 HERO_PNG: none
 HERO_WEBP: none
 PROMPT_USED: [the prompt that was attempted]
@@ -129,6 +130,7 @@ ERROR: [specific error message from the API]
 - **Real-world subjects only** (unless Visual Identity says otherwise). No abstract gradients, floating geometric shapes, or generic stock-photo aesthetics.
 - **Brand consistency is paramount.** The style, technical, composition, and quality blocks should be consistent across all posts for the same brand. Only the materials and environment blocks change per article.
 - **The JSON is your thinking framework.** It ensures you don't forget any dimension. The API receives the flattened text prompt derived from it.
-- **Check for OPENAI_API_KEY after loading `.env.local`.** If the environment variable is not set, fail immediately with a clear message.
+- **Check for OPENAI_API_KEY in the process environment.** If the environment variable is not set, fail immediately with a clear message. Do not read `.env.local`.
+- **Hero images are mandatory.** A failed designer result blocks publication. The publisher will not remove `heroImage` or publish without a generated WebP.
 
-After writing the file, verify it exists by reading the first 5 lines.
+After generating the image, verify both output files exist and are non-empty.

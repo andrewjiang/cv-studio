@@ -267,16 +267,17 @@ VISUAL IDENTITY:
 
 Extract:
 
+- `designer_status`
 - `hero_png`
 - `hero_webp`
 - `prompt_used`
 - `error`, if any
 
-Designer failure does not block publication unless the post requires a hero image. If image generation fails, proceed with no `heroImage` frontmatter and report the failure.
+Designer failure blocks publication. Every GEO blog post must have a generated hero image. If image generation fails, retry the designer once; if it still fails, stop before publishing and report the non-secret error.
 
 ## Retry Gate
 
-If `factcheck_status == fail` or `optimizer_status == fail`:
+If `factcheck_status == fail` or `optimizer_status == fail` or `designer_status == fail`:
 
 1. Increment `retry_count`.
 2. If `retry_count <= 2`:
@@ -288,11 +289,12 @@ If `factcheck_status == fail` or `optimizer_status == fail`:
 Verification failed (attempt {retry_count}/3). Retrying writer with feedback...
 ```
 
-   - Return to Phase 3 with retry feedback.
-   - Re-run only failed Phase 4 checks. Re-run designer only if it failed and a hero image is still desired.
+   - Return to Phase 3 with retry feedback if the writer-facing checks failed.
+   - Re-run only failed Phase 4 checks.
+   - If only designer failed, do not rewrite the article; re-run the designer with the same title, slug, category, and visual identity.
 3. If `retry_count > 2`:
    - Stop.
-   - Report all outstanding factchecker and optimizer issues.
+   - Report all outstanding factchecker, optimizer, and designer issues.
 
 ## Phase 5: Publish
 
@@ -302,6 +304,9 @@ Before dispatching publisher, verify:
 - `factcheck_status == pass`
 - `optimizer_status == pass`
 - `geo_score >= 8`
+- `designer_status == pass`
+- `hero_png` exists and is non-empty
+- `hero_webp` exists and is non-empty
 
 If any preflight check fails, report the issue and stop.
 
