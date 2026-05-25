@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createWorkspaceBootstrap } from "@/app/_lib/hosted-resume-store";
+import { recordUsageEvent } from "@/app/_lib/usage-events";
 import {
   readWorkspaceCookieFromRequest,
   writeWorkspaceCookie,
@@ -31,6 +32,15 @@ export async function POST(request: NextRequest) {
     const payload = await createWorkspaceBootstrap({
       templateKey: body.templateKey,
       workspaceId,
+    });
+
+    await recordUsageEvent({
+      action: "workspace_bootstrap_created",
+      metadata: {
+        surface: "new_resume",
+        template_key: body.templateKey,
+        workspace_id: payload.workspace.workspaceId,
+      },
     });
 
     const response = NextResponse.json(buildResumeResponse(request, payload), { status: 201 });

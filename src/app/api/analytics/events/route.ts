@@ -1,44 +1,43 @@
 import { headers } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  isActivationEventName,
+  sanitizeActivationMetadata,
+} from "@/app/_lib/activation-events";
 import { auth } from "@/app/_lib/auth";
 import { recordUsageEvent } from "@/app/_lib/usage-events";
 
-const ALLOWED_ACCOUNT_EVENTS = new Set([
+const LEGACY_ACCOUNT_EVENTS = new Set([
   "account.sign_in",
   "account.sign_up",
 ]);
 
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user?.id) {
-    return NextResponse.json({
-      error: "Sign in before recording account events.",
-    }, { status: 401 });
-  }
-
   const body = await request.json().catch(() => ({})) as {
     action?: unknown;
+    eventName?: unknown;
     metadata?: unknown;
   };
+  const eventName = typeof body.eventName === "string" ? body.eventName : body.action;
 
-  if (typeof body.action !== "string" || !ALLOWED_ACCOUNT_EVENTS.has(body.action)) {
+  if (
+    !isActivationEventName(eventName) &&
+    !(typeof eventName === "string" && LEGACY_ACCOUNT_EVENTS.has(eventName))
+  ) {
     return NextResponse.json({
       error: "Unsupported analytics event.",
     }, { status: 400 });
   }
 
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   await recordUsageEvent({
-    action: body.action,
-    metadata: isRecord(body.metadata) ? body.metadata : {},
-    userId: session.user.id,
+    action: eventName,
+    metadata: sanitizeActivationMetadata(body.metadata),
+    userId: session?.user?.id,
   });
 
   return NextResponse.json({ ok: true });
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }

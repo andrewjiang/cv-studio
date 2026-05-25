@@ -11,6 +11,7 @@ import { ResumeDocumentContent, fontFamilyForChoice } from "@/app/_components/re
 import { AppHeader } from "./app-header";
 import { SiteFooter } from "./site-footer";
 import { ArrowRightIcon, CheckIcon, GitHubIcon, LayoutIcon, FileTextIcon, GlobeIcon, CodeIcon } from "./icons";
+import { trackActivationEvent } from "@/app/_lib/activation-analytics-client";
 import { parseCvMarkdown, resolveMobileResumeTypography } from "@/app/_lib/cv-markdown";
 import {
   LANDING_EXAMPLES,
@@ -462,6 +463,10 @@ function ExampleCard({
           LANDING_EXAMPLE_ROTATIONS[templateKey],
         )}
         href={`/new?template=${templateKey}`}
+        onClick={() => trackActivationEvent("template_selected", {
+          surface: "landing_examples",
+          template_key: templateKey,
+        })}
       >
         <ResumePaperPreview
           className="shadow-[0_30px_70px_rgba(15,23,42,0.12)] ring-1 ring-black/5"
@@ -487,6 +492,10 @@ function ExampleCard({
           <Link
             className="text-[0.94rem] font-bold text-[#065f46] hover:text-[#044e34] transition-colors inline-flex items-center gap-1.5"
             href={`/new?template=${templateKey}`}
+            onClick={() => trackActivationEvent("template_selected", {
+              surface: "landing_examples",
+              template_key: templateKey,
+            })}
           >
             Use template
             <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -600,6 +609,14 @@ function LandingPrimaryLink({
         className,
       )}
       href={href}
+      onClick={() => {
+        if (href.startsWith("/account")) {
+          trackActivationEvent("account_cta_clicked", {
+            mode: "landing_primary",
+            surface: "landing",
+          });
+        }
+      }}
     >
       {children}
     </Link>

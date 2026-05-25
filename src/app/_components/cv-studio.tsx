@@ -6,6 +6,7 @@ import {
   useEffect,
   useEffectEvent,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -68,6 +69,7 @@ import type {
 import { downloadPdfFromUrl } from "@/app/_lib/pdf-download-client";
 import { buildResumePdfDownloadUrl } from "@/app/_lib/resume-print-url";
 import { getResumeTemplate } from "@/app/_lib/resume-templates";
+import { trackActivationEvent } from "@/app/_lib/activation-analytics-client";
 import { UserMenu } from "./user-menu";
 
 type StudioMode = "edit" | "preview" | "publish";
@@ -162,6 +164,7 @@ export function CvStudio({
   const renameInputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef(0);
   const autoPublishKeyRef = useRef<string | null>(null);
+  const firstEditTrackedResumeIdRef = useRef<string | null>(null);
   const lastAutoMarginAdjustmentRef = useRef<{ from: number; to: number } | null>(null);
   const lastAutoPageSizeAdjustmentRef = useRef<{ from: ResumePageSize; to: ResumePageSize } | null>(null);
 
@@ -192,6 +195,11 @@ export function CvStudio({
   const fitAdjustmentPreference =
     autoFitPreferences[activeResume.id] ?? DEFAULT_FIT_ADJUSTMENT_PREFERENCE;
   const shouldWarnAboutContentLength = fitState.scale <= CUT_CONTENT_THRESHOLD;
+  const activationMetadata = useMemo(() => ({
+    surface: "studio",
+    template_key: activeResume.templateKey,
+    workspace_id: workspaceState.workspaceId,
+  }) as const, [activeResume.templateKey, workspaceState.workspaceId]);
 
   useEffect(() => {
     markdownRef.current = markdown;
@@ -203,7 +211,17 @@ export function CvStudio({
 
   useEffect(() => {
     autoPublishKeyRef.current = null;
+    firstEditTrackedResumeIdRef.current = null;
   }, [activeResume.id]);
+
+  useEffect(() => {
+    trackActivationEvent("returning_resume_opened", {
+      ...activationMetadata,
+      is_published: activeResume.isPublished,
+    }, {
+      onceKey: `returning_resume_opened:${activeResume.id}`,
+    });
+  }, [activeResume.id, activeResume.isPublished, activationMetadata]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -420,10 +438,37 @@ export function CvStudio({
         requestMarkdown,
         successMessage,
       );
+      if (publish) {
+        trackActivationEvent("resume_published", {
+          surface: "studio",
+          template_key: payload.resume.templateKey,
+          workspace_id: payload.workspace.workspaceId,
+        }, {
+          sendToServer: false,
+        });
+      } else if (silent) {
+        trackActivationEvent("autosave_succeeded", {
+          surface: "studio",
+          template_key: payload.resume.templateKey,
+          workspace_id: payload.workspace.workspaceId,
+        });
+      }
       return payload;
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to sync this resume.";
+
+      if (publish) {
+        trackActivationEvent("publish_failed", {
+          ...activationMetadata,
+          error_code: "request_failed",
+        });
+      } else if (silent) {
+        trackActivationEvent("autosave_failed", {
+          ...activationMetadata,
+          error_code: "request_failed",
+        });
+      }
 
       setRemoteSyncState({ kind: "error", message });
       setNotice({ kind: "error", message });
@@ -485,25 +530,50 @@ export function CvStudio({
     }
 
     await navigator.clipboard.writeText(absoluteUrl);
+    trackActivationEvent("share_link_copied", activationMetadata);
     setNotice({ kind: "success", message: `Copied ${absoluteUrl}` });
   };
 
   const downloadPdf = async () => {
-    if (!shouldUseDedicatedPrintView()) {
+    const usedDedicatedPdfView = shouldUseDedicatedPrintView();
+    trackActivationEvent("pdf_download_clicked", {
+      ...activationMetadata,
+      used_dedicated_pdf_view: usedDedicatedPdfView,
+    });
+
+    if (!usedDedicatedPdfView) {
       window.print();
+      trackActivationEvent("pdf_download_succeeded", {
+        ...activationMetadata,
+        used_dedicated_pdf_view: false,
+      });
       return;
     }
 
     setNotice({ kind: "success", message: "Generating PDF..." });
 
     if (!(await mutateResume({ successMessage: null }))) {
+      trackActivationEvent("pdf_download_failed", {
+        ...activationMetadata,
+        error_code: "save_failed",
+        used_dedicated_pdf_view: true,
+      });
       return;
     }
 
     try {
       await downloadPdfFromUrl(buildResumePdfDownloadUrl(window.location.href));
+      trackActivationEvent("pdf_download_succeeded", {
+        ...activationMetadata,
+        used_dedicated_pdf_view: true,
+      });
       setNotice({ kind: "success", message: "PDF downloaded." });
     } catch (error) {
+      trackActivationEvent("pdf_download_failed", {
+        ...activationMetadata,
+        error_code: "request_failed",
+        used_dedicated_pdf_view: true,
+      });
       setNotice({
         kind: "error",
         message: error instanceof Error ? error.message : "Unable to download this PDF.",
@@ -932,6 +1002,32 @@ export function CvStudio({
     }
   };
 
+  const handleMarkdownInputChange = (nextValue: string) => {
+    if (firstEditTrackedResumeIdRef.current !== activeResume.id) {
+      firstEditTrackedResumeIdRef.current = activeResume.id;
+      trackActivationEvent("first_edit", activationMetadata);
+    }
+
+    if (showStylePrefs) {
+      setMarkdown(nextValue);
+      return;
+    }
+
+    setMarkdown(
+      composeCvMarkdown({
+        bodyMarkdown: nextValue,
+        frontmatter:
+          markdownParts.frontmatter ||
+          composeCvFrontmatter(DEFAULT_RESUME_STYLE),
+      }),
+    );
+  };
+
+  const publishCurrentResume = () => {
+    trackActivationEvent("publish_clicked", activationMetadata);
+    void mutateResume({ publish: true });
+  };
+
   return (
     <main className="app-shell flex flex-1 flex-col">
       <header className={`app-chrome ${appHeaderClass}`}>
@@ -1133,7 +1229,7 @@ export function CvStudio({
             <button
               className={`${brandPrimaryButtonClass} h-11 px-5 text-[0.92rem]`}
               disabled={isPublishing}
-              onClick={() => void mutateResume({ publish: true })}
+              onClick={publishCurrentResume}
               type="button"
             >
               {isPublishing ? <SpinnerIcon /> : null}
@@ -1179,7 +1275,10 @@ export function CvStudio({
             </button>
             <button
               className={`${modeButtonClass(mode === "publish")} min-w-0 flex-1 !px-2 !py-1.5 !text-[0.77rem]`}
-              onClick={() => setMode("publish")}
+              onClick={() => {
+                trackActivationEvent("publish_clicked", activationMetadata);
+                setMode("publish");
+              }}
               type="button"
             >
               Publish
@@ -1303,23 +1402,7 @@ export function CvStudio({
 
                 <textarea
                   className="min-h-[32rem] flex-1 resize-none bg-transparent px-5 py-5 font-mono text-[0.98rem] leading-7 text-slate-900 outline-none"
-                  onChange={(event) => {
-                    const nextValue = event.target.value;
-
-                    if (showStylePrefs) {
-                      setMarkdown(nextValue);
-                      return;
-                    }
-
-                    setMarkdown(
-                      composeCvMarkdown({
-                        bodyMarkdown: nextValue,
-                        frontmatter:
-                          markdownParts.frontmatter ||
-                          composeCvFrontmatter(DEFAULT_RESUME_STYLE),
-                      }),
-                    );
-                  }}
+                  onChange={(event) => handleMarkdownInputChange(event.target.value)}
                   spellCheck={false}
                   value={visibleEditorMarkdown}
                 />
@@ -1541,6 +1624,10 @@ export function CvStudio({
               </button>
             </div>
             <ResumeTemplateChooser
+              analyticsMetadata={{
+                workspace_id: workspaceState.workspaceId,
+              }}
+              analyticsSurface="studio_new_resume"
               busyTemplateKey={templateBusyKey}
               eyebrow={null}
               onSelect={(templateKey) => void createResumeFromTemplate(templateKey)}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { trackActivationEvent } from "@/app/_lib/activation-analytics-client";
 import { authClient } from "@/app/_lib/auth-client";
 import {
   CodeBracketIcon,
@@ -33,6 +34,10 @@ export function UserMenu() {
       <Link
         className="inline-flex h-11 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-[0.92rem] font-semibold text-slate-600 shadow-sm transition hover:border-black/20 hover:bg-slate-50 hover:text-slate-950"
         href="/account"
+        onClick={() => trackActivationEvent("account_cta_clicked", {
+          mode: "sign_in",
+          surface: "app_header",
+        })}
       >
         Sign in
       </Link>

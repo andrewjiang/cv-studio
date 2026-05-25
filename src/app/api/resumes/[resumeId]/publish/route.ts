@@ -51,10 +51,10 @@ export async function POST(
     }
 
     await recordUsageEvent({
-      action: "workspace.resume_published",
+      action: "resume_published",
       metadata: {
-        resume_id: resumeId,
-        slug: payload.resume.slug,
+        surface: "studio",
+        template_key: payload.resume.templateKey,
         workspace_id: workspaceId,
       },
     });

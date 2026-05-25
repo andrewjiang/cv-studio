@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import type { CheckoutPlanKey } from "@/app/_lib/billing-core";
+import { trackActivationEvent } from "@/app/_lib/activation-analytics-client";
 import { authClient } from "@/app/_lib/auth-client";
 import {
   brandPrimaryButtonClass,
@@ -30,6 +31,10 @@ export function AccountAuthPanel({
     event.preventDefault();
     setError(null);
     setPending(true);
+    trackActivationEvent("account_cta_clicked", {
+      mode,
+      surface: "account_page",
+    });
 
     try {
       const result = mode === "sign-up"
@@ -49,7 +54,6 @@ export function AccountAuthPanel({
         return;
       }
 
-      await recordAccountEvent(mode === "sign-up" ? "account.sign_up" : "account.sign_in");
       await claimWorkspace();
       router.refresh();
     } finally {
@@ -60,6 +64,11 @@ export function AccountAuthPanel({
   async function handleSocialSignIn(provider: "github" | "google") {
     setError(null);
     setPending(true);
+    trackActivationEvent("account_cta_clicked", {
+      mode: "social_sign_in",
+      provider,
+      surface: "account_page",
+    });
 
     try {
       await authClient.signIn.social({
@@ -312,6 +321,9 @@ export function CopyAccountPublicLinkButton({
   async function copyLink() {
     const absoluteUrl = new URL(publicUrl, window.location.origin).toString();
     await navigator.clipboard.writeText(absoluteUrl);
+    trackActivationEvent("share_link_copied", {
+      surface: "account_page",
+    });
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
   }
@@ -813,21 +825,6 @@ export function BillingPortalButton({
 
 async function claimWorkspace() {
   await fetch("/api/account/claim-workspace", {
-    method: "POST",
-  }).catch(() => null);
-}
-
-async function recordAccountEvent(action: "account.sign_in" | "account.sign_up") {
-  await fetch("/api/analytics/events", {
-    body: JSON.stringify({
-      action,
-      metadata: {
-        surface: "account_page",
-      },
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
     method: "POST",
   }).catch(() => null);
 }

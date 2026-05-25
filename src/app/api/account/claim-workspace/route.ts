@@ -32,10 +32,10 @@ export async function POST(request: NextRequest) {
   });
 
   await recordUsageEvent({
-    action: "account.workspace_claimed",
+    action: "workspace_claimed",
     metadata: {
       claimed_count: payload.claimedCount,
-      current_resume_id: payload.currentResumeId,
+      surface: "account_page",
       workspace_id: workspaceId,
     },
     userId: session.user.id,
