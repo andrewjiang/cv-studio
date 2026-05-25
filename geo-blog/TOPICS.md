@@ -133,6 +133,71 @@ Build agent and workflow authority around AI agents, verifiable facts,
 job-description parsing, resume diffs, privacy, public links, APIs, and resume
 version control.
 
+## Published Coverage And Selection Guardrails
+
+Last audited: 2026-05-25.
+
+| Published post | Hub | Format | Funnel | Coverage note | Selection rule |
+| --- | --- | --- | --- | --- | --- |
+| `one-page-resume-forcing-function` | Resume Writing | Standard | TOFU | Covers the one-page constraint as an evidence-prioritization frame, including when page two is acceptable. | Covered; extend only with tactical subtopics such as cutting content, layout hierarchy, or role-specific examples. |
+| `ats-friendly-resume` | Resume Writing | Research deep-dive | TOFU | Covers ATS myths, parsing vs ranking, readable text, keywords in context, and a test workflow. | Covered; refresh only if ATS vendor documentation or hiring-tool guidance materially changes. |
+| `ai-agent-edit-resume-safely` | AI-Assisted Resumes | Protocol | MOFU | Covers safe agent boundaries, reviewable diffs, non-invention rules, and the Tiny CV agent workflow. | Covered; do not create another broad safe-AI resume post. |
+| `resume-source-of-truth` | Career Materials And Public Identity | Protocol / standard | MOFU | Covers version drift, private evidence, stable claims, and publishing from one trusted record. | Covered; extend with version naming, channel alignment, or proof-library workflows. |
+| `public-resume-link-vs-pdf` | Career Materials And Public Identity | Comparison | MOFU | Covers link vs PDF by receiver, public CV contents, sharing etiquette, and source-to-output workflow. | Covered; split public-CV contents or privacy only when analytics show demand. |
+| `should-you-tailor-resume-for-every-job` | Job Search Systems | Decision framework | MOFU | Covers selective tailoring, effort levels, AI help, and pre-send checks. | Covered; extend only with vague job descriptions, warm-intro updates, or segment-specific tailoring. |
+| `top-resume-creation-software` | Career Materials And Public Identity | Roundup | BOFU | Covers broad resume creation software options for 2026 with Tiny CV positioned by workflow. | Refresh-only until the year, tool list, pricing, or product details age. New BOFU posts need narrower intent than "best resume software." |
+
+Current funnel mix: 2 TOFU, 4 MOFU, 1 BOFU. When GSC/GA4 data is unavailable
+or sparse, the next pick should usually add TOFU authority or a differentiated
+role/workflow page rather than another middle-funnel foundation post.
+
+## Next 4 Recommended Posts
+
+Use this fallback order when analytics are unavailable or do not clearly point
+to a refresh. These come from the first-20 priority list after removing topics
+already covered by the published posts above.
+
+1. **Software Engineer Resume Guide: What to Prove on One Page**
+   - Hub: Role-Specific Resume Playbooks
+   - Funnel: TOFU
+   - Format: Role playbook / standard
+   - Rationale: Opens the first role cluster for Tiny CV's strongest technical
+     audience and gives agents a concrete one-page proof standard.
+2. **AI Engineer Resume Guide: Projects, Models, Infrastructure, and Impact**
+   - Hub: Role-Specific Resume Playbooks
+   - Funnel: TOFU
+   - Format: Role playbook / standard
+   - Rationale: Matches the AI-aware positioning and gives Tiny CV a distinct
+     stance on proving model, data, infrastructure, and product impact without
+     inflated claims.
+3. **How to Use Keywords Without Keyword Stuffing Your Resume**
+   - Hub: Resume Writing
+   - Funnel: TOFU
+   - Format: Decision framework or protocol
+   - Rationale: Extends the ATS article with a practical, defensible keyword
+     workflow instead of another broad ATS myth post.
+4. **Markdown Resume Guide for Technical Candidates**
+   - Hub: Career Materials And Public Identity
+   - Funnel: MOFU
+   - Format: Protocol / How-To
+   - Rationale: Reinforces Tiny CV's inspectable-source advantage and connects
+     markdown, AI review, public links, and PDF export into one workflow.
+
+## Analytics-Blocked Decisions
+
+Do not choose these automatically without GSC/GA4 evidence or explicit human
+direction:
+
+- Refreshing `top-resume-creation-software` before the year, pricing, tool
+  features, or Tiny CV product behavior is stale.
+- Splitting "What belongs on a public CV link?" out of
+  `public-resume-link-vs-pdf`.
+- Creating product-specific Developer/API posts before demand is visible.
+- Creating another broad AI resume safety or role-specific AI tailoring post.
+- Choosing a long role cluster beyond the first technical cluster.
+- Rewriting titles, descriptions, or internal-link targets based only on CTR
+  assumptions.
+
 ## First 20 Priority Topics
 
 1. The Tiny CV Guide to a One-Page Resume in 2026
