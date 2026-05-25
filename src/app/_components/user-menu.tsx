@@ -96,13 +96,13 @@ export function UserMenu() {
 
           <MenuGroup>
             <UserMenuLink
-              href="/documentation"
+              href="/developers"
               icon={<FileTextIcon className="h-4 w-4" />}
               label="Documentation"
               onNavigate={() => setIsOpen(false)}
             />
             <UserMenuLink
-              href="/documentation#api-reference"
+              href="/developers#api-reference"
               icon={<CodeBracketIcon className="h-4 w-4" />}
               label="API reference"
               onNavigate={() => setIsOpen(false)}

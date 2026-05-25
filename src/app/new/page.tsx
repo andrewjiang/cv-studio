@@ -1,8 +1,10 @@
 import { WorkspaceBootstrap } from "@/app/_components/workspace-bootstrap";
 import type { TemplateKey } from "@/app/_lib/hosted-resume-types";
+import { TINYCV_NOINDEX_METADATA } from "@/app/_lib/site-metadata";
 import { readWorkspaceCookie } from "@/app/_lib/workspace-cookie";
 
 export const dynamic = "force-dynamic";
+export const metadata = TINYCV_NOINDEX_METADATA;
 
 const TEMPLATE_KEYS: TemplateKey[] = ["engineer", "designer", "sales", "founder"];
 

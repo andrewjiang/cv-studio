@@ -30,10 +30,26 @@ export async function generateMetadata({ params }: ExamplePageProps) {
   }
 
   const example = getLandingExample(templateKey as TemplateKey);
+  const canonicalPath = `/examples/${example.key}`;
+  const title = `${example.label} Template`;
+  const description = `${example.label} template for Tiny CV.`;
 
   return {
-    description: `${example.label} template for Tiny CV.`,
-    title: `${example.label} Template`,
+    alternates: {
+      canonical: canonicalPath,
+    },
+    description,
+    openGraph: {
+      description,
+      title,
+      url: canonicalPath,
+    },
+    title,
+    twitter: {
+      card: "summary_large_image",
+      description,
+      title,
+    },
   };
 }
 

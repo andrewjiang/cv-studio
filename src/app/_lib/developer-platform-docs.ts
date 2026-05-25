@@ -713,7 +713,7 @@ export function buildLlmsManifest(origin: string) {
     "",
     "## Core Docs",
     "",
-    `- [Documentation](${origin}/documentation): human-first overview with live playground.`,
+    `- [Developer docs](${origin}/developers): human-first overview with live playground.`,
     `- [Agent guide](${origin}/agents): instructions for agents that interview a user, choose a template, draft markdown, validate, publish, export, and hand off editing.`,
     `- [Machine-payment OpenAPI 3.1](${origin}/openapi.json): root discovery document for paid x402/MPP routes.`,
     `- [Full OpenAPI 3.1](${origin}/api/v1/openapi.json): complete developer API schema for bearer-token integrations.`,

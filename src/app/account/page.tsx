@@ -587,7 +587,7 @@ function DeveloperApiCard({
         <div className="flex flex-wrap gap-3">
           <Link
             className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
-            href="/documentation"
+            href="/developers"
           >
             Docs
           </Link>
