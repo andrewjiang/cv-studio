@@ -179,7 +179,12 @@
    - Which year-tagged posts need refreshes
    - Which topics have been touched lightly but deserve dedicated deep coverage
 
-   ### Step 1.5: Query Search Console data (when MCP tools are available)
+   ### Step 1.5: Query analytics data (when tools are available)
+
+   Read `geo-blog/ANALYTICS_REPORTING.md` before querying analytics. Use its
+   GA4/GSC identifiers, date windows, required fields, indexing fields, and
+   fallback wording. Do not invent a GA4 numeric property ID from the
+   `G-743RD6GYBD` measurement ID.
 
    If GSC MCP tools are available in the environment, query them to get real search data:
 
@@ -207,7 +212,10 @@
    - **Long-tail question queries** ("should I do X when Y") → create a decision-framework post
    - **Product/brand queries** ("fitbod alternatives", "freeletics review") → create a roundup or comparison
 
-   If GSC tools are NOT available (e.g., running in remote trigger without MCP), fall back to the existing coverage-map-based auto-selection.
+   If GA4/GSC tools are NOT available (e.g., running in remote trigger without
+   MCP), report the exact unavailable-tool fallback from
+   `geo-blog/ANALYTICS_REPORTING.md` and continue with the existing
+   coverage-map-based auto-selection.
 
    ### Step 2: Identify the highest-value opportunities
 

@@ -36,6 +36,7 @@ Use these repo files:
 
 - `GEO.md`
 - `geo-blog/TOPICS.md`
+- `geo-blog/ANALYTICS_REPORTING.md`
 - `geo-blog/AUTOPILOT_PROMPT.md`
 - `geo-blog/agents/orchestrator.md`
 - `geo-blog/agents/researcher.md`
@@ -83,6 +84,22 @@ The orchestrator agent needs:
 - `pnpm`.
 - Network access for web research, citation verification, OpenAI image generation, GitHub, and package installs when needed.
 
+For analytics-driven topic selection, the orchestrator or researcher also needs
+one of:
+
+- A GA4/GSC MCP connector with authenticated reporting tools.
+- Google Analytics Data API credentials plus the numeric GA4 property ID.
+- Search Console API credentials with access to `https://tiny.cv/` or
+  `sc-domain:tiny.cv`.
+- Human-provided GA4 and GSC exports that follow
+  `geo-blog/ANALYTICS_REPORTING.md`.
+
+The repo currently documents the GA4 web stream measurement ID
+`G-743RD6GYBD`, not the numeric GA4 Data API property ID. If a runtime tool asks
+for the numeric property ID and it is not configured, record that as the GA4
+blocker and continue from GSC or sparse-data fallback. Do not derive a property
+ID from the measurement ID.
+
 The designer runtime, or whichever runtime executes `pnpm generate:blog-hero`, needs:
 
 - `OPENAI_API_KEY` in the process environment.
@@ -123,6 +140,31 @@ multica agent update "<agent-id-or-name>" --instructions "$(cat geo-blog/agents/
 
 If the CLI argument length becomes inconvenient, update the instructions through the Multica UI instead.
 
+## Analytics Reporting Path
+
+Before topic selection, follow `geo-blog/ANALYTICS_REPORTING.md`.
+
+Minimum weekly reporting path:
+
+- GA4 landing-page report for `/blog/*`: last complete 7 days versus previous 7
+  days for trend, and last complete 28 days versus previous 28 days for topic
+  selection. Required fields are `date`, `landingPagePlusQueryString`,
+  `sessions`, `activeUsers`, `screenPageViews`, `engagementRate`,
+  `averageSessionDuration`, and `keyEvents` when configured.
+- GSC query/page performance for `https://tiny.cv/` or `sc-domain:tiny.cv`:
+  last complete 28 days for opportunities and 90 days for gaps/decay when
+  enough history exists. Required fields are `date`, `query`, `page`, `clicks`,
+  `impressions`, `ctr`, and `position`.
+- GSC indexing review for published `/blog/*` URLs: record the URL inspection
+  verdict, coverage state, robots/indexing state, last crawl time, canonical
+  fields, sitemap status, and inspection link when available.
+
+If GA4 or GSC tools are unavailable, auth is missing, the numeric GA4 property
+ID is not configured, or the data is too sparse to draw a conclusion, the run is
+not blocked. The agent must state the blocker or sparse-data condition and fall
+back to `GEO.md`, `geo-blog/TOPICS.md`, existing post coverage, and
+source-backed search-intent research.
+
 ## Autopilot Task Prompt
 
 Use `geo-blog/AUTOPILOT_PROMPT.md` as the autopilot description/task prompt. Its current contents are:
@@ -139,6 +181,7 @@ Produce one complete, fact-checked, GEO-optimized Tiny CV blog post for today. K
 Required source-of-truth files:
 - GEO.md
 - geo-blog/TOPICS.md
+- geo-blog/ANALYTICS_REPORTING.md
 - geo-blog/agents/orchestrator.md
 - geo-blog/agents/researcher.md
 - geo-blog/agents/strategist.md
@@ -151,19 +194,19 @@ Required source-of-truth files:
 
 Execution:
 1. Check out cv-studio using multica repo checkout.
-2. Read GEO.md and geo-blog/agents/orchestrator.md.
+2. Read GEO.md, geo-blog/ANALYTICS_REPORTING.md, and geo-blog/agents/orchestrator.md.
 3. Follow the orchestrator pipeline exactly with direction: auto.
 4. Use geo-blog/TOPICS.md when present.
-5. If analytics are available, use GSC/GA4 signals before selecting the topic. If unavailable or sparse, say so and fall back to GEO.md, TOPICS.md, and existing coverage.
+5. Pull GA4/GSC reporting from available tools before topic selection using geo-blog/ANALYTICS_REPORTING.md. If unavailable or sparse, report the concrete blocker and fall back to GEO.md, TOPICS.md, and existing coverage.
 6. Do not duplicate an existing blog post topic.
 7. Open with a direct answer, include a reusable framework/table/checklist/markdown recipe/before-after example, and end with a practical Tiny CV workflow.
 8. Run factchecker, optimizer, and designer gates.
 9. Hero image generation is mandatory. Do not publish without PNG and WebP hero assets.
 10. Do not read .env.local. Use runtime environment variables only.
-11. Do not invent citations, statistics, experts, hiring outcomes, or product capabilities.
+11. Do not invent citations, statistics, experts, hiring outcomes, product capabilities, or analytics.
 12. Require factcheck_status=pass, optimizer_status=pass, geo_score>=8, designer_status=pass, and pnpm build passing before publishing.
 13. Commit, push, open a PR, and enable squash auto-merge.
-14. Report the PR URL, topic, category, format, GEO score, citations, word count, hero image status, build status, auto-merge status, and analytics/fallback signal.
+14. Report the PR URL, topic, category, format, GEO score, citations, word count, hero image status, build status, analytics signal or blocker, and auto-merge status.
 
 Failure behavior:
 - If research cannot find a non-duplicate topic with enough evidence potential, stop and report the blocker.
@@ -322,6 +365,7 @@ multica autopilot trigger-delete <autopilot-id> <trigger-id>
 
 Weekly:
 
+- Run the GA4/GSC weekly review path in `geo-blog/ANALYTICS_REPORTING.md`.
 - Review the previous 7 run issues and PRs.
 - Check topic diversity across categories and funnel positions.
 - Add or prune `geo-blog/TOPICS.md` backlog items.
