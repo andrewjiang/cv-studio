@@ -55,9 +55,6 @@ const uiMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  alternates: {
-    canonical: "/",
-  },
   applicationName: TINYCV_SITE_NAME,
   authors: [{ name: TINYCV_SITE_NAME }],
   category: "productivity",

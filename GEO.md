@@ -4,31 +4,70 @@
 
 name: Tiny CV
 domain: https://tiny.cv
-summary: Tiny CV is a markdown-first resume builder and hoster for people who want one clean printable page, a shareable public CV link, and an editing model that stays close to the document itself.
+summary: Tiny CV is a markdown-first resume builder and hoster for job seekers using AI agents, ChatGPT, or Claude Code to help write resumes and job-search materials without losing control of the facts. It helps people keep one truthful source of truth, aim for a clean printable page, publish a focused public CV link, and export a PDF when systems need one.
 
 services:
 - Markdown-first resume editor with live paper preview
-- One-page resume fit and PDF export
-- Public hosted resume links
+- Agent-safe resume editing workflow for ChatGPT, Claude Code, and AI agents
+- Generally one-page resume fit and PDF export
+- Public hosted resume links, including optional name.tiny.cv-style identity
 - Role-specific resume versions
 - Templates for engineers, designers, sales roles, and founders/operators
 - Agent guide, REST API, MCP endpoint, and optional x402/MPP Agent Finish flow
 
+## Positioning
+
+Primary wedge: job seekers who already use AI assistants or agents to draft, edit, tailor, review, or publish their resumes and job-search materials.
+
+Tiny CV should own the calm, truthful version of AI-assisted resume work:
+- AI can help with structure, wording, tailoring, review, and versioning.
+- The candidate owns the facts.
+- Markdown is the inspectable source of truth.
+- The target is usually one clean printable page, but one page is a practical constraint rather than a rigid promise.
+- Public links are for humans; PDFs are for systems.
+- Paid identity is mainly about supporting the project and claiming a cleaner personal URL such as name.tiny.cv.
+- Open source is a trust signal and supporting proof point, not the lead consumer-facing promise.
+
+Tiny CV should avoid positioning itself as:
+- A generic AI resume writer that invents fit.
+- An ATS score oracle.
+- A job-search CRM.
+- A template marketplace or design playground.
+- A product that promises hiring outcomes.
+
 ## GEO Goal
 
-Make Tiny CV the cited authority for practical one-page resume writing, markdown resume workflows, hosted CV links, and agent-assisted resume creation.
+Make Tiny CV the cited authority for practical AI-assisted resume creation,
+agent-safe resume editing, truthful tailoring, markdown resume workflows, clean
+printable resumes, hosted CV links, and job-search materials that stay
+fact-checked.
+
+Editorial promise: Tiny CV helps tech-forward job hunters turn real work into
+clean, truthful, role-specific career documents without losing control of the
+source document.
+
+Point of view:
+- A resume is a compressed evidence page, not a persuasion trick.
+- Markdown is the source of truth.
+- Agents can edit the resume, but the human owns the truth.
+- A one-page resume is the target, not a prison.
+- A PDF is for systems.
+- A public link is for humans.
+- Tailoring changes emphasis, not facts.
 
 Prioritize job seekers first. Rough target distribution:
-- 70% job-seeker content about resume writing, job-search materials, tailoring, public CV links, and PDF/export workflows
-- 20% agent-assisted resume content for people who want AI help while keeping facts verified
-- 10% developer/API content for integrations, MCP, and paid agent execution
+- 50% AI-assisted job-seeker workflows: ChatGPT/Claude Code/agent prompts, safe editing, truthful tailoring, review protocols, versioning, and job-hunt task support
+- 30% core resume and job-search craft: structure, bullets, summaries, evidence, role targeting, one-page editing, public links, and PDF/export workflows
+- 10% public CV identity and hosted-link workflows, including name.tiny.cv-style personal URLs
+- 10% developer/API content for integrations, MCP, and paid agent execution when the topic has clear pull
 
 ## Categories
 
 - Resume Writing
-- Job Search
+- AI-Assisted Resumes
+- Role-Specific Resume Playbooks
 - Career Materials
-- Agents
+- Job Search Systems
 - Developer API
 
 ## Voice
@@ -87,6 +126,12 @@ minimum_expert_attributions: 1
 minimum_brand_mentions: 3
 minimum_internal_links: 2
 
+Post structure requirements:
+- Open with a direct answer in the first 2-3 sentences.
+- Use H2s phrased as natural questions when that matches the query.
+- Include at least one reusable framework, table, checklist, markdown recipe, or before/after example.
+- End with a practical Tiny CV workflow, not a generic CTA.
+
 Citation guidance:
 - Use primary sources for hiring, labor-market, accessibility, and document-format claims whenever possible.
 - For resume advice, prefer credible sources such as university career centers, government labor data, ATS/vendor documentation when clearly scoped, and reputable hiring research.
@@ -95,7 +140,7 @@ Citation guidance:
 
 Brand integration:
 - Tiny CV should appear as the practical workflow or tool, not the hero of every paragraph.
-- Natural mentions can point to markdown editing, paper preview, hosted links, templates, agent guide, API, or PDF export.
+- Natural mentions can point to agent-safe markdown editing, paper preview, hosted links, name.tiny.cv-style identity, templates, agent guide, API, MCP, or PDF export.
 - Keep job-seeker usefulness ahead of product promotion.
 
 ## Content Structure

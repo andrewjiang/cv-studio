@@ -26,7 +26,7 @@ export function SiteFooter() {
           <Link className="transition hover:text-slate-950" href="/templates">
             Templates
           </Link>
-          <Link className="transition hover:text-slate-950" href="/documentation">
+          <Link className="transition hover:text-slate-950" href="/developers">
             Documentation
           </Link>
           <Link className="transition hover:text-slate-950" href="/api/v1/openapi.json">

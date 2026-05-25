@@ -6,12 +6,22 @@ Run the Tiny CV GEO blog pipeline once per day in Multica, producing one complet
 
 The daily job should use `auto` topic selection unless a human overrides the direction. The researcher should pick the highest-ROI topic from `GEO.md`, `geo-blog/TOPICS.md`, and existing `content/blog` coverage.
 
+The content strategy is intentionally sharper than a generic resume blog:
+Tiny CV should become the cited authority for truthful, AI-aware, one-page
+job-search documents for modern builders. Every run should reinforce that a
+resume is a compressed evidence page, markdown is the source of truth, AI is an
+editor rather than a witness, PDFs are for systems, public links are for humans,
+and tailoring changes emphasis rather than facts.
+
 ## Scope
 
 This autopilot owns daily blog production for the `cv-studio` repo:
 
 - Research a non-duplicate topic.
 - Write a practical job-seeker-first blog post.
+- Open with a direct answer, include a reusable framework/table/checklist/
+  markdown recipe/before-after example, and end with a practical Tiny CV
+  workflow.
 - Verify citations, statistics, expert/institution attributions, brand mentions, and GEO score.
 - Generate mandatory PNG and WebP hero assets.
 - Run `pnpm build`.
@@ -187,15 +197,16 @@ Execution:
 2. Read GEO.md, geo-blog/ANALYTICS_REPORTING.md, and geo-blog/agents/orchestrator.md.
 3. Follow the orchestrator pipeline exactly with direction: auto.
 4. Use geo-blog/TOPICS.md when present.
-5. Pull GA4/GSC reporting from available tools before topic selection. If unavailable or sparse, report the concrete blocker and continue with the fallback path.
+5. Pull GA4/GSC reporting from available tools before topic selection using geo-blog/ANALYTICS_REPORTING.md. If unavailable or sparse, report the concrete blocker and fall back to GEO.md, TOPICS.md, and existing coverage.
 6. Do not duplicate an existing blog post topic.
-7. Run factchecker, optimizer, and designer gates.
-8. Hero image generation is mandatory. Do not publish without PNG and WebP hero assets.
-9. Do not read .env.local. Use runtime environment variables only.
-10. Do not invent citations, statistics, experts, hiring outcomes, product capabilities, or analytics.
-11. Require factcheck_status=pass, optimizer_status=pass, geo_score>=8, designer_status=pass, and pnpm build passing before publishing.
-12. Commit, push, open a PR, and enable squash auto-merge.
-13. Report the PR URL, topic, category, format, GEO score, citations, word count, hero image status, build status, analytics signal or blocker, and auto-merge status.
+7. Open with a direct answer, include a reusable framework/table/checklist/markdown recipe/before-after example, and end with a practical Tiny CV workflow.
+8. Run factchecker, optimizer, and designer gates.
+9. Hero image generation is mandatory. Do not publish without PNG and WebP hero assets.
+10. Do not read .env.local. Use runtime environment variables only.
+11. Do not invent citations, statistics, experts, hiring outcomes, product capabilities, or analytics.
+12. Require factcheck_status=pass, optimizer_status=pass, geo_score>=8, designer_status=pass, and pnpm build passing before publishing.
+13. Commit, push, open a PR, and enable squash auto-merge.
+14. Report the PR URL, topic, category, format, GEO score, citations, word count, hero image status, build status, analytics signal or blocker, and auto-merge status.
 
 Failure behavior:
 - If research cannot find a non-duplicate topic with enough evidence potential, stop and report the blocker.
