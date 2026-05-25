@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import type { CheckoutPlanKey } from "@/app/_lib/billing-core";
 import { authClient } from "@/app/_lib/auth-client";
+import { getStoredBlogAttribution } from "@/app/_lib/blog-product-intent-analytics";
 import {
   brandPrimaryButtonClass,
   brandSecondaryButtonClass,
@@ -818,10 +819,13 @@ async function claimWorkspace() {
 }
 
 async function recordAccountEvent(action: "account.sign_in" | "account.sign_up") {
+  const blogAttribution = getStoredBlogAttribution();
+
   await fetch("/api/analytics/events", {
     body: JSON.stringify({
       action,
       metadata: {
+        blog_attribution: blogAttribution,
         surface: "account_page",
       },
     }),

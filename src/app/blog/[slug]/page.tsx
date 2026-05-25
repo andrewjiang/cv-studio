@@ -5,6 +5,10 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { AppHeader } from "@/app/_components/app-header";
+import {
+  BlogMarkdownLink,
+  BlogProductIntentLink,
+} from "@/app/_components/blog-product-intent-links";
 import { SiteFooter } from "@/app/_components/site-footer";
 import {
   getBlogPostBySlug,
@@ -77,10 +81,21 @@ export default async function BlogPostPage({
   ) : (
     <TextPostHeader post={post} />
   );
+  const startWritingHref = getBlogIntentHref("/new", post.slug, "start_writing");
+  const publicLinkHref = getBlogIntentHref("/new?intent=public-link", post.slug, "public_link");
+  const pdfHref = getBlogIntentHref("/new?intent=pdf", post.slug, "pdf");
 
   return (
     <main className="min-h-screen bg-[#fbf7f0] text-slate-900 selection:bg-[#065f46] selection:text-white">
-      <AppHeader continueEditingHref={null} />
+      <AppHeader
+        blogAnalytics={{
+          blogCategory: post.category,
+          blogSlug: post.slug,
+          blogTitle: post.title,
+          surface: "blog_post_header",
+        }}
+        continueEditingHref={null}
+      />
 
       {header}
 
@@ -89,12 +104,15 @@ export default async function BlogPostPage({
           <ReactMarkdown
             components={{
               a: ({ children, href }) => (
-                <a
+                <BlogMarkdownLink
+                  blogCategory={post.category}
+                  blogSlug={post.slug}
+                  blogTitle={post.title}
                   className="font-bold text-[#065f46] underline decoration-[#065f46]/25 underline-offset-4 transition hover:text-[#044e34]"
                   href={href}
                 >
                   {children}
-                </a>
+                </BlogMarkdownLink>
               ),
               blockquote: ({ children }) => (
                 <blockquote className="my-8 border-l-4 border-[#065f46] bg-[#065f46]/5 px-6 py-4 text-slate-700">
@@ -166,12 +184,44 @@ export default async function BlogPostPage({
             Write in markdown, preview on paper, and publish a clean Tiny CV
             link when you are ready.
           </p>
-          <Link
+          <BlogProductIntentLink
+            blogCategory={post.category}
+            blogSlug={post.slug}
+            blogTitle={post.title}
             className="mt-6 inline-flex rounded-full bg-[#065f46] px-5 py-3 text-sm font-bold !text-white shadow-sm transition hover:bg-[#044e34]"
-            href="/new"
+            href={startWritingHref}
+            intent="start_writing"
+            linkText="Start writing"
+            surface="blog_post_next_step"
           >
             Start writing
-          </Link>
+          </BlogProductIntentLink>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <BlogProductIntentLink
+              blogCategory={post.category}
+              blogSlug={post.slug}
+              blogTitle={post.title}
+              className="inline-flex rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50"
+              href={publicLinkHref}
+              intent="public_link"
+              linkText="Publish a public CV link"
+              surface="blog_post_next_step"
+            >
+              Publish a public CV link
+            </BlogProductIntentLink>
+            <BlogProductIntentLink
+              blogCategory={post.category}
+              blogSlug={post.slug}
+              blogTitle={post.title}
+              className="inline-flex rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50"
+              href={pdfHref}
+              intent="pdf"
+              linkText="Make a PDF resume"
+              surface="blog_post_next_step"
+            >
+              Make a PDF resume
+            </BlogProductIntentLink>
+          </div>
         </footer>
       </article>
 
@@ -300,4 +350,20 @@ function formatPostDate(date: string) {
     month: "long",
     year: "numeric",
   }).format(new Date(`${date}T00:00:00.000Z`));
+}
+
+function getBlogIntentHref(
+  href: string,
+  slug: string,
+  cta: "pdf" | "public_link" | "start_writing",
+) {
+  const [path, hash = ""] = href.split("#", 2);
+  const separator = path.includes("?") ? "&" : "?";
+  const params = new URLSearchParams({
+    blog: slug,
+    blog_cta: cta,
+    source: "blog",
+  });
+
+  return `${path}${separator}${params.toString()}${hash ? `#${hash}` : ""}`;
 }
