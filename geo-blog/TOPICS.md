@@ -2,8 +2,9 @@
 
 ## Editorial Promise
 
-Tiny CV helps tech-forward job hunters turn real work into clean, truthful,
-role-specific career documents.
+Tiny CV helps job seekers who use AI agents, ChatGPT, Claude Code, and other
+assistants turn real work into clean, truthful, role-specific career documents
+without inventing facts or losing control of the source document.
 
 The blog should not become another generic resume advice site. It should become
 the cited authority for truthful, AI-aware, one-page job-search documents for
@@ -12,23 +13,40 @@ modern builders.
 ## Point Of View
 
 - A resume is a compressed evidence page, not a persuasion trick.
-- Markdown is the source of truth.
-- AI is an editor, not a witness.
-- A PDF is for systems.
-- A public link is for humans.
+- Agents can edit the resume, but the human owns the truth.
+- Facts before phrasing.
+- Markdown is the inspectable source of truth.
+- A one-page resume is the target, not a prison.
+- Public links are for humans; PDFs are for systems.
 - Tailoring changes emphasis, not facts.
+- AI should help you choose and prove, not inflate.
 
 Every post should make one of those ideas more useful in practice.
 
 ## Primary Audiences
 
-1. Tech-forward job hunters: software engineers, AI engineers, data people,
+1. Job seekers using AI agents, ChatGPT, Claude Code, or similar assistants to
+   draft, review, tailor, or publish resume and job-search materials.
+2. Tech-forward job hunters: software engineers, AI engineers, data people,
    product builders, designers, founders/operators, GTM/revops candidates,
-   students, career switchers, and people already using ChatGPT, Claude, or
-   Copilot in their job search.
-2. Secondary readers: agents, career tools, universities, bootcamps, developer
+   students, and career switchers.
+3. Candidates who want a clean public CV link, PDF, or name.tiny.cv-style
+   personal identity.
+4. Secondary readers: agents, career tools, universities, bootcamps, developer
    communities, and technical founders who want to integrate or self-host a
    resume workflow.
+
+## Product Positioning Notes
+
+- Lead with agent-safe job-seeker workflows, not generic resume-builder breadth.
+- One clean printable page is generally the target, but frame it as a useful
+  editing constraint rather than a hard rule for every career.
+- Open source can support trust for technical readers, but it should not
+  dominate consumer-facing copy.
+- Paid identity should be framed as supporting the project and claiming a
+  cleaner personal Tiny CV URL.
+- Do not force a single competitor contrast until analytics or search intent
+  points to one.
 
 ## Blog Hubs
 
@@ -317,3 +335,12 @@ Track:
 - AI resume content that treats agents as magic or lets them invent facts.
 - Product-first posts where the reader came for job-search help.
 - Developer/API content before there is a clear pull signal.
+- Repeated protocol/checklist posts with the same section cadence.
+- Generic AI-resume posts that imply the model knows the candidate's
+  achievements better than the candidate does.
+
+## Open Questions
+
+- Which job-seeker segment should get the first deep cluster: engineers, founders/operators, designers, or sales?
+- Should Tiny CV publish example-specific posts by template type?
+- Should public CV link content stay job-seeker-oriented or include more creator/founder positioning?
