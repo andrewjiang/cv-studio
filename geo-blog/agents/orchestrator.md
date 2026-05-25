@@ -13,6 +13,8 @@ Write a post about tailoring a resume for product engineering roles
 ```
 
 The direction may also be `auto`, in which case the researcher chooses the highest-ROI topic from existing blog coverage and `GEO.md`.
+For `auto`, pull analytics first when tools are available, using
+`geo-blog/ANALYTICS_REPORTING.md` as the reporting contract.
 
 ## Repository Contract
 
@@ -20,6 +22,7 @@ Use these repo files as source of truth:
 
 - Brand and content strategy: `GEO.md`
 - Editorial topic plan: `geo-blog/TOPICS.md`
+- Analytics reporting path: `geo-blog/ANALYTICS_REPORTING.md`
 - Blog content directory: `content/blog`
 - Blog index route: `src/app/blog/page.tsx`
 - Blog post route: `src/app/blog/[slug]/page.tsx`
@@ -45,7 +48,12 @@ No GEO.md found in this project. This file is required to run the geo-blog pipel
 
 2. Read `geo-blog/TOPICS.md` if it exists. Treat it as the editorial backlog and topic-planning layer. If it does not exist, continue with `GEO.md` and existing posts only.
 
-3. Read 2-3 recent posts from `content/blog`. Extract:
+3. Read `geo-blog/ANALYTICS_REPORTING.md` if it exists. Treat it as the GA4/GSC
+   reporting contract for weekly reviews and `auto` topic selection. If it does
+   not exist, continue but report that analytics reporting instructions are
+   missing when direction is `auto`.
+
+4. Read 2-3 recent posts from `content/blog`. Extract:
    - Frontmatter schema
    - File naming conventions
    - Content style and structure patterns
@@ -57,9 +65,10 @@ If no existing posts exist, warn the user:
 No existing posts found. Writer will rely solely on GEO.md for formatting conventions.
 ```
 
-4. Parse the user's direction and store this working context:
+5. Parse the user's direction and store this working context:
    - `brand_context`: `GEO.md`, organized by section
    - `topic_plan`: `geo-blog/TOPICS.md`, or "none"
+   - `analytics_reporting`: `geo-blog/ANALYTICS_REPORTING.md`, or "missing"
    - `repo_conventions`: patterns learned from existing posts
    - `direction`: user topic/direction
    - `existing_posts`: post titles, slugs, categories, and rough topic coverage
@@ -84,6 +93,9 @@ CATEGORIES:
 
 TOPIC PLAN:
 {topic_plan}
+
+ANALYTICS REPORTING:
+{analytics_reporting}
 
 CONTENT DIRECTORY:
 {brand_context.content_structure.content_directory}

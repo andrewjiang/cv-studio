@@ -47,6 +47,7 @@ Source-of-truth files:
 
 - `GEO.md`
 - `geo-blog/TOPICS.md` when present
+- `geo-blog/ANALYTICS_REPORTING.md`
 - `geo-blog/agents/leader.md`
 - `geo-blog/agents/researcher.md`
 - `geo-blog/agents/strategist.md`
@@ -68,6 +69,11 @@ print or expose secrets.
 
 Before touching the researcher, pull live search and product analytics if the
 runtime has the tools/auth to do it.
+
+Use `geo-blog/ANALYTICS_REPORTING.md` as the reporting contract. It contains
+the GA4 measurement ID, GSC properties, required date windows, expected fields,
+and exact fallback language for unavailable or sparse data. Do not invent a GA4
+numeric property ID from the measurement ID.
 
 ### GSC Data
 
