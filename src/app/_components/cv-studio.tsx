@@ -66,6 +66,7 @@ import type {
   WorkspacePayload,
 } from "@/app/_lib/hosted-resume-types";
 import { downloadPdfFromUrl } from "@/app/_lib/pdf-download-client";
+import { hasUnpublishedResumeChanges } from "@/app/_lib/resume-publication-state";
 import { buildResumePdfDownloadUrl } from "@/app/_lib/resume-print-url";
 import { getResumeTemplate } from "@/app/_lib/resume-templates";
 import { UserMenu } from "./user-menu";
@@ -192,6 +193,7 @@ export function CvStudio({
   const fitAdjustmentPreference =
     autoFitPreferences[activeResume.id] ?? DEFAULT_FIT_ADJUSTMENT_PREFERENCE;
   const shouldWarnAboutContentLength = fitState.scale <= CUT_CONTENT_THRESHOLD;
+  const hasUnpublishedChanges = hasUnpublishedResumeChanges(activeResume, markdown);
 
   useEffect(() => {
     markdownRef.current = markdown;
@@ -456,11 +458,16 @@ export function CvStudio({
       return;
     }
 
-    if (activeResume.isPublished && markdown === activeResume.markdown) {
+    if (!hasUnpublishedChanges) {
       return;
     }
 
-    const publishKey = `${activeResume.id}:${markdown}`;
+    const publishKey = [
+      activeResume.id,
+      activeResume.publishedAt ?? "",
+      activeResume.updatedAt,
+      markdown,
+    ].join(":");
 
     if (autoPublishKeyRef.current === publishKey) {
       return;
@@ -472,6 +479,9 @@ export function CvStudio({
     activeResume.id,
     activeResume.isPublished,
     activeResume.markdown,
+    activeResume.publishedAt,
+    activeResume.updatedAt,
+    hasUnpublishedChanges,
     isPublishing,
     markdown,
     mode,

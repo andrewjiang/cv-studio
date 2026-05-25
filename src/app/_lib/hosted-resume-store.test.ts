@@ -73,6 +73,32 @@ describe("hosted-resume-store", () => {
     expect(publicResume?.slug).toBe(payload.resume.slug);
   });
 
+  it("updates the publication timestamp on every workspace publish", async () => {
+    const payload = await createWorkspaceBootstrap({ templateKey: "founder" });
+
+    const firstPublish = await publishWorkspaceResume({
+      fitScale: payload.resume.fitScale,
+      markdown: payload.resume.markdown,
+      resumeId: payload.resume.id,
+      workspaceId: payload.workspace.workspaceId,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    const secondPublish = await publishWorkspaceResume({
+      fitScale: 0.9,
+      markdown: `${payload.resume.markdown}\n\n## Projects\n- Built Tiny CV.`,
+      resumeId: payload.resume.id,
+      workspaceId: payload.workspace.workspaceId,
+    });
+
+    expect(firstPublish?.resume.publishedAt).toBeTruthy();
+    expect(secondPublish?.resume.publishedAt).toBeTruthy();
+    expect(Date.parse(secondPublish!.resume.publishedAt!)).toBeGreaterThan(
+      Date.parse(firstPublish!.resume.publishedAt!),
+    );
+  });
+
   it("dedupes identical legacy drafts inside one workspace", async () => {
     const payload = await importLegacyWorkspaceDrafts({
       activeDraftName: "Primary CV",
