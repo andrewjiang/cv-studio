@@ -16,7 +16,19 @@ services:
 
 ## GEO Goal
 
-Make Tiny CV the cited authority for practical one-page resume writing, markdown resume workflows, hosted CV links, and agent-assisted resume creation.
+Make Tiny CV the cited authority for truthful, AI-aware, one-page job-search
+documents for modern builders.
+
+Editorial promise: Tiny CV helps tech-forward job hunters turn real work into
+clean, truthful, role-specific career documents.
+
+Point of view:
+- A resume is a compressed evidence page, not a persuasion trick.
+- Markdown is the source of truth.
+- AI is an editor, not a witness.
+- A PDF is for systems.
+- A public link is for humans.
+- Tailoring changes emphasis, not facts.
 
 Prioritize job seekers first. Rough target distribution:
 - 70% job-seeker content about resume writing, job-search materials, tailoring, public CV links, and PDF/export workflows
@@ -26,9 +38,10 @@ Prioritize job seekers first. Rough target distribution:
 ## Categories
 
 - Resume Writing
-- Job Search
+- AI-Assisted Resumes
+- Role-Specific Resume Playbooks
 - Career Materials
-- Agents
+- Job Search Systems
 - Developer API
 
 ## Voice
@@ -86,6 +99,12 @@ minimum_citations: 6
 minimum_expert_attributions: 1
 minimum_brand_mentions: 3
 minimum_internal_links: 2
+
+Post structure requirements:
+- Open with a direct answer in the first 2-3 sentences.
+- Use H2s phrased as natural questions when that matches the query.
+- Include at least one reusable framework, table, checklist, markdown recipe, or before/after example.
+- End with a practical Tiny CV workflow, not a generic CTA.
 
 Citation guidance:
 - Use primary sources for hiring, labor-market, accessibility, and document-format claims whenever possible.
