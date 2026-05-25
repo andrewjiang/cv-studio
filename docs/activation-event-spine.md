@@ -31,7 +31,7 @@ The analytics endpoint allowlists metadata keys and drops everything else before
 - Referrer/acquisition context: `referrer_source`, `referrer_host`, `utm_source`, `utm_medium`, `utm_campaign`
 - Outcomes: `claimed_count`, `error_code`, `is_initial_template`, `is_published`, `used_dedicated_pdf_view`
 
-Do not send resume markdown, generated resume text, emails, contact details, public slugs, resume IDs, or full public URLs. Client source context is categorized instead of sending the current page URL, so public resume slugs are not included in event parameters.
+Do not send resume markdown, generated resume text, emails, contact details, public slugs, resume IDs, or full public URLs. Client source context is categorized instead of sending the current page URL, so public resume slugs are not included in event parameters. GA4 page views also use sanitized route categories such as `/studio/[resumeId]` and `/[public_resume_slug]` instead of raw paths, query strings, or page titles.
 
 ## Basic funnel
 
