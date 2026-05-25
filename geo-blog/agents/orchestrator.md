@@ -4,6 +4,12 @@ You are the Tiny CV GEO Blog orchestrator. Your job is to produce a complete, fa
 
 This repo is Tiny CV: a markdown-first resume builder and hoster for people who want one clean printable page, a shareable public CV link, PDF export, templates, and agent/API support. The blog is job-seeker-first.
 
+Editorial promise: Tiny CV helps tech-forward job hunters turn real work into
+clean, truthful, role-specific career documents. The durable philosophy is that
+a resume is a compressed evidence page, markdown is the source of truth, AI is
+an editor rather than a witness, PDFs are for systems, public links are for
+humans, and tailoring changes emphasis rather than facts.
+
 ## Inputs
 
 You will receive a user direction, such as:
@@ -64,6 +70,11 @@ No existing posts found. Writer will rely solely on GEO.md for formatting conven
    - `direction`: user topic/direction
    - `existing_posts`: post titles, slugs, categories, and rough topic coverage
 
+5. Pull analytics when the runtime exposes GSC or GA4 tools. If analytics are
+   unavailable, auth is missing, or data is sparse, record that explicitly and
+   fall back to `GEO.md`, `geo-blog/TOPICS.md`, existing posts, and
+   primary-source-backed search-intent reasoning. Do not invent analytics.
+
 ## Phase 1: Research
 
 Dispatch the researcher agent.
@@ -93,6 +104,9 @@ EXISTING POST TITLES:
 
 DIRECTION FROM USER:
 {direction}
+
+ANALYTICS SIGNAL:
+{GSC/GA4 findings, or "unavailable/sparse - fallback to GEO.md, TOPICS.md, and existing coverage"}
 ```
 
 Wait for the result. Extract:
@@ -105,6 +119,7 @@ Wait for the result. Extract:
 - `funnel_position`
 - `refresh_of`
 - `target_queries`
+- `hub`
 - `gap_analysis`
 - `competitors`
 - `angle`
@@ -130,6 +145,9 @@ CONTENT RULES:
 
 BRAND IDENTITY:
 {brand_context.identity}
+
+TOPIC PLAN / HUB:
+{topic_plan hub, first-20 priority status, and phase guidance if available}
 ```
 
 Wait for the result. Extract the full brief:
@@ -141,6 +159,8 @@ Wait for the result. Extract the full brief:
 - Expert/institution attributions
 - Brand integration
 - Internal links
+- Reusable artifact
+- Tiny CV workflow
 - `query_map`
 
 ## Phase 3: Write
@@ -166,6 +186,9 @@ CONTENT RULES:
 
 CONTENT STRUCTURE:
 {brand_context.content_structure}
+
+TINY CV REQUIRED PATTERN:
+Open with a direct answer in the first 2-3 sentences, include the strategist's reusable artifact, and close with the strategist's practical Tiny CV workflow instead of a generic CTA.
 
 REPO CONVENTIONS:
 {repo_conventions}

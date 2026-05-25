@@ -19,6 +19,19 @@
 
    2. **Analyze the topic plan** — If a Topic Plan is provided, use it as the editorial planning layer. Prefer topics from the backlog unless the user's direction clearly asks for something else. Respect the avoid-rules.
 
+      For Tiny CV, the Topic Plan is not a loose idea list. Treat it as the
+      canonical content architecture:
+      - Editorial promise: help tech-forward job hunters turn real work into
+        clean, truthful, role-specific career documents.
+      - Point of view: a resume is a compressed evidence page; markdown is the
+        source of truth; AI is an editor, not a witness; PDFs are for systems;
+        public links are for humans; tailoring changes emphasis, not facts.
+      - Hubs: Resume Writing, AI-Assisted Resumes, Role-Specific Resume
+        Playbooks, Career Materials And Public Identity, Job Search Systems,
+        Developer/API.
+      - Preserve the backlog's priority order unless analytics or the user's
+        direction provides a stronger signal.
+
    3. **Analyze the direction** — The user has given a direction (topic area, specific question, or broad theme). Use this to focus your research. If direction is "auto", follow the Auto-Selection Mode below instead.
 
    4. **Check existing content** — Read blog posts in the Content Directory to understand what's already been covered. Cross-reference with the Existing Post Titles provided. You must NOT propose a topic that overlaps significantly with existing content.
@@ -37,6 +50,8 @@
       - **Gap size:** How weak are current AI answers for related queries?
       - **Query volume signals:** Are people actually searching for this?
       - **Format fit:** Which format maximizes citation potential for this topic?
+      - **Canonical fit:** Does this map cleanly to one Topic Plan hub without
+        creating a thin keyword variant or near-duplicate?
 
    8. **Select the best topic** — Choose the one with the strongest combination of evidence potential, business value, gap size, format fit, and alignment with the Topic Plan.
 
@@ -85,6 +100,11 @@
 
    When in **Auto-Selection Mode**, assess the blog's current funnel distribution as part of the coverage map (Step 1). Use the GEO.md target distribution if provided; for Tiny CV, bias toward job-seeker TOFU and MOFU content before developer/API content. If the blog skews heavily away from the target, prioritize topics that rebalance the distribution.
 
+   For Tiny CV, also maintain the content mix from `GEO.md`: roughly 70%
+   job-seeker content, 20% agent-assisted resume content, and 10% developer/API
+   content. Analytics can override this, but do not let developer/API topics
+   outrun the job-seeker and AI-assisted foundation.
+
    ### Slug Rule
 
    Never include the year in the slug. The year goes in the TITLE only. Slugs should be yearless so the URL remains valid across years without redirects. Example: slug `best-markdown-resume-builders` (not `best-markdown-resume-builders-2026`). This follows the Wirecutter/CNET/NerdWallet pattern.
@@ -111,6 +131,7 @@
    FUNNEL_POSITION: [TOFU | MOFU | BOFU]
    REFRESH_OF: [filename of existing post if this is a refresh, or "none"]
    TARGET_QUERIES: [comma-separated list of 5-8 search queries this post should rank for]
+   HUB: [Resume Writing | AI-Assisted Resumes | Role-Specific Resume Playbooks | Career Materials And Public Identity | Job Search Systems | Developer/API]
    GAP_ANALYSIS: [2-3 sentences explaining why AI answers are currently weak for these queries]
    COMPETITORS: [key sources currently cited in AI answers for these queries]
    ANGLE: [the editorial angle — what makes this post uniquely valuable vs existing content]
@@ -120,6 +141,12 @@
    ## Rules
 
    - **No duplicate topics** against existing content. If the direction overlaps with an existing post, find a distinct angle or adjacent topic — or recommend a refresh.
+   - **Respect the first 20 priority topics.** If analytics are missing or weak,
+     choose from the Topic Plan's first 20 unless existing coverage makes that a
+     duplicate.
+   - **Prefer canonical pages.** Do not recommend thin variants such as many
+     near-identical role or keyword posts. Recommend the strongest canonical page
+     with examples inside it.
    - **Pick topics with evidence potential.** If you can't find at least 8 credible sources during research, the topic won't pass fact-checking later. Move on.
    - **Clear business value.** The topic must naturally connect to the brand's services — not forced, but the link should be obvious.
    - **Distinctive Tiny CV POV.** Prefer topics where Tiny CV can say something memorable, not just answer a generic career query. Good topics create language the brand can own.
@@ -127,6 +154,9 @@
    - **Be specific.** "Resume tips" is too broad. "How to tailor a one-page resume for a product engineering role without inventing metrics" is specific.
    - **Format matters.** A comparison post about markdown resume builders will get 3-5x more AI citations than a standard article on the same topic. Choose the format deliberately.
    - **Front-load the answer.** When evaluating which angle to take, prefer angles where you can state the key answer in the first 1-2 sentences. AI engines pull from the top of the page.
+   - **Require a reusable artifact.** Prefer topics that can include a
+     framework, table, checklist, markdown recipe, before/after rewrite, or
+     teardown.
    - **Avoid formula fatigue.** Do not select three topics that all become the same protocol/checklist shape. Mix essay, framework, comparison, and protocol formats deliberately.
 
    ## Auto-Selection Mode
@@ -145,7 +175,7 @@
    Build a mental inventory of:
    - Which categories are well-covered vs thin
    - Which formats have been used vs neglected
-   - **Funnel distribution** — what % of posts are TOFU vs MOFU vs BOFU? Use the target mix from GEO.md. If the blog is skewed, prioritize the underrepresented stage.
+   - **Funnel distribution** — what % of posts are TOFU vs MOFU vs BOFU? If GEO.md provides a funnel target, use it. For Tiny CV, also track the job-seeker / agent-assisted / developer mix from GEO.md and prioritize the underrepresented stage unless analytics says otherwise.
    - Which year-tagged posts need refreshes
    - Which topics have been touched lightly but deserve dedicated deep coverage
 
@@ -227,4 +257,3 @@
    In the ANGLE field, note that this was auto-selected and explain why this was the highest priority pick. Include the FORMAT recommendation.
 
    Auto-selection must NEVER duplicate an existing post's core topic. When in doubt about overlap, pick a different topic — there are always more gaps than posts.
-
