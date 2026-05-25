@@ -544,6 +544,31 @@ export function CvStudio({
     }
   };
 
+  const downloadPublishedPdf = async (link: string | null) => {
+    const absoluteUrl = resolveAbsoluteUrl(link);
+
+    if (!absoluteUrl) {
+      setNotice({ kind: "error", message: "Unable to download this PDF." });
+      return;
+    }
+
+    setNotice({ kind: "success", message: "Generating PDF..." });
+
+    try {
+      await downloadPdfFromUrl(buildResumePdfDownloadUrl(absoluteUrl));
+      setNotice({ kind: "success", message: "PDF downloaded." });
+      void recordActivationEvent("pdf_download_succeeded", {
+        resume_id: activeResumeRef.current.id,
+        surface: "studio_post_publish_modal",
+      });
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Unable to download this PDF.",
+      });
+    }
+  };
+
   const measureFit = useEffectEvent(() => {
     const page = fitMeasureBoundsRef.current;
     const content = fitMeasureContentRef.current;
@@ -1198,7 +1223,7 @@ export function CvStudio({
             });
           }}
           onCopyLink={() => copyHostedLink(publicLink)}
-          onDownloadPdf={downloadPdf}
+          onDownloadPdf={() => downloadPublishedPdf(publicLink)}
           onViewLive={() => void recordActivationEvent("view_live_clicked", {
             resume_id: activeResume.id,
             surface: "studio_post_publish_modal",

@@ -62,7 +62,7 @@ export function PostPublishSuccessModal({
   const shouldShowAccountCta = !isPending && !session;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/40 px-4 py-6 backdrop-blur-md">
+    <div className="post-publish-modal fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/40 px-4 py-6 backdrop-blur-md">
       <div className="relative w-full max-w-2xl animate-in rounded-[1.5rem] border border-black/8 bg-white p-6 shadow-[0_32px_80px_rgba(15,23,42,0.22)] sm:p-8">
         <div className="flex flex-col items-center text-center">
           <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/10">
