@@ -7,6 +7,7 @@ import postgres from "postgres";
 type SqlClient = postgres.Sql;
 
 export type ApiRateLimitAction =
+  | "analytics:event"
   | "api:claim_consume"
   | "api:mcp"
   | "api:pdf_create"
@@ -32,10 +33,11 @@ type RateLimitPolicy = {
 
 type RateLimitSubject = {
   id: string;
-  type: "ip" | "project" | "workspace";
+  type: "ip" | "project" | "session" | "workspace";
 };
 
 const DEFAULT_POLICIES: Record<ApiRateLimitAction, RateLimitPolicy> = {
+  "analytics:event": { max: 240, windowSeconds: 60 },
   "api:claim_consume": { max: 30, windowSeconds: 60 },
   "api:mcp": { max: 120, windowSeconds: 60 },
   "api:pdf_create": { max: 10, windowSeconds: 60 },
@@ -88,6 +90,7 @@ export async function assertApiRateLimit(input: {
   action: ApiRateLimitAction;
   projectId?: string | null;
   request: NextRequest;
+  sessionId?: string | null;
   workspaceId?: string | null;
 }) {
   const policy = resolveApiRateLimitPolicy(input.action);
@@ -98,6 +101,7 @@ export async function assertApiRateLimit(input: {
 
   const subjects = buildRateLimitSubjects(input.request, {
     projectId: input.projectId,
+    sessionId: input.sessionId,
     workspaceId: input.workspaceId,
   });
 
@@ -114,6 +118,7 @@ export function buildRateLimitSubjects(
   request: NextRequest,
   input: {
     projectId?: string | null;
+    sessionId?: string | null;
     workspaceId?: string | null;
   },
 ) {
@@ -125,6 +130,10 @@ export function buildRateLimitSubjects(
 
   if (input.workspaceId) {
     subjects.push({ id: input.workspaceId, type: "workspace" });
+  }
+
+  if (input.sessionId) {
+    subjects.push({ id: input.sessionId, type: "session" });
   }
 
   const ipAddress = readRequestIp(request);

@@ -117,7 +117,7 @@ function classifySource(pathname: string) {
 
 function readSafeQueryParam(url: URL, key: string) {
   const value = url.searchParams.get(key);
-  return value && /^[\w .:@-]{1,96}$/.test(value) ? value : undefined;
+  return value && value.length <= 96 ? value : undefined;
 }
 
 function getStoredId(storage: Storage, key: string) {

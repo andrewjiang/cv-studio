@@ -69,6 +69,27 @@ const ALLOWED_METADATA_KEYS = new Set<keyof ActivationEventMetadata>([
 
 const TEMPLATE_KEYS = new Set<string>(["engineer", "designer", "founder", "sales"]);
 const MAX_METADATA_STRING_LENGTH = 96;
+const MAX_ENUM_METADATA_STRING_LENGTH = 64;
+const IDENTIFIER_METADATA_KEYS = new Set<keyof ActivationEventMetadata>([
+  "anonymous_id",
+  "session_id",
+  "workspace_id",
+]);
+const TOKEN_METADATA_KEYS = new Set<keyof ActivationEventMetadata>([
+  "error_code",
+  "mode",
+  "provider",
+  "referrer_source",
+  "result",
+  "source",
+  "surface",
+  "utm_campaign",
+  "utm_medium",
+  "utm_source",
+]);
+const EMAIL_LIKE_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
+const URL_LIKE_PATTERN = /\b(?:https?:\/\/|www\.|[a-z][a-z0-9+.-]*:\/\/)\S+/i;
+const PUBLIC_SLUG_LIKE_PATTERN = /^(?:(?:[A-Z][a-z]+){2,5}|[A-Za-z0-9]+(?:-[A-Za-z0-9]+){2,})$/;
 
 export function isActivationEventName(value: unknown): value is ActivationEventName {
   return typeof value === "string" && ACTIVATION_EVENT_NAME_SET.has(value);
@@ -114,7 +135,7 @@ export function sanitizeActivationMetadata(value: unknown): ActivationEventMetad
     }
 
     if (typeof rawValue === "string") {
-      const cleanValue = sanitizeMetadataString(rawValue);
+      const cleanValue = sanitizeMetadataString(metadataKey, rawValue);
 
       if (cleanValue) {
         sanitized[metadataKey] = cleanValue as never;
@@ -125,11 +146,53 @@ export function sanitizeActivationMetadata(value: unknown): ActivationEventMetad
   return sanitized;
 }
 
-function sanitizeMetadataString(value: string) {
-  return value
-    .trim()
-    .replace(/[^\w .:@-]/g, "_")
-    .slice(0, MAX_METADATA_STRING_LENGTH);
+function sanitizeMetadataString(key: keyof ActivationEventMetadata, value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed || containsUnsafeAnalyticsValue(trimmed)) {
+    return undefined;
+  }
+
+  if (IDENTIFIER_METADATA_KEYS.has(key)) {
+    return /^[A-Za-z0-9_-]{1,96}$/.test(trimmed) ? trimmed : undefined;
+  }
+
+  if (key === "referrer_host") {
+    const host = trimmed.toLowerCase();
+    return /^[a-z0-9.-]+(?::[0-9]{1,5})?$/.test(host) && !host.includes("..")
+      ? host.slice(0, MAX_METADATA_STRING_LENGTH)
+      : undefined;
+  }
+
+  if (TOKEN_METADATA_KEYS.has(key)) {
+    const normalized = trimmed
+      .toLowerCase()
+      .replace(/[\s.]+/g, "_")
+      .replace(/[^a-z0-9_-]/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, MAX_ENUM_METADATA_STRING_LENGTH);
+
+    return /[a-z0-9]/.test(normalized) ? normalized : undefined;
+  }
+
+  return undefined;
+}
+
+function containsUnsafeAnalyticsValue(value: string) {
+  if (
+    value.length > MAX_METADATA_STRING_LENGTH ||
+    value.includes("@") ||
+    /\s/.test(value) ||
+    EMAIL_LIKE_PATTERN.test(value) ||
+    URL_LIKE_PATTERN.test(value) ||
+    PUBLIC_SLUG_LIKE_PATTERN.test(value) ||
+    /[/?#\\]/.test(value)
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

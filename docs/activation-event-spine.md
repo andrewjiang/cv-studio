@@ -33,6 +33,8 @@ The analytics endpoint allowlists metadata keys and drops everything else before
 
 Do not send resume markdown, generated resume text, emails, contact details, public slugs, resume IDs, or full public URLs. Client source context is categorized instead of sending the current page URL, so public resume slugs are not included in event parameters. GA4 page views also use sanitized route categories such as `/studio/[resumeId]` and `/[public_resume_slug]` instead of raw paths, query strings, or page titles.
 
+String metadata is sanitized by key before client GA4 dispatch and server-side storage. Email-like values, URL-like values, public-slug-like values, path fragments, and long free-text values are dropped. The public `/api/analytics/events` write path is rate limited by IP plus available workspace and session identifiers.
+
 ## Basic funnel
 
 Review the first-use funnel in order:

@@ -33,14 +33,34 @@ describe("activation events", () => {
     expect(sanitizeActivationMetadata({
       claimed_count: 2.4,
       is_published: true,
-      mode: "create/free account!",
+      mode: "create-free_account!",
       template_key: "unsupported",
       used_dedicated_pdf_view: false,
     })).toEqual({
       claimed_count: 2,
       is_published: true,
-      mode: "create_free account_",
+      mode: "create-free_account",
       used_dedicated_pdf_view: false,
     });
+  });
+
+  it("drops unsafe string metadata values before analytics dispatch", () => {
+    expect(sanitizeActivationMetadata({
+      referrer_host: "jobs.example.com",
+      source: "studio",
+      utm_campaign: "SteadyBlueHeron",
+      utm_medium: "https://tiny.cv/private",
+      utm_source: "avery@example.com",
+      workspace_id: "workspace/secret",
+    })).toEqual({
+      referrer_host: "jobs.example.com",
+      source: "studio",
+    });
+  });
+
+  it("drops long free-text metadata", () => {
+    expect(sanitizeActivationMetadata({
+      utm_campaign: "this is a long note with resume-like context that should never be analytics metadata",
+    })).toEqual({});
   });
 });
