@@ -169,6 +169,10 @@ textarea {
     display: none !important;
   }
 
+  .post-publish-modal {
+    display: none !important;
+  }
+
   .editor-column,
   .fit-style-probes {
     display: none !important;
