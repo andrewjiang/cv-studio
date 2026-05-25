@@ -58,6 +58,25 @@ describe("activation events", () => {
     });
   });
 
+  it("preserves UUID-shaped funnel identifiers", () => {
+    expect(sanitizeActivationMetadata({
+      anonymous_id: "550e8400-e29b-41d4-a716-446655440000",
+      session_id: "8f14e45f-e2f7-4c20-9c91-2f7513b383f4",
+      workspace_id: "c9bf9e57-1685-4c89-bafb-ff5af830be8a",
+    })).toEqual({
+      anonymous_id: "550e8400-e29b-41d4-a716-446655440000",
+      session_id: "8f14e45f-e2f7-4c20-9c91-2f7513b383f4",
+      workspace_id: "c9bf9e57-1685-4c89-bafb-ff5af830be8a",
+    });
+  });
+
+  it("still drops public-slug-like token metadata", () => {
+    expect(sanitizeActivationMetadata({
+      utm_campaign: "avery-johnson-resume",
+      utm_source: "AveryJohnsonResume",
+    })).toEqual({});
+  });
+
   it("drops long free-text metadata", () => {
     expect(sanitizeActivationMetadata({
       utm_campaign: "this is a long note with resume-like context that should never be analytics metadata",

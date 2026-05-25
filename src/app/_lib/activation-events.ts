@@ -149,12 +149,16 @@ export function sanitizeActivationMetadata(value: unknown): ActivationEventMetad
 function sanitizeMetadataString(key: keyof ActivationEventMetadata, value: string) {
   const trimmed = value.trim();
 
-  if (!trimmed || containsUnsafeAnalyticsValue(trimmed)) {
+  if (!trimmed) {
     return undefined;
   }
 
   if (IDENTIFIER_METADATA_KEYS.has(key)) {
-    return /^[A-Za-z0-9_-]{1,96}$/.test(trimmed) ? trimmed : undefined;
+    return isSafeMetadataIdentifier(trimmed) ? trimmed : undefined;
+  }
+
+  if (containsUnsafeAnalyticsValue(trimmed)) {
+    return undefined;
   }
 
   if (key === "referrer_host") {
@@ -177,6 +181,21 @@ function sanitizeMetadataString(key: keyof ActivationEventMetadata, value: strin
   }
 
   return undefined;
+}
+
+function isSafeMetadataIdentifier(value: string) {
+  if (
+    value.length > MAX_METADATA_STRING_LENGTH ||
+    value.includes("@") ||
+    /\s/.test(value) ||
+    EMAIL_LIKE_PATTERN.test(value) ||
+    URL_LIKE_PATTERN.test(value) ||
+    /[/?#\\]/.test(value)
+  ) {
+    return false;
+  }
+
+  return /^[A-Za-z0-9_-]{1,96}$/.test(value);
 }
 
 function containsUnsafeAnalyticsValue(value: string) {
