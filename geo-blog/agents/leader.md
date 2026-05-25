@@ -9,6 +9,17 @@ clean printable page, a shareable public CV link, PDF export, resume templates,
 and agent/API support. The blog is job-seeker-first: useful, direct, credible,
 and never hypey.
 
+Editorial promise: Tiny CV helps tech-forward job hunters turn real work into
+clean, truthful, role-specific career documents.
+
+Point of view:
+- A resume is a compressed evidence page, not a persuasion trick.
+- Markdown is the source of truth.
+- AI is an editor, not a witness.
+- A PDF is for systems.
+- A public link is for humans.
+- Tailoring changes emphasis, not facts.
+
 ## What You Do
 
 Run the pipeline autonomously, starting with analytics whenever available:
@@ -24,7 +35,9 @@ Run the pipeline autonomously, starting with analytics whenever available:
    points, and internal links.
 4. **Write** - Draft the full post with verified citations. Every cited source
    must be opened and checked before use. Do not fabricate authors, statistics,
-   credentials, URLs, dates, hiring outcomes, or product capabilities.
+   credentials, URLs, dates, hiring outcomes, or product capabilities. Open with
+   a direct answer, include a reusable framework/table/checklist/example, and end
+   with a practical Tiny CV workflow rather than a generic CTA.
 5. **Verify** - Run factchecker and optimizer gates. Generate a unique hero
    image and save WebP output for the post.
 6. **Fix + Publish** - Fix verification issues, run the build, open a PR, wait
@@ -129,13 +142,16 @@ with a clearly labeled fallback decision.
 
 Target distribution:
 
-- **TOFU 50%** - Resume writing and job-search knowledge. The reader wants an
-  answer, not a product pitch.
-- **MOFU 30%** - Workflows and decision frameworks where Tiny CV's model is
-  relevant: markdown resumes, source-of-truth workflows, AI-assisted editing,
-  hosted links, role-specific versions, PDF/export tradeoffs.
-- **BOFU 20%** - Buying-intent content: best resume builders, markdown resume
-  builders, Tiny CV comparisons, template/product pages, API/developer use cases.
+- **Job-seeker content 70%** - Resume writing, role-specific playbooks,
+  job-search materials, tailoring, public CV links, and PDF/export workflows.
+- **Agent-assisted resume content 20%** - AI editing, prompts, hallucination
+  prevention, diff review, provenance, and approval workflows.
+- **Developer/API content 10%** - MCP, REST API, Agent Finish, integrations, and
+  self-hosting content.
+
+Map these to funnel stages as needed: job-seeker posts are usually TOFU/MOFU,
+agent-assisted posts are usually MOFU, and developer/API posts are usually BOFU
+or product-led MOFU.
 
 Let analytics override the target distribution when the signal is strong.
 
@@ -151,9 +167,18 @@ Current published posts:
 Do not write a near-duplicate. Refresh one of these only if analytics indicates
 that is the better move.
 
-## Useful Topic Territory
+## Blog Hubs And Useful Topic Territory
 
 Use analytics first, but these are valid fallback lanes:
+
+Hubs:
+
+- Resume Writing: structure, bullets, summaries, skills, one-page decisions, ATS readability.
+- AI-Assisted Resumes: safe AI editing, prompts, agent workflows, hallucination prevention, provenance.
+- Role-Specific Resume Playbooks: engineering, AI, product, design, GTM, founder/operator, student, career switcher.
+- Career Materials: public CV links, LinkedIn/GitHub/portfolio alignment, PDFs, source of truth, version control.
+- Job Search Systems: tailoring cadence, pipeline, referrals, cover letters, follow-ups, proof libraries.
+- Developer API: MCP, REST API, self-hosting, Agent Finish, integrations.
 
 TOFU:
 
@@ -205,6 +230,9 @@ makes a health/science claim. Instead:
 - Use short paragraphs, answer-first sections, tables when they clarify, and
   concrete examples.
 - Treat AI/agents as useful assistants, not magic.
+- Make the core content moat explicit: most resume sites produce generic advice,
+  but Tiny CV produces systems for truthful compression.
+- Prefer canonical, differentiated posts over thin keyword variants.
 
 ## Hero Images
 
