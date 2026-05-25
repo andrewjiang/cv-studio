@@ -10,8 +10,21 @@ import { TEMPLATE_STYLE_SHOWCASE, type TemplateStyleShowcaseItem } from "@/app/_
 import type { TemplateKey } from "@/app/_lib/hosted-resume-types";
 
 export const metadata: Metadata = {
+  alternates: {
+    canonical: "/templates",
+  },
   description: "Browse Tiny CV resume templates, formats, and style presets.",
+  openGraph: {
+    description: "Browse Tiny CV resume templates, formats, and style presets.",
+    title: "Tiny CV Templates",
+    url: "/templates",
+  },
   title: "Templates",
+  twitter: {
+    card: "summary_large_image",
+    description: "Browse Tiny CV resume templates, formats, and style presets.",
+    title: "Tiny CV Templates",
+  },
 };
 
 const TEMPLATE_FIT_SCALES: Record<TemplateKey, number> = {

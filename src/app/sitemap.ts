@@ -31,16 +31,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
-      url: absoluteUrl("/developers"),
+      url: absoluteUrl("/agents"),
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
-      url: absoluteUrl("/docs"),
+      url: absoluteUrl("/developers"),
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.5,
+      priority: 0.6,
     },
   ];
 
