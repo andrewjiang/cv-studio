@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { AppHeaderBrand, appHeaderClass } from "@/app/_components/app-header";
 import { brandPrimaryButtonClass } from "@/app/_components/button-classes";
+import { PostPublishSuccessModal } from "@/app/_components/unauthenticated-publish-modal";
 import { ResumeTemplateChooser } from "@/app/_components/resume-template-chooser";
 import {
   CheckIcon,
@@ -93,6 +94,14 @@ type FitInterventionNotice =
   | { kind: "margin"; from: number; to: number }
   | { kind: "legal"; from: ResumePageSize; to: ResumePageSize };
 
+type ActivationEvent =
+  | "first_publish_success_viewed"
+  | "share_link_copied"
+  | "pdf_download_succeeded"
+  | "account_cta_clicked"
+  | "view_live_clicked"
+  | "continue_editing_clicked";
+
 const AUTO_FIT_PREFS_STORAGE_KEY = "tinycv:auto-fit-preferences";
 const AUTO_MARGIN_THRESHOLD = 0.84;
 const AUTO_LEGAL_THRESHOLD = 0.72;
@@ -127,6 +136,7 @@ export function CvStudio({
   const [autoFitPreferencesReady, setAutoFitPreferencesReady] = useState(false);
   const [remoteSyncState, setRemoteSyncState] = useState<RemoteSyncState>({ kind: "idle" });
   const [notice, setNotice] = useState<StudioNotice>({ kind: "idle" });
+  const [showPostPublishSuccess, setShowPostPublishSuccess] = useState(false);
   const [workspaceState, setWorkspaceState] = useState(workspace);
   const [activeResume, setActiveResume] = useState(initialResume);
   const [publicLink, setPublicLink] = useState(initialPublicPath);
@@ -255,6 +265,7 @@ export function CvStudio({
     setIsRenamingDraft(false);
     setFitInterventionNotice(null);
     setNotice({ kind: "idle" });
+    setShowPostPublishSuccess(false);
     setRemoteSyncState({ kind: "idle" });
     lastAutoMarginAdjustmentRef.current = null;
     lastAutoPageSizeAdjustmentRef.current = null;
@@ -382,6 +393,7 @@ export function CvStudio({
     const requestMarkdown = markdownRef.current;
     const requestResume = activeResumeRef.current;
     const requestFitScale = fitState.scale;
+    const isFirstPublish = publish && !requestResume.isPublished;
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
 
@@ -420,6 +432,15 @@ export function CvStudio({
         requestMarkdown,
         successMessage,
       );
+
+      if (isFirstPublish && payload.resume.isPublished && payload.publicUrl) {
+        setShowPostPublishSuccess(true);
+        void recordActivationEvent("first_publish_success_viewed", {
+          resume_id: payload.resume.id,
+          surface: "studio_post_publish_modal",
+        });
+      }
+
       return payload;
     } catch (error) {
       const message =
@@ -486,11 +507,19 @@ export function CvStudio({
 
     await navigator.clipboard.writeText(absoluteUrl);
     setNotice({ kind: "success", message: `Copied ${absoluteUrl}` });
+    void recordActivationEvent("share_link_copied", {
+      resume_id: activeResumeRef.current.id,
+      surface: "studio",
+    });
   };
 
   const downloadPdf = async () => {
     if (!shouldUseDedicatedPrintView()) {
       window.print();
+      void recordActivationEvent("pdf_download_succeeded", {
+        resume_id: activeResumeRef.current.id,
+        surface: "studio_print_dialog",
+      });
       return;
     }
 
@@ -503,6 +532,10 @@ export function CvStudio({
     try {
       await downloadPdfFromUrl(buildResumePdfDownloadUrl(window.location.href));
       setNotice({ kind: "success", message: "PDF downloaded." });
+      void recordActivationEvent("pdf_download_succeeded", {
+        resume_id: activeResumeRef.current.id,
+        surface: "studio",
+      });
     } catch (error) {
       setNotice({
         kind: "error",
@@ -1122,6 +1155,10 @@ export function CvStudio({
               <a
                 className={headerSecondaryActionButtonClass}
                 href={publicLink}
+                onClick={() => void recordActivationEvent("view_live_clicked", {
+                  resume_id: activeResume.id,
+                  surface: "studio_header",
+                })}
                 rel="noreferrer"
                 target="_blank"
               >
@@ -1144,6 +1181,31 @@ export function CvStudio({
           </div>
         </div>
       </header>
+
+      {showPostPublishSuccess && publicLink ? (
+        <PostPublishSuccessModal
+          document={resumeDocument}
+          fitScale={fitState.scale}
+          onAccountCtaClick={() => void recordActivationEvent("account_cta_clicked", {
+            resume_id: activeResume.id,
+            surface: "studio_post_publish_modal",
+          })}
+          onClose={() => {
+            setShowPostPublishSuccess(false);
+            void recordActivationEvent("continue_editing_clicked", {
+              resume_id: activeResume.id,
+              surface: "studio_post_publish_modal",
+            });
+          }}
+          onCopyLink={() => copyHostedLink(publicLink)}
+          onDownloadPdf={downloadPdf}
+          onViewLive={() => void recordActivationEvent("view_live_clicked", {
+            resume_id: activeResume.id,
+            surface: "studio_post_publish_modal",
+          })}
+          publicUrl={publicLink}
+        />
+      ) : null}
 
       {notice.kind !== "idle" ? (
         <div className="pointer-events-none fixed inset-x-4 bottom-4 z-40 flex justify-center lg:inset-x-auto lg:right-6 lg:bottom-6">
@@ -1999,6 +2061,22 @@ function resolveAbsoluteUrl(link: string | null) {
   } catch {
     return null;
   }
+}
+
+async function recordActivationEvent(
+  action: ActivationEvent,
+  metadata: Record<string, unknown> = {},
+) {
+  await fetch("/api/analytics/events", {
+    body: JSON.stringify({
+      action,
+      metadata,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  }).catch(() => null);
 }
 
 function shouldUseDedicatedPrintView() {
