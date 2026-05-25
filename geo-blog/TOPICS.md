@@ -2,27 +2,49 @@
 
 ## Editorial Thesis
 
-Tiny CV helps job seekers put their best self forward with clear one-page resumes, role-specific versions, public CV links, and careful agent-assisted workflows that do not invent facts.
+Tiny CV helps job seekers use AI agents, ChatGPT, and Claude Code to write, review, tailor, and publish resumes without inventing facts or losing control of the source document.
 
 The blog should feel useful before it feels strategic. Prefer practical posts someone can apply during an active job search, but every post still needs a point of view that sounds like Tiny CV.
 
 ## Signature Tiny CV Frames
 
-- **A one-page resume is a forcing function, not a rule.**
-- **Your resume needs a source of truth.**
-- **Public links are for humans; PDFs are for systems.**
-- **Facts before phrasing.**
 - **Agents can edit the resume, but the human owns the truth.**
+- **Facts before phrasing.**
+- **Your resume needs a source of truth.**
+- **A one-page resume is the target, not a prison.**
+- **Public links are for humans; PDFs are for systems.**
 - **A resume is a selected case, not a complete archive.**
+- **AI should help you choose and prove, not inflate.**
 
 ## Audience Priority
 
-1. Job seekers updating or tailoring a resume.
-2. Candidates who want a clean public CV link or PDF.
-3. People using agents to draft, review, or publish career materials.
+1. Job seekers using AI agents, ChatGPT, or Claude Code to draft, review, tailor, or publish resume and job-search materials.
+2. Job seekers updating, cutting, or tailoring a resume manually.
+3. Candidates who want a clean public CV link, PDF, or name.tiny.cv-style personal identity.
 4. Developers integrating Tiny CV only when the topic has clear pull.
 
+## Product Positioning Notes
+
+- Lead with agent-safe job-seeker workflows, not generic resume-builder breadth.
+- One clean printable page is generally the target, but the blog should frame it as a useful editing constraint rather than a hard rule for every career.
+- Open source can support trust for technical readers, but it should not dominate consumer-facing copy.
+- Paid identity should be framed as supporting the project and claiming a cleaner personal Tiny CV URL.
+- Do not force a single competitor contrast until analytics or search intent points to one.
+
 ## Topic Backlog
+
+### AI-Assisted Job Search
+
+- How to use ChatGPT to improve your resume without inventing facts
+- How to use Claude Code as a resume editing agent
+- The prompts an AI agent should ask before rewriting your resume
+- How to audit an AI-edited resume before you send it
+- How to tailor a resume with AI while keeping your evidence honest
+- How to keep a source-of-truth resume when AI helps with every version
+- How to use AI to turn rough work notes into resume bullets
+- What to paste into ChatGPT before asking it to edit your resume
+- How to use an AI agent to prepare for a warm intro
+- How to create role-specific resume versions with an agent
 
 ### Resume Writing
 
@@ -81,6 +103,7 @@ The blog should feel useful before it feels strategic. Prefer practical posts so
 - Fear-based ATS sludge.
 - Unsupported recruiter-stat claims.
 - Repeated protocol/checklist posts with the same section cadence.
+- Generic AI-resume posts that imply the model knows the candidate's achievements better than the candidate does.
 - Overly developer-first API content unless intentionally requested.
 
 ## Open Questions
