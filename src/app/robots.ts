@@ -10,7 +10,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: [
         "/api/",
-        "/internal/",
       ],
     },
     sitemap: new URL("/sitemap.xml", appUrl).toString(),
