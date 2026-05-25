@@ -60,6 +60,7 @@ export const RESERVED_TINYCV_SUBDOMAINS = new Set([
   "app",
   "assets",
   "billing",
+  "developers",
   "documentation",
   "docs",
   "email",

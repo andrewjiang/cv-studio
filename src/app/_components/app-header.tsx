@@ -51,7 +51,7 @@ export function AppHeader({
             <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/blog">
               Blog
             </Link>
-            <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/documentation">
+            <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/developers">
               API
             </Link>
           </nav>

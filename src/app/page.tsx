@@ -9,6 +9,7 @@ import { TinyCvLandingPage } from "@/app/_components/tinycv-landing-page";
 import { getBillingLaunchState } from "@/app/_lib/billing";
 import { getWorkspace } from "@/app/_lib/hosted-resume-store";
 import { resolveHost } from "@/app/_lib/resume-domains";
+import { TINYCV_APP_DESCRIPTION } from "@/app/_lib/site-metadata";
 import { readWorkspaceCookie } from "@/app/_lib/workspace-cookie";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,20 @@ export async function generateMetadata(): Promise<Metadata> {
     });
   }
 
-  return {};
+  return {
+    alternates: {
+      canonical: "/",
+    },
+    description: TINYCV_APP_DESCRIPTION,
+    openGraph: {
+      description: TINYCV_APP_DESCRIPTION,
+      title: "Tiny CV - The resume builder that stays on one page.",
+      url: "/",
+    },
+    title: {
+      absolute: "Tiny CV - The resume builder that stays on one page",
+    },
+  };
 }
 
 export default async function Home() {

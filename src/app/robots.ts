@@ -9,12 +9,8 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
       disallow: [
-        "/account",
-        "/account/",
         "/api/",
-        "/claim/",
         "/internal/",
-        "/studio/",
       ],
     },
     sitemap: new URL("/sitemap.xml", appUrl).toString(),

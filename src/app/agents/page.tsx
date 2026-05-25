@@ -198,7 +198,7 @@ export default function AgentsPage() {
             Tiny CV
           </Link>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-slate-600">
-            <Link className="transition hover:text-slate-950" href="/documentation">
+            <Link className="transition hover:text-slate-950" href="/developers">
               Developer docs
             </Link>
             <Link className="transition hover:text-slate-950" href="/openapi.json">
@@ -231,7 +231,7 @@ export default function AgentsPage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 className={`${brandPrimaryButtonClass} px-6 py-3 text-sm shadow-sm`}
-                href="/documentation#paid-agent-finish"
+                href="/developers#paid-agent-finish"
               >
                 Agent Finish endpoint
                 <ArrowRightIcon className="ml-1.5 h-3.5 w-3.5" />
@@ -452,7 +452,7 @@ export default function AgentsPage() {
           />
           <ActionLink
             body="No-account paid path for a hosted resume, claim link, queued PDF job, and receipt."
-            href="/documentation#paid-agent-finish"
+            href="/developers#paid-agent-finish"
             title="Agent Finish"
           />
           <ActionLink
