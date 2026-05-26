@@ -111,7 +111,7 @@ Callback URLs:
 
 Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` to the GA4 web stream measurement ID for the production site. Leave it unset in local development unless you intentionally want local page views in GA4.
 
-Tiny CV sends app-controlled GA4 page views on the initial load and on Next.js route changes. Do not add a second auto page-view trigger in GTM for the same measurement ID. For DebugView checks, set `NEXT_PUBLIC_GA_DEBUG_MODE=1` only in the debug environment; keep it unset or `0` in production.
+Tiny CV sends app-controlled GA4 page views on the initial load and on Next.js route changes. Do not add a second auto page-view trigger in GTM for the same measurement ID. In the GA4 web stream, keep Enhanced measurement page-view browser-history events disabled while Tiny CV sends manual route-change page views; otherwise GA4 can count duplicate route-change page views and inflate engaged sessions. For DebugView checks, set `NEXT_PUBLIC_GA_DEBUG_MODE=1` only in the debug environment; keep it unset or `0` in production.
 
 Engaged-session timing should use GA4's default engaged-session definition: the session becomes engaged after more than 10 seconds, at least two page/screen views, or a key event. Save and publish actions are not GA4 key events by default, so they should not independently mark a session as engaged unless the GA4 property is changed.
 

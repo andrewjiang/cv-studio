@@ -135,9 +135,12 @@ export default function RootLayout({
                   function gtag(){dataLayer.push(arguments);}
                   window.gtag = gtag;
                   gtag('js', new Date());
+                  gtag('set', { send_page_view: false });
+                  gtag('config', ${JSON.stringify(gaMeasurementId)}, { send_page_view: false });
 
                   (function trackTinyCvPageViews() {
                     var previousPath = null;
+                    var pollIntervalMs = 250;
 
                     function currentPath() {
                       return window.location.pathname + window.location.search;
@@ -150,38 +153,18 @@ export default function RootLayout({
                         return;
                       }
 
-                      var eventParams = {
+                      gtag('event', 'page_view', {
+                        send_to: ${JSON.stringify(gaMeasurementId)},
                         page_location: window.location.href,
                         page_path: pagePath,
                         page_title: document.title,
                         ${gaDebugMode ? "debug_mode: true," : ""}
-                      };
-
-                      gtag('config', ${JSON.stringify(gaMeasurementId)}, eventParams);
+                      });
                       previousPath = pagePath;
                     }
 
-                    function schedulePageView() {
-                      window.setTimeout(sendPageView, 50);
-                    }
-
-                    var pushState = window.history.pushState;
-                    var replaceState = window.history.replaceState;
-
-                    window.history.pushState = function tinyCvPushState() {
-                      var result = pushState.apply(this, arguments);
-                      schedulePageView();
-                      return result;
-                    };
-
-                    window.history.replaceState = function tinyCvReplaceState() {
-                      var result = replaceState.apply(this, arguments);
-                      schedulePageView();
-                      return result;
-                    };
-
-                    window.addEventListener('popstate', schedulePageView);
-                    sendPageView();
+                    window.setTimeout(sendPageView, 50);
+                    window.setInterval(sendPageView, pollIntervalMs);
                   })();
                 `,
               }}
