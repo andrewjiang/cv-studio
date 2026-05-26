@@ -6,6 +6,10 @@
     {
       "path": "/api/v1/jobs/process",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/admin/analytics/refresh",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

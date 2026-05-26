@@ -111,6 +111,31 @@ Callback URLs:
 
 Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` to the GA4 web stream measurement ID for the production site. Leave it unset in local development unless you intentionally want local page views in GA4.
 
+The admin traffic dashboard reads cached GA4 snapshots from Postgres. Vercel Cron refreshes those snapshots through `/api/admin/analytics/refresh` every 6 hours.
+
+Set:
+
+- `TINYCV_GA4_PROPERTY_ID`
+- `TINYCV_GA4_SERVICE_ACCOUNT_JSON_BASE64`
+- `TINYCV_ANALYTICS_REFRESH_HOURS=6`
+
+Grant the Google service account Viewer access to the GA4 property, then store its JSON key as base64:
+
+```bash
+base64 -i service-account.json | tr -d '\n'
+```
+
+The cron route is protected by `CRON_SECRET` / `TINYCV_WORKER_SECRET`. Vercel automatically sends `Authorization: Bearer $CRON_SECRET` to configured cron routes when `CRON_SECRET` is set.
+
+Manual refresh:
+
+```bash
+curl -X POST https://your-domain.com/api/admin/analytics/refresh \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"force":true}'
+```
+
 ### Billing
 
 Stripe is optional and only required for premium plan flows.
