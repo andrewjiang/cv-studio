@@ -1,14 +1,40 @@
 import { describe, expect, it } from "vitest";
 import {
+  getActivationEventNamesToDispatch,
   isActivationEventName,
   sanitizeActivationMetadata,
 } from "@/app/_lib/activation-events";
 
 describe("activation events", () => {
   it("recognizes the activation funnel event names", () => {
+    expect(isActivationEventName("cta_click")).toBe(true);
+    expect(isActivationEventName("template_select")).toBe(true);
+    expect(isActivationEventName("cv_create_start")).toBe(true);
+    expect(isActivationEventName("cv_save")).toBe(true);
+    expect(isActivationEventName("cv_publish")).toBe(true);
     expect(isActivationEventName("template_selected")).toBe(true);
     expect(isActivationEventName("resume_published")).toBe(true);
     expect(isActivationEventName("account.sign_in")).toBe(false);
+  });
+
+  it("dispatches launch-critical aliases for the existing event spine", () => {
+    expect(getActivationEventNamesToDispatch("template_selected")).toEqual([
+      "template_selected",
+      "template_select",
+    ]);
+    expect(getActivationEventNamesToDispatch("workspace_bootstrap_created")).toEqual([
+      "workspace_bootstrap_created",
+      "cv_create_start",
+    ]);
+    expect(getActivationEventNamesToDispatch("autosave_succeeded")).toEqual([
+      "autosave_succeeded",
+      "cv_save",
+    ]);
+    expect(getActivationEventNamesToDispatch("resume_published")).toEqual([
+      "resume_published",
+      "cv_publish",
+    ]);
+    expect(getActivationEventNamesToDispatch("cta_click")).toEqual(["cta_click"]);
   });
 
   it("keeps only privacy-safe activation metadata keys", () => {

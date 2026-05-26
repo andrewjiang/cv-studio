@@ -4,6 +4,11 @@ Tiny CV records the product activation funnel with privacy-safe metadata only. C
 
 ## Events
 
+- `cta_click`
+- `template_select`
+- `cv_create_start`
+- `cv_save`
+- `cv_publish`
 - `template_viewed`
 - `template_selected`
 - `workspace_bootstrap_created`
@@ -22,6 +27,18 @@ Tiny CV records the product activation funnel with privacy-safe metadata only. C
 - `workspace_claimed`
 - `returning_resume_opened`
 
+## Launch funnel events
+
+The launch-critical GA4 funnel uses these exact event names. Tiny CV keeps the broader activation spine events and dispatches the launch names alongside them where the same user action already exists.
+
+| Event | Trigger | Expected parameters |
+| --- | --- | --- |
+| `cta_click` | Homepage hero primary CTA click. | `surface=landing_hero`, `mode=start_writing` or `mode=continue_editing`, plus anonymous/session/source/referrer context. |
+| `template_select` | User selects a resume template from the homepage examples, templates page, template example page, or `/new` chooser. | `surface`, `template_key`, plus anonymous/session/source/referrer context. |
+| `cv_create_start` | A new workspace resume is successfully bootstrapped from a template. | `surface=new_resume`, `template_key`, `workspace_id`, plus anonymous/session/source/referrer context in GA4. |
+| `cv_save` | A studio autosave succeeds. | `surface=studio`, `template_key`, `workspace_id`, plus anonymous/session/source/referrer context. |
+| `cv_publish` | A studio publish request succeeds. | `surface=studio`, `template_key`, `workspace_id`, plus anonymous/session/source/referrer context in GA4. |
+
 ## Allowed metadata
 
 The analytics endpoint allowlists metadata keys and drops everything else before writing `usage_events`.
@@ -39,15 +56,16 @@ String metadata is sanitized by key before client GA4 dispatch and server-side s
 
 Review the first-use funnel in order:
 
-1. `template_viewed`
-2. `template_selected`
-3. `workspace_bootstrap_created`
-4. `returning_resume_opened`
-5. `first_edit`
-6. `autosave_succeeded` or `autosave_failed`
-7. `publish_clicked`
-8. `resume_published` or `publish_failed`
-9. `share_link_copied`, `pdf_download_succeeded`, or `account_cta_clicked`
-10. `workspace_claimed`
+1. `cta_click`
+2. `template_viewed`
+3. `template_selected` and `template_select`
+4. `workspace_bootstrap_created` and `cv_create_start`
+5. `returning_resume_opened`
+6. `first_edit`
+7. `autosave_succeeded` and `cv_save`, or `autosave_failed`
+8. `publish_clicked`
+9. `resume_published` and `cv_publish`, or `publish_failed`
+10. `share_link_copied`, `pdf_download_succeeded`, or `account_cta_clicked`
+11. `workspace_claimed`
 
 For reporting quality, compare client-side GA4 counts with server-side `usage_events` counts for the same event names, then inspect duplicate rate by `anonymous_id`, `session_id`, `workspace_id`, `template_key`, and `surface`.

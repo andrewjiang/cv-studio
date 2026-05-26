@@ -34,13 +34,19 @@ export async function POST(request: NextRequest) {
       workspaceId,
     });
 
+    const metadata = {
+      surface: "new_resume",
+      template_key: body.templateKey,
+      workspace_id: payload.workspace.workspaceId,
+    };
+
     await recordUsageEvent({
       action: "workspace_bootstrap_created",
-      metadata: {
-        surface: "new_resume",
-        template_key: body.templateKey,
-        workspace_id: payload.workspace.workspaceId,
-      },
+      metadata,
+    });
+    await recordUsageEvent({
+      action: "cv_create_start",
+      metadata,
     });
 
     const response = NextResponse.json(buildResumeResponse(request, payload), { status: 201 });

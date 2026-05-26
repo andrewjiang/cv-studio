@@ -85,7 +85,11 @@ export function TinyCvLandingPage({
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
-              <LandingPrimaryLink className="w-full px-9 py-4 text-[1rem] sm:w-auto" href={primaryHref}>
+              <LandingPrimaryLink
+                className="w-full px-9 py-4 text-[1rem] sm:w-auto"
+                href={primaryHref}
+                launchCtaSurface="landing_hero"
+              >
                 {primaryLabel}
               </LandingPrimaryLink>
               <Link
@@ -596,10 +600,12 @@ function LandingPrimaryLink({
   children,
   className,
   href,
+  launchCtaSurface,
 }: {
   children: string;
   className?: string;
   href: string;
+  launchCtaSurface?: "landing_hero";
 }) {
   return (
     <Link
@@ -610,6 +616,13 @@ function LandingPrimaryLink({
       )}
       href={href}
       onClick={() => {
+        if (launchCtaSurface) {
+          trackActivationEvent("cta_click", {
+            mode: href.startsWith("/studio/") ? "continue_editing" : "start_writing",
+            surface: launchCtaSurface,
+          });
+        }
+
         if (href.startsWith("/account")) {
           trackActivationEvent("account_cta_clicked", {
             mode: "landing_primary",

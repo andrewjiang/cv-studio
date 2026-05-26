@@ -3,6 +3,7 @@
 import {
   type ActivationEventMetadata,
   type ActivationEventName,
+  getActivationEventNamesToDispatch,
   sanitizeActivationMetadata,
 } from "@/app/_lib/activation-events";
 
@@ -41,22 +42,26 @@ export function trackActivationEvent(
     session_id: getStoredId(window.sessionStorage, SESSION_ID_STORAGE_KEY),
   });
 
-  if (typeof window.gtag === "function") {
-    window.gtag("event", eventName, eventMetadata);
-  }
+  const eventNames = getActivationEventNamesToDispatch(eventName);
 
-  if (options.sendToServer !== false) {
-    void fetch("/api/analytics/events", {
-      body: JSON.stringify({
-        eventName,
-        metadata: eventMetadata,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      keepalive: true,
-      method: "POST",
-    }).catch(() => null);
+  for (const name of eventNames) {
+    if (typeof window.gtag === "function") {
+      window.gtag("event", name, eventMetadata);
+    }
+
+    if (options.sendToServer !== false) {
+      void fetch("/api/analytics/events", {
+        body: JSON.stringify({
+          eventName: name,
+          metadata: eventMetadata,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        keepalive: true,
+        method: "POST",
+      }).catch(() => null);
+    }
   }
 
   if (options.onceKey) {

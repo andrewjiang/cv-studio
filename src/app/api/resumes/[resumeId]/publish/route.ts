@@ -50,13 +50,19 @@ export async function POST(
       return NextResponse.json({ error: "CV not found." }, { status: 404 });
     }
 
+    const metadata = {
+      surface: "studio",
+      template_key: payload.resume.templateKey,
+      workspace_id: workspaceId,
+    };
+
     await recordUsageEvent({
       action: "resume_published",
-      metadata: {
-        surface: "studio",
-        template_key: payload.resume.templateKey,
-        workspace_id: workspaceId,
-      },
+      metadata,
+    });
+    await recordUsageEvent({
+      action: "cv_publish",
+      metadata,
     });
 
     return NextResponse.json(buildResumeResponse(request, payload));

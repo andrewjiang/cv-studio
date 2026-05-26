@@ -1,6 +1,11 @@
 import type { TemplateKey } from "@/app/_lib/hosted-resume-types";
 
 export const ACTIVATION_EVENT_NAMES = [
+  "cta_click",
+  "template_select",
+  "cv_create_start",
+  "cv_save",
+  "cv_publish",
   "template_viewed",
   "template_selected",
   "workspace_bootstrap_created",
@@ -21,6 +26,13 @@ export const ACTIVATION_EVENT_NAMES = [
 ] as const;
 
 export type ActivationEventName = typeof ACTIVATION_EVENT_NAMES[number];
+
+const LAUNCH_EVENT_ALIASES: Partial<Record<ActivationEventName, ActivationEventName[]>> = {
+  autosave_succeeded: ["cv_save"],
+  resume_published: ["cv_publish"],
+  template_selected: ["template_select"],
+  workspace_bootstrap_created: ["cv_create_start"],
+};
 
 export type ActivationEventMetadata = {
   anonymous_id?: string;
@@ -93,6 +105,10 @@ const PUBLIC_SLUG_LIKE_PATTERN = /^(?:(?:[A-Z][a-z]+){2,5}|[A-Za-z0-9]+(?:-[A-Za
 
 export function isActivationEventName(value: unknown): value is ActivationEventName {
   return typeof value === "string" && ACTIVATION_EVENT_NAME_SET.has(value);
+}
+
+export function getActivationEventNamesToDispatch(eventName: ActivationEventName) {
+  return [eventName, ...(LAUNCH_EVENT_ALIASES[eventName] ?? [])];
 }
 
 export function sanitizeActivationMetadata(value: unknown): ActivationEventMetadata {
