@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ResumeTemplateChooser } from "@/app/_components/resume-template-chooser";
+import { trackActivationEvent } from "@/app/_lib/activation-analytics-client";
 import {
   DRAFTS_STORAGE_KEY,
   LEGACY_MARKDOWN_STORAGE_KEY,
@@ -40,6 +41,13 @@ export function WorkspaceBootstrap({
         throw new Error(payload.error ?? "Unable to create a new resume.");
       }
 
+      trackActivationEvent("workspace_bootstrap_created", {
+        surface: "new_resume",
+        template_key: templateKey,
+        workspace_id: payload.workspace.workspaceId,
+      }, {
+        sendToServer: false,
+      });
       window.location.replace(`/studio/${payload.resume.id}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to create a new resume.");
@@ -109,6 +117,11 @@ export function WorkspaceBootstrap({
     }
 
     attemptedInitialTemplateRef.current = true;
+    trackActivationEvent("template_selected", {
+      is_initial_template: true,
+      surface: "new_resume",
+      template_key: initialTemplateKey,
+    });
     void createFromTemplate(initialTemplateKey);
   }, [createFromTemplate, initialTemplateKey]);
 
@@ -123,6 +136,7 @@ export function WorkspaceBootstrap({
           </div>
 
           <ResumeTemplateChooser
+            analyticsSurface="new_resume"
             busyTemplateKey={busyTemplateKey}
             eyebrow={null}
             onSelect={createFromTemplate}

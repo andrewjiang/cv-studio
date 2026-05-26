@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ActivationEventOnMount,
+  ActivationLink,
+} from "@/app/_components/activation-analytics";
 import { AppHeader } from "@/app/_components/app-header";
 import { brandPrimaryButtonClass, brandSecondaryButtonClass } from "@/app/_components/button-classes";
 import { ResumeDesktopSheet, ResumeMobileSheet } from "@/app/_components/resume-live-document";
@@ -66,6 +70,14 @@ export default async function ExamplePage({ params }: ExamplePageProps) {
 
   return (
     <>
+      <ActivationEventOnMount
+        eventName="template_viewed"
+        metadata={{
+          surface: "template_example",
+          template_key: templateKey as TemplateKey,
+        }}
+        onceKey={`template_example:${templateKey}`}
+      />
       <AppHeader />
       <main className="min-h-screen bg-[linear-gradient(180deg,#faf7f1_0%,#f4efe8_100%)] text-slate-900">
         <section className="mx-auto flex w-full max-w-[112rem] flex-col px-4 py-7 sm:px-6 lg:px-8 lg:py-10">
@@ -86,12 +98,17 @@ export default async function ExamplePage({ params }: ExamplePageProps) {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Link
+              <ActivationLink
                 className={`${brandPrimaryButtonClass} min-h-12 px-5 text-[0.98rem]`}
+                eventName="template_selected"
+                eventMetadata={{
+                  surface: "template_example",
+                  template_key: templateKey as TemplateKey,
+                }}
                 href={`/new?template=${templateKey}`}
               >
                 Use this template
-              </Link>
+              </ActivationLink>
               <Link
                 className={`${brandSecondaryButtonClass} min-h-12 px-5 text-[0.98rem]`}
                 href="/templates"

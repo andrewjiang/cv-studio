@@ -1,21 +1,40 @@
 "use client";
 
+import { useEffect } from "react";
+import type { ActivationEventMetadata } from "@/app/_lib/activation-events";
+import { trackActivationEvent } from "@/app/_lib/activation-analytics-client";
 import { RESUME_TEMPLATES } from "@/app/_lib/resume-templates";
 import type { TemplateKey } from "@/app/_lib/hosted-resume-types";
 
 export function ResumeTemplateChooser({
+  analyticsMetadata,
+  analyticsSurface = "template_chooser",
   busyTemplateKey,
   eyebrow,
   onSelect,
   subtitle,
   title,
 }: {
+  analyticsMetadata?: ActivationEventMetadata;
+  analyticsSurface?: string;
   busyTemplateKey?: TemplateKey | null;
   eyebrow?: string | null;
   onSelect: (templateKey: TemplateKey) => void;
   subtitle: string;
   title: string;
 }) {
+  useEffect(() => {
+    for (const template of RESUME_TEMPLATES) {
+      trackActivationEvent("template_viewed", {
+        ...analyticsMetadata,
+        surface: analyticsSurface,
+        template_key: template.key,
+      }, {
+        onceKey: `template_viewed:${analyticsSurface}:${template.key}`,
+      });
+    }
+  }, [analyticsMetadata, analyticsSurface]);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="space-y-2">
@@ -41,7 +60,14 @@ export function ResumeTemplateChooser({
               key={template.key}
               className="group cursor-pointer rounded-[1.35rem] border border-black/8 bg-white/90 p-5 text-left shadow-[0_14px_34px_rgba(15,23,42,0.06)] transition hover:-translate-y-[1px] hover:border-black/12 hover:bg-white"
               disabled={Boolean(busyTemplateKey)}
-              onClick={() => onSelect(template.key)}
+              onClick={() => {
+                trackActivationEvent("template_selected", {
+                  ...analyticsMetadata,
+                  surface: analyticsSurface,
+                  template_key: template.key,
+                });
+                onSelect(template.key);
+              }}
               type="button"
             >
               <div className="flex items-start justify-between gap-4">

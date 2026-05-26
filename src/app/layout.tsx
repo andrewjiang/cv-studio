@@ -136,7 +136,7 @@ export default function RootLayout({
                   window.dataLayer = window.dataLayer || [];
                   function gtag(){dataLayer.push(arguments);}
                   gtag('js', new Date());
-                  gtag('config', ${JSON.stringify(gaMeasurementId)});
+                  gtag('config', ${JSON.stringify(gaMeasurementId)}, { send_page_view: false });
                 `,
               }}
             />

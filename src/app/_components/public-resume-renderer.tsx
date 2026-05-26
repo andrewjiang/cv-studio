@@ -35,7 +35,11 @@ export async function PublicResumeRenderer({
           <ResumeDesktopSheet document={document} fitScale={resume.fitScale} />
         </div>
 
-        <PublicResumeFooterActions pageWidth={pageMetrics.pageWidth} showBranding={!hideBranding} />
+        <PublicResumeFooterActions
+          pageWidth={pageMetrics.pageWidth}
+          showBranding={!hideBranding}
+          templateKey={resume.templateKey}
+        />
       </div>
 
       <style media="print">{`@page { size: ${document.style.pageSize}; margin: 0; }`}</style>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ResumePreview } from "./resume-content";
+import { trackActivationEvent } from "@/app/_lib/activation-analytics-client";
 import { 
   CheckIcon, 
   CopyIcon, 
@@ -33,6 +34,9 @@ export function UnauthenticatedPublishModal({
     try {
       const absoluteUrl = new URL(publicUrl, window.location.origin).toString();
       await navigator.clipboard.writeText(absoluteUrl);
+      trackActivationEvent("share_link_copied", {
+        surface: "publish_modal",
+      });
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -115,6 +119,10 @@ export function UnauthenticatedPublishModal({
               <Link
                 href="/account"
                 className={`${brandPrimaryButtonClass} flex-1 !py-3 !text-[0.94rem]`}
+                onClick={() => trackActivationEvent("account_cta_clicked", {
+                  mode: "create_free_account",
+                  surface: "publish_modal",
+                })}
               >
                 Create free account
               </Link>

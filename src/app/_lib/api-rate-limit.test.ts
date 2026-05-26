@@ -1,5 +1,7 @@
+import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  buildRateLimitSubjects,
   getRateLimitRetryAfterSeconds,
   resolveApiRateLimitPolicy,
 } from "@/app/_lib/api-rate-limit";
@@ -14,6 +16,13 @@ describe("api-rate-limit", () => {
   it("resolves default limits for a mutating API action", () => {
     expect(resolveApiRateLimitPolicy("api:resume_create")).toEqual({
       max: 30,
+      windowSeconds: 60,
+    });
+  });
+
+  it("resolves the analytics event write limit", () => {
+    expect(resolveApiRateLimitPolicy("analytics:event")).toEqual({
+      max: 240,
       windowSeconds: 60,
     });
   });
@@ -39,5 +48,22 @@ describe("api-rate-limit", () => {
 
     expect(getRateLimitRetryAfterSeconds(oldest, 60)).toBeLessThanOrEqual(46);
     expect(getRateLimitRetryAfterSeconds(oldest, 60)).toBeGreaterThanOrEqual(44);
+  });
+
+  it("builds analytics rate-limit subjects from workspace, session, and IP", () => {
+    const request = new NextRequest("https://tiny.cv/api/analytics/events", {
+      headers: {
+        "x-forwarded-for": "203.0.113.42, 198.51.100.5",
+      },
+    });
+
+    expect(buildRateLimitSubjects(request, {
+      sessionId: "session-123",
+      workspaceId: "workspace-123",
+    })).toEqual([
+      { id: "workspace-123", type: "workspace" },
+      { id: "session-123", type: "session" },
+      { id: "203.0.113.42", type: "ip" },
+    ]);
   });
 });

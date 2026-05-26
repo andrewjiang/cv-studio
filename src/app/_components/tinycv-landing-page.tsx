@@ -11,6 +11,7 @@ import { ResumeDocumentContent, fontFamilyForChoice } from "@/app/_components/re
 import { AppHeader } from "./app-header";
 import { SiteFooter } from "./site-footer";
 import { ArrowRightIcon, CheckIcon, GitHubIcon, LayoutIcon, FileTextIcon, GlobeIcon, CodeIcon } from "./icons";
+import { trackActivationEvent } from "@/app/_lib/activation-analytics-client";
 import { parseCvMarkdown, resolveMobileResumeTypography } from "@/app/_lib/cv-markdown";
 import {
   LANDING_EXAMPLES,
@@ -84,7 +85,11 @@ export function TinyCvLandingPage({
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
-              <LandingPrimaryLink className="w-full px-9 py-4 text-[1rem] sm:w-auto" href={primaryHref}>
+              <LandingPrimaryLink
+                className="w-full px-9 py-4 text-[1rem] sm:w-auto"
+                href={primaryHref}
+                launchCtaSurface="landing_hero"
+              >
                 {primaryLabel}
               </LandingPrimaryLink>
               <Link
@@ -462,6 +467,10 @@ function ExampleCard({
           LANDING_EXAMPLE_ROTATIONS[templateKey],
         )}
         href={`/new?template=${templateKey}`}
+        onClick={() => trackActivationEvent("template_selected", {
+          surface: "landing_examples",
+          template_key: templateKey,
+        })}
       >
         <ResumePaperPreview
           className="shadow-[0_30px_70px_rgba(15,23,42,0.12)] ring-1 ring-black/5"
@@ -487,6 +496,10 @@ function ExampleCard({
           <Link
             className="text-[0.94rem] font-bold text-[#065f46] hover:text-[#044e34] transition-colors inline-flex items-center gap-1.5"
             href={`/new?template=${templateKey}`}
+            onClick={() => trackActivationEvent("template_selected", {
+              surface: "landing_examples",
+              template_key: templateKey,
+            })}
           >
             Use template
             <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -587,10 +600,12 @@ function LandingPrimaryLink({
   children,
   className,
   href,
+  launchCtaSurface,
 }: {
   children: string;
   className?: string;
   href: string;
+  launchCtaSurface?: "landing_hero";
 }) {
   return (
     <Link
@@ -600,6 +615,21 @@ function LandingPrimaryLink({
         className,
       )}
       href={href}
+      onClick={() => {
+        if (launchCtaSurface) {
+          trackActivationEvent("cta_click", {
+            mode: href.startsWith("/studio/") ? "continue_editing" : "start_writing",
+            surface: launchCtaSurface,
+          });
+        }
+
+        if (href.startsWith("/account")) {
+          trackActivationEvent("account_cta_clicked", {
+            mode: "landing_primary",
+            surface: "landing",
+          });
+        }
+      }}
     >
       {children}
     </Link>

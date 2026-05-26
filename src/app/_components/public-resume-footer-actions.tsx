@@ -1,26 +1,54 @@
 "use client";
 
 import { DownloadIcon } from "@/app/_components/cv-studio-ui";
+import { trackActivationEvent } from "@/app/_lib/activation-analytics-client";
 import { downloadPdfFromUrl } from "@/app/_lib/pdf-download-client";
+import type { TemplateKey } from "@/app/_lib/hosted-resume-types";
 import { buildResumePdfDownloadUrl } from "@/app/_lib/resume-print-url";
 import Link from "next/link";
 
 export function PublicResumeFooterActions({
   pageWidth,
   showBranding,
+  templateKey,
 }: {
   pageWidth: number;
   showBranding: boolean;
+  templateKey: TemplateKey;
 }) {
+  const activationMetadata = {
+    surface: "public_resume_footer",
+    template_key: templateKey,
+  } as const;
+
   const handleDownloadPdf = async () => {
-    if (!shouldUseDedicatedPrintView()) {
+    const usedDedicatedPdfView = shouldUseDedicatedPrintView();
+    trackActivationEvent("pdf_download_clicked", {
+      ...activationMetadata,
+      used_dedicated_pdf_view: usedDedicatedPdfView,
+    });
+
+    if (!usedDedicatedPdfView) {
       window.print();
+      trackActivationEvent("pdf_download_succeeded", {
+        ...activationMetadata,
+        used_dedicated_pdf_view: false,
+      });
       return;
     }
 
     try {
       await downloadPdfFromUrl(buildResumePdfDownloadUrl(window.location.href));
+      trackActivationEvent("pdf_download_succeeded", {
+        ...activationMetadata,
+        used_dedicated_pdf_view: true,
+      });
     } catch (error) {
+      trackActivationEvent("pdf_download_failed", {
+        ...activationMetadata,
+        error_code: "request_failed",
+        used_dedicated_pdf_view: true,
+      });
       window.alert(error instanceof Error ? error.message : "Unable to download this PDF.");
     }
   };
@@ -64,6 +92,7 @@ export function PublicResumeFooterActions({
         <Link
           className="inline-flex min-h-11 items-center underline-offset-4 transition hover:text-slate-950 hover:underline sm:min-h-0"
           href="/new"
+          onClick={() => trackActivationEvent("public_footer_create_clicked", activationMetadata)}
         >
           Create your own
         </Link>
@@ -71,6 +100,10 @@ export function PublicResumeFooterActions({
         <Link
           className="inline-flex min-h-11 items-center font-semibold text-[#065f46] underline-offset-4 transition hover:text-[#044e34] hover:underline sm:min-h-0"
           href="/account#billing"
+          onClick={() => trackActivationEvent("account_cta_clicked", {
+            ...activationMetadata,
+            mode: "claim_tinycv_url",
+          })}
         >
           Claim your tiny.cv URL
         </Link>

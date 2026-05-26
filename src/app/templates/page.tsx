@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  ActivationEventOnMount,
+  ActivationLink,
+} from "@/app/_components/activation-analytics";
 import { AppHeader } from "@/app/_components/app-header";
 import { brandPrimaryButtonClass, brandSecondaryButtonClass } from "@/app/_components/button-classes";
 import { ArrowRightIcon } from "@/app/_components/icons";
@@ -112,6 +116,14 @@ function RoleTemplateCard({ templateKey }: { templateKey: TemplateKey }) {
 
   return (
     <article className="group overflow-hidden rounded-[1.35rem] border border-black/8 bg-white/88 shadow-[0_20px_50px_rgba(15,23,42,0.06)] transition hover:-translate-y-[1px] hover:shadow-[0_24px_60px_rgba(15,23,42,0.09)]">
+      <ActivationEventOnMount
+        eventName="template_viewed"
+        metadata={{
+          surface: "templates_page",
+          template_key: templateKey,
+        }}
+        onceKey={`templates_page:${templateKey}`}
+      />
       <Link
         className="flex min-h-[25rem] items-start justify-center overflow-hidden bg-[linear-gradient(180deg,#fffdf9_0%,#f1eee7_100%)] px-5 py-6"
         href={`/examples/${templateKey}`}
@@ -153,9 +165,17 @@ function RoleTemplateCard({ templateKey }: { templateKey: TemplateKey }) {
           ))}
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link className={`${brandPrimaryButtonClass} min-h-11 px-4 text-[0.9rem]`} href={`/new?template=${templateKey}`}>
+          <ActivationLink
+            className={`${brandPrimaryButtonClass} min-h-11 px-4 text-[0.9rem]`}
+            eventName="template_selected"
+            eventMetadata={{
+              surface: "templates_page",
+              template_key: templateKey,
+            }}
+            href={`/new?template=${templateKey}`}
+          >
             Use template
-          </Link>
+          </ActivationLink>
           <Link className={`${brandSecondaryButtonClass} min-h-11 px-4 text-[0.9rem]`} href={`/examples/${templateKey}`}>
             Preview
           </Link>
@@ -205,10 +225,18 @@ function StyleTemplateCard({ item }: { item: TemplateStyleShowcaseItem }) {
           ))}
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link className={`${brandPrimaryButtonClass} min-h-11 gap-1.5 px-4 text-[0.9rem]`} href={item.useHref}>
+          <ActivationLink
+            className={`${brandPrimaryButtonClass} min-h-11 gap-1.5 px-4 text-[0.9rem]`}
+            eventName="template_selected"
+            eventMetadata={{
+              surface: "templates_page",
+              template_key: item.templateKey,
+            }}
+            href={item.useHref}
+          >
             Use base
             <ArrowRightIcon className="h-3.5 w-3.5" />
-          </Link>
+          </ActivationLink>
           <Link className={`${brandSecondaryButtonClass} min-h-11 px-4 text-[0.9rem]`} href={item.previewHref}>
             Full preview
           </Link>
