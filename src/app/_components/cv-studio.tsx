@@ -489,11 +489,6 @@ export function CvStudio({
   };
 
   const downloadPdf = async () => {
-    if (!shouldUseDedicatedPrintView()) {
-      window.print();
-      return;
-    }
-
     setNotice({ kind: "success", message: "Generating PDF..." });
 
     if (!(await mutateResume({ successMessage: null }))) {
@@ -1999,10 +1994,6 @@ function resolveAbsoluteUrl(link: string | null) {
   } catch {
     return null;
   }
-}
-
-function shouldUseDedicatedPrintView() {
-  return window.matchMedia("(max-width: 1023px)").matches;
 }
 
 function describeRemoteSyncState(
