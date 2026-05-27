@@ -86,8 +86,8 @@ export async function refreshAdminAnalytics(input = {}) {
     }
 
     const token = await getGoogleAccessToken();
-    const stockResumeSlugs = await getStockResumeSlugs(sql);
-    const payload = await buildAnalyticsPayload({ propertyId, stockResumeSlugs, token });
+    const resumePages = await getResumePageLookup(sql);
+    const payload = await buildAnalyticsPayload({ propertyId, resumePages, token });
     const id = randomUUID();
 
     await sql`
@@ -300,8 +300,8 @@ function base64Url(buffer) {
     .replace(/\//g, "_");
 }
 
-async function getStockResumeSlugs(sql) {
-  const rows = await sql`
+async function getResumePageLookup(sql) {
+  const [row] = await sql`
     with stock_names as (
       select *
       from (values
@@ -311,22 +311,35 @@ async function getStockResumeSlugs(sql) {
         ('Avery Brooks'),
         ('Jordan Lee')
       ) as names(name)
+    ),
+    real_resumes as (
+      select id, slug
+      from resumes r
+      where is_published = true
+        and not exists (
+          select 1
+          from stock_names stock
+          where r.markdown ilike '%# ' || stock.name || '%'
+             or coalesce(r.published_markdown, '') ilike '%# ' || stock.name || '%'
+             or r.title ilike '%' || stock.name || '%'
+        )
     )
-    select slug
-    from resumes r
-    where exists (
-      select 1
-      from stock_names stock
-      where r.markdown ilike '%# ' || stock.name || '%'
-         or coalesce(r.published_markdown, '') ilike '%# ' || stock.name || '%'
-         or r.title ilike '%' || stock.name || '%'
-    )
+    select
+      coalesce(json_agg(distinct real_resumes.slug) filter (where real_resumes.slug is not null), '[]'::json) as slugs,
+      coalesce(json_agg(distinct lower(domain.hostname)) filter (where domain.hostname is not null), '[]'::json) as hosts
+    from real_resumes
+    left join resume_domains domain on domain.resume_id = real_resumes.id
+      and domain.disabled_at is null
+      and domain.status = 'active'
   `;
 
-  return new Set(rows.map((row) => String(row.slug).toLowerCase()));
+  return {
+    hosts: new Set((row?.hosts || []).map((host) => normalizeAnalyticsHost(String(host)))),
+    slugs: new Set((row?.slugs || []).map((slug) => String(slug).toLowerCase())),
+  };
 }
 
-async function buildAnalyticsPayload({ propertyId, stockResumeSlugs, token }) {
+async function buildAnalyticsPayload({ propertyId, resumePages, token }) {
   const now = new Date();
   const last24Start = dateHour(new Date(now.getTime() - 24 * 60 * 60 * 1000));
   const nowHour = dateHour(now);
@@ -353,7 +366,7 @@ async function buildAnalyticsPayload({ propertyId, stockResumeSlugs, token }) {
   const pages7d = parsePageRows(pages7dPayload);
   const dailyPages = parseDailyPageRows(dailyPagesPayload);
   const resumeDaily = fillDailySeries(
-    summarizeDailyPages(dailyPages.filter((page) => isResumePage(page.location, stockResumeSlugs))),
+    summarizeDailyPages(dailyPages.filter((page) => isResumePage(page.location, resumePages))),
     now,
   );
   const blogDaily = fillDailySeries(
@@ -368,8 +381,8 @@ async function buildAnalyticsPayload({ propertyId, stockResumeSlugs, token }) {
     daily: parseDailyRows(dailyPayload),
     generatedAt: now.toISOString(),
     propertyId,
-    resumePages24h: summarizePageRows(pages24h.filter((page) => isResumePage(page.location, stockResumeSlugs))),
-    resumePages7d: summarizePageRows(pages7d.filter((page) => isResumePage(page.location, stockResumeSlugs))),
+    resumePages24h: summarizePageRows(pages24h.filter((page) => isResumePage(page.location, resumePages))),
+    resumePages7d: summarizePageRows(pages7d.filter((page) => isResumePage(page.location, resumePages))),
     resumePagesDaily30d: resumeDaily,
     sources24h,
     sources7d,
@@ -633,7 +646,7 @@ function fillDailySeries(rows, endDate, days = 30) {
   return filled;
 }
 
-function isResumePage(location, stockResumeSlugs = new Set()) {
+function isResumePage(location, resumePages) {
   let url;
 
   try {
@@ -642,11 +655,11 @@ function isResumePage(location, stockResumeSlugs = new Set()) {
     return false;
   }
 
-  const host = url.hostname.toLowerCase();
+  const host = normalizeAnalyticsHost(url.hostname);
   const path = url.pathname || "/";
 
   if (!APP_HOSTS.has(host) && !host.endsWith(".vercel.app")) {
-    return true;
+    return resumePages.hosts.has(host);
   }
 
   if (path === "/") return false;
@@ -654,9 +667,8 @@ function isResumePage(location, stockResumeSlugs = new Set()) {
   const segment = decodeURIComponent(path.split("/").filter(Boolean)[0] || "").toLowerCase();
   if (!segment || NON_RESUME_SEGMENTS.has(segment)) return false;
   if (segment.includes(".")) return false;
-  if (stockResumeSlugs.has(segment)) return false;
 
-  return true;
+  return resumePages.slugs.has(segment);
 }
 
 function isBlogPage(location) {
@@ -675,6 +687,14 @@ function isBlogPage(location) {
 
   const segments = url.pathname.split("/").filter(Boolean);
   return segments[0]?.toLowerCase() === "blog";
+}
+
+function normalizeAnalyticsHost(value) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\.$/, "")
+    .replace(/:\d+$/, "");
 }
 
 function numberValue(value) {
