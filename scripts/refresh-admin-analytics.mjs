@@ -331,25 +331,46 @@ async function buildAnalyticsPayload({ propertyId, stockResumeSlugs, token }) {
   const last24Start = dateHour(new Date(now.getTime() - 24 * 60 * 60 * 1000));
   const nowHour = dateHour(now);
 
-  const [sources24hPayload, sources7dPayload, pages24hPayload, pages7dPayload, dailyPayload] = await Promise.all([
+  const [
+    sources24hPayload,
+    sources7dPayload,
+    pages24hPayload,
+    pages7dPayload,
+    dailyPayload,
+    dailyPagesPayload,
+  ] = await Promise.all([
     runGaReport(propertyId, token, rollingSourceReportBody()),
     runGaReport(propertyId, token, sourceReportBody("7daysAgo")),
     runGaReport(propertyId, token, rollingPageReportBody()),
     runGaReport(propertyId, token, pageReportBody("7daysAgo")),
     runGaReport(propertyId, token, dailyReportBody("30daysAgo")),
+    runGaReport(propertyId, token, dailyPageReportBody("30daysAgo")),
   ]);
 
   const sources24h = parseRollingSourceRows(sources24hPayload, last24Start, nowHour);
   const sources7d = parseSourceRows(sources7dPayload);
   const pages24h = parseRollingPageRows(pages24hPayload, last24Start, nowHour);
   const pages7d = parsePageRows(pages7dPayload);
+  const dailyPages = parseDailyPageRows(dailyPagesPayload);
+  const resumeDaily = fillDailySeries(
+    summarizeDailyPages(dailyPages.filter((page) => isResumePage(page.location, stockResumeSlugs))),
+    now,
+  );
+  const blogDaily = fillDailySeries(
+    summarizeDailyPages(dailyPages.filter((page) => isBlogPage(page.location))),
+    now,
+  );
+  const blogPages = summarizePageRows(dailyPages.filter((page) => isBlogPage(page.location)));
 
   return {
+    blogDaily30d: blogDaily,
+    blogPages30d: blogPages,
     daily: parseDailyRows(dailyPayload),
     generatedAt: now.toISOString(),
     propertyId,
     resumePages24h: summarizePageRows(pages24h.filter((page) => isResumePage(page.location, stockResumeSlugs))),
     resumePages7d: summarizePageRows(pages7d.filter((page) => isResumePage(page.location, stockResumeSlugs))),
+    resumePagesDaily30d: resumeDaily,
     sources24h,
     sources7d,
     topPages24h: summarizePageRows(pages24h),
@@ -421,6 +442,19 @@ function dailyReportBody(startDate) {
     metrics: [
       { name: "activeUsers" },
       { name: "sessions" },
+      { name: "screenPageViews" },
+    ],
+    orderBys: [{ dimension: { dimensionName: "date" } }],
+  };
+}
+
+function dailyPageReportBody(startDate) {
+  return {
+    dateRanges: [{ startDate, endDate: "today" }],
+    dimensions: [{ name: "date" }, { name: "pageLocation" }],
+    limit: "10000",
+    metrics: [
+      { name: "activeUsers" },
       { name: "screenPageViews" },
     ],
     orderBys: [{ dimension: { dimensionName: "date" } }],
@@ -517,6 +551,15 @@ function parseDailyRows(payload) {
   }));
 }
 
+function parseDailyPageRows(payload) {
+  return (payload.rows || []).map((row) => ({
+    date: isoDateFromGaDate(row.dimensionValues?.[0]?.value || ""),
+    location: row.dimensionValues?.[1]?.value || "",
+    pageViews: numberValue(row.metricValues?.[1]?.value),
+    visitors: numberValue(row.metricValues?.[0]?.value),
+  }));
+}
+
 function summarizeSources(rows) {
   return rows.reduce((summary, row) => ({
     pageViews: summary.pageViews + row.pageViews,
@@ -526,14 +569,68 @@ function summarizeSources(rows) {
 }
 
 function summarizePageRows(rows) {
+  const byLocation = new Map();
+
+  for (const row of rows) {
+    if (!row.location) continue;
+
+    const existing = byLocation.get(row.location) || {
+      location: row.location,
+      pageViews: 0,
+      visitors: 0,
+    };
+
+    existing.pageViews += row.pageViews;
+    existing.visitors += row.visitors;
+    byLocation.set(row.location, existing);
+  }
+
+  const pages = [...byLocation.values()];
+
   return {
-    pageViews: rows.reduce((sum, row) => sum + row.pageViews, 0),
-    topPages: rows
-      .filter((row) => row.location)
+    pageViews: pages.reduce((sum, row) => sum + row.pageViews, 0),
+    topPages: pages
       .sort((a, b) => b.pageViews - a.pageViews)
       .slice(0, 25),
-    visitors: rows.reduce((sum, row) => sum + row.visitors, 0),
+    visitors: pages.reduce((sum, row) => sum + row.visitors, 0),
   };
+}
+
+function summarizeDailyPages(rows) {
+  const byDate = new Map();
+
+  for (const row of rows) {
+    const existing = byDate.get(row.date) || {
+      date: row.date,
+      pageViews: 0,
+      visitors: 0,
+    };
+
+    existing.pageViews += row.pageViews;
+    existing.visitors += row.visitors;
+    byDate.set(row.date, existing);
+  }
+
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function fillDailySeries(rows, endDate, days = 30) {
+  const byDate = new Map(rows.map((row) => [row.date, row]));
+  const filled = [];
+  const end = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate()));
+
+  for (let offset = days - 1; offset >= 0; offset -= 1) {
+    const date = new Date(end);
+    date.setUTCDate(end.getUTCDate() - offset);
+    const key = date.toISOString().slice(0, 10);
+    filled.push(byDate.get(key) || {
+      date: key,
+      pageViews: 0,
+      visitors: 0,
+    });
+  }
+
+  return filled;
 }
 
 function isResumePage(location, stockResumeSlugs = new Set()) {
@@ -560,6 +657,24 @@ function isResumePage(location, stockResumeSlugs = new Set()) {
   if (stockResumeSlugs.has(segment)) return false;
 
   return true;
+}
+
+function isBlogPage(location) {
+  let url;
+
+  try {
+    url = new URL(location);
+  } catch {
+    return false;
+  }
+
+  const host = url.hostname.toLowerCase();
+  if (!APP_HOSTS.has(host) && !host.endsWith(".vercel.app")) {
+    return false;
+  }
+
+  const segments = url.pathname.split("/").filter(Boolean);
+  return segments[0]?.toLowerCase() === "blog";
 }
 
 function numberValue(value) {

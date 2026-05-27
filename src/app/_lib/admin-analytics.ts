@@ -27,16 +27,25 @@ export type AdminAnalyticsPageSummary = {
   visitors: number;
 };
 
+export type AdminAnalyticsDailyPageRow = {
+  date: string;
+  pageViews: number;
+  visitors: number;
+};
+
 export type AdminAnalyticsDailyRow = AdminAnalyticsMetricSet & {
   date: string;
 };
 
 export type AdminAnalyticsPayload = {
+  blogDaily30d: AdminAnalyticsDailyPageRow[];
+  blogPages30d: AdminAnalyticsPageSummary;
   daily: AdminAnalyticsDailyRow[];
   generatedAt: string;
   propertyId: string;
   resumePages24h: AdminAnalyticsPageSummary;
   resumePages7d: AdminAnalyticsPageSummary;
+  resumePagesDaily30d: AdminAnalyticsDailyPageRow[];
   sources24h: AdminAnalyticsSourceRow[];
   sources7d: AdminAnalyticsSourceRow[];
   topPages24h: AdminAnalyticsPageSummary;
@@ -129,11 +138,42 @@ function toAdminAnalyticsSnapshot(row: AdminAnalyticsSnapshotRow): AdminAnalytic
 }
 
 function normalizePayload(payload: AdminAnalyticsSnapshotRow["payload"]): AdminAnalyticsPayload {
-  if (typeof payload === "string") {
-    return JSON.parse(payload) as AdminAnalyticsPayload;
-  }
+  const parsed = typeof payload === "string"
+    ? JSON.parse(payload) as Partial<AdminAnalyticsPayload>
+    : payload as Partial<AdminAnalyticsPayload>;
 
-  return payload;
+  return {
+    blogDaily30d: parsed.blogDaily30d ?? [],
+    blogPages30d: parsed.blogPages30d ?? emptyPageSummary(),
+    daily: parsed.daily ?? [],
+    generatedAt: parsed.generatedAt ?? "",
+    propertyId: parsed.propertyId ?? "",
+    resumePages24h: parsed.resumePages24h ?? emptyPageSummary(),
+    resumePages7d: parsed.resumePages7d ?? emptyPageSummary(),
+    resumePagesDaily30d: parsed.resumePagesDaily30d ?? [],
+    sources24h: parsed.sources24h ?? [],
+    sources7d: parsed.sources7d ?? [],
+    topPages24h: parsed.topPages24h ?? emptyPageSummary(),
+    topPages7d: parsed.topPages7d ?? emptyPageSummary(),
+    traffic24h: parsed.traffic24h ?? emptyMetricSet(),
+    traffic7d: parsed.traffic7d ?? emptyMetricSet(),
+  };
+}
+
+function emptyMetricSet(): AdminAnalyticsMetricSet {
+  return {
+    pageViews: 0,
+    sessions: 0,
+    visitors: 0,
+  };
+}
+
+function emptyPageSummary(): AdminAnalyticsPageSummary {
+  return {
+    pageViews: 0,
+    topPages: [],
+    visitors: 0,
+  };
 }
 
 function getAdminAnalyticsSql(): SqlClient {

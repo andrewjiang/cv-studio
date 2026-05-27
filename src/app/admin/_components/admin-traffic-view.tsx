@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type {
+  AdminAnalyticsDailyPageRow,
   AdminAnalyticsPageRow,
   AdminAnalyticsSnapshot,
   AdminAnalyticsSourceRow,
@@ -56,7 +57,16 @@ export function AdminTrafficView({
         <TrafficMetric label="Visitors" value={payload.traffic24h.visitors} />
         <TrafficMetric label="Page views" value={payload.traffic24h.pageViews} />
         <TrafficMetric label="Resume views" value={payload.resumePages24h.pageViews} />
-        <TrafficMetric label="7d views" value={payload.traffic7d.pageViews} />
+        <TrafficMetric label="Blog views 30d" value={sumDailyViews(payload.blogDaily30d)} />
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <TrafficPanel title="Resume views">
+          <DailyBarChart rows={payload.resumePagesDaily30d} tone="green" />
+        </TrafficPanel>
+        <TrafficPanel title="Blog views">
+          <DailyBarChart rows={payload.blogDaily30d} tone="blue" />
+        </TrafficPanel>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -72,8 +82,8 @@ export function AdminTrafficView({
         <TrafficPanel title="Resume pages">
           <PageTable rows={payload.resumePages24h.topPages.slice(0, compact ? 6 : 10)} />
         </TrafficPanel>
-        <TrafficPanel title="Top pages">
-          <PageTable rows={payload.topPages24h.topPages.slice(0, compact ? 6 : 10)} />
+        <TrafficPanel title="Blog pages">
+          <PageTable rows={payload.blogPages30d.topPages.slice(0, compact ? 6 : 10)} />
         </TrafficPanel>
       </div>
     </div>
@@ -154,6 +164,51 @@ function DailyTable({
         ))}
       </tbody>
     </ResponsiveTable>
+  );
+}
+
+function DailyBarChart({
+  rows,
+  tone,
+}: {
+  rows: AdminAnalyticsDailyPageRow[];
+  tone: "blue" | "green";
+}) {
+  if (rows.length === 0) {
+    return <AdminEmptyState label="No page views." />;
+  }
+
+  const visibleRows = rows.slice(-30);
+  const maxViews = Math.max(...visibleRows.map((row) => row.pageViews), 1);
+  const totalViews = sumDailyViews(visibleRows);
+  const barClass = tone === "green" ? "bg-[#065f46]" : "bg-[#2563eb]";
+
+  return (
+    <div>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <p className="text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+          {formatAdminNumber(totalViews)}
+        </p>
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">30 days</p>
+      </div>
+      <div className="flex h-44 items-end gap-1 rounded-[1rem] border border-black/6 bg-white/65 px-3 pb-3 pt-4">
+        {visibleRows.map((row) => (
+          <div className="flex min-w-0 flex-1 flex-col items-center gap-2" key={row.date}>
+            <div className="flex h-32 w-full items-end">
+              <div
+                aria-label={`${formatTrafficDate(row.date)}: ${formatAdminNumber(row.pageViews)} views`}
+                className={`w-full rounded-t ${barClass}`}
+                title={`${formatTrafficDate(row.date)}: ${formatAdminNumber(row.pageViews)} views`}
+                style={{ height: `${Math.max(2, (row.pageViews / maxViews) * 100)}%` }}
+              />
+            </div>
+            <span className="h-3 text-[0.625rem] font-bold leading-3 text-slate-400">
+              {formatChartTick(row.date)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -262,4 +317,19 @@ function formatTrafficDate(value: string) {
     month: "short",
     timeZone: "UTC",
   }).format(date);
+}
+
+function formatChartTick(value: string) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  if (!Number.isFinite(date.getTime())) {
+    return "";
+  }
+
+  const day = date.getUTCDate();
+  return day === 1 || day % 5 === 0 ? String(day) : "";
+}
+
+function sumDailyViews(rows: AdminAnalyticsDailyPageRow[]) {
+  return rows.reduce((sum, row) => sum + row.pageViews, 0);
 }
