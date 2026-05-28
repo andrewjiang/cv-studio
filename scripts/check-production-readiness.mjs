@@ -88,10 +88,10 @@ if (!env("NEXT_PUBLIC_TINYCV_TURNSTILE_SITE_KEY") || !env("TINYCV_TURNSTILE_SECR
   pass("turnstile", "Turnstile is configured.");
 }
 
-if (!env("TINYCV_GA4_SERVICE_ACCOUNT_JSON_BASE64")) {
-  fail("admin-analytics", "Set TINYCV_GA4_SERVICE_ACCOUNT_JSON_BASE64 so Vercel Cron can refresh the admin traffic dashboard.");
+if (!env("TINYCV_GA4_SERVICE_ACCOUNT_JSON_BASE64") && !env("TINYCV_GA4_USER_CREDENTIALS_JSON_BASE64")) {
+  fail("admin-analytics", "Set TINYCV_GA4_SERVICE_ACCOUNT_JSON_BASE64 or TINYCV_GA4_USER_CREDENTIALS_JSON_BASE64 so Vercel Cron can refresh the admin traffic dashboard.");
 } else {
-  pass("admin-analytics", "Admin analytics GA4 service account is configured.");
+  pass("admin-analytics", "Admin analytics GA4 credentials are configured.");
 }
 
 if (env("TINYCV_RATE_LIMIT_DISABLED") === "true") {

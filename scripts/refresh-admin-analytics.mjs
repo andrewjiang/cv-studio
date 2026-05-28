@@ -211,6 +211,11 @@ async function getGoogleAccessToken() {
     return getGoogleServiceAccountAccessToken(serviceAccount);
   }
 
+  const userCredentials = getGoogleUserCredentials();
+  if (userCredentials) {
+    return getGoogleUserCredentialsAccessToken(userCredentials);
+  }
+
   try {
     return execFileSync("gcloud", ["auth", "application-default", "print-access-token"], {
       encoding: "utf8",
@@ -219,6 +224,55 @@ async function getGoogleAccessToken() {
   } catch (error) {
     throw new Error(`Failed to get Google ADC access token: ${formatCommandError(error)}`);
   }
+}
+
+function getGoogleUserCredentials() {
+  const encoded = process.env.TINYCV_GA4_USER_CREDENTIALS_JSON_BASE64?.trim();
+  const raw = encoded
+    ? Buffer.from(encoded, "base64").toString("utf8")
+    : process.env.TINYCV_GA4_USER_CREDENTIALS_JSON?.trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed.client_id || !parsed.client_secret || !parsed.refresh_token) {
+      throw new Error("missing client_id, client_secret, or refresh_token");
+    }
+
+    return {
+      clientId: String(parsed.client_id),
+      clientSecret: String(parsed.client_secret),
+      refreshToken: String(parsed.refresh_token),
+    };
+  } catch (error) {
+    throw new Error(`Invalid TINYCV_GA4_USER_CREDENTIALS_JSON_BASE64: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+async function getGoogleUserCredentialsAccessToken(credentials) {
+  const body = new URLSearchParams({
+    client_id: credentials.clientId,
+    client_secret: credentials.clientSecret,
+    grant_type: "refresh_token",
+    refresh_token: credentials.refreshToken,
+  });
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    body,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    method: "POST",
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok || !payload.access_token) {
+    throw new Error(`Google user credential token request failed with HTTP ${response.status}: ${JSON.stringify(payload)}`);
+  }
+
+  return String(payload.access_token);
 }
 
 function getGoogleServiceAccount() {

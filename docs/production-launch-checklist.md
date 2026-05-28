@@ -117,6 +117,7 @@ Set:
 
 - `TINYCV_GA4_PROPERTY_ID`
 - `TINYCV_GA4_SERVICE_ACCOUNT_JSON_BASE64`
+- `TINYCV_GA4_USER_CREDENTIALS_JSON_BASE64` as a fallback when using local Google ADC user credentials
 - `TINYCV_ANALYTICS_REFRESH_HOURS=6`
 
 Grant the Google service account Viewer access to the GA4 property, then store its JSON key as base64:
@@ -124,6 +125,8 @@ Grant the Google service account Viewer access to the GA4 property, then store i
 ```bash
 base64 -i service-account.json | tr -d '\n'
 ```
+
+If using the local Google ADC authorized-user credential instead, store `~/.config/gcloud/application_default_credentials.json` as `TINYCV_GA4_USER_CREDENTIALS_JSON_BASE64`.
 
 The cron route is protected by `CRON_SECRET` / `TINYCV_WORKER_SECRET`. Vercel automatically sends `Authorization: Bearer $CRON_SECRET` to configured cron routes when `CRON_SECRET` is set.
 
