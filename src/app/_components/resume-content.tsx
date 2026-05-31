@@ -296,7 +296,7 @@ function ContactItem({
     </>
   );
 
-  if (item.href && interactive) {
+  if (item.href) {
     return (
       <a
         aria-label={item.label}
@@ -621,7 +621,7 @@ function InlineMarkdown({
       components={{
         p: ({ children }) => <>{children}</>,
         a: ({ children, href }) =>
-          interactive ? (
+          href ? (
             <a className="cv-link" href={href} rel="noreferrer" target="_blank">
               {children}
             </a>
