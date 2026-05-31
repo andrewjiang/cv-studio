@@ -1,288 +1,269 @@
 ---
 title: "Software Engineer Resume Guide: What to Prove on One Page in 2026"
-description: "A software engineer resume should prove shipped software, technical depth, system judgment, product impact, collaboration, and credible links without becoming a technology inventory."
-date: "2026-05-26"
+description: "A software engineer resume should prove shipped systems, technical depth, ownership, reliability, collaboration, projects, and role fit without becoming a long inventory of tools."
+date: "2026-05-31"
 author: "Andrew Jiang"
 category: "Role-Specific Resume Playbooks"
 slug: "software-engineer-resume-guide"
 heroImage: "/blog/software-engineer-resume-guide-hero.webp"
 ---
 
-A software engineer resume in 2026 should prove that you can build, debug, ship, improve, and explain software on one readable page.
+A software engineer resume in 2026 should prove the level of engineering judgment you can bring to the next role, not every tool you have ever touched.
 
-That proof usually comes from six buckets: shipped code, technical depth, system judgment, product or user impact, collaboration, and credible supporting links. The mistake is treating the resume like a warehouse for every language, framework, class, and side project you have touched.
+The page has one job: make shipped systems, technical depth, ownership, reliability, collaboration, projects, and role fit easy to trust. Tiny CV's view is simple here: a resume is a compressed evidence page, not a persuasion trick.
 
-A better resume acts like a proof map.
+That matters because software engineering is broad. The U.S. Bureau of Labor Statistics groups software developers with quality assurance analysts and testers, reports 1,895,500 jobs in 2024, and projects 15% growth from 2024 to 2034 with about 129,200 openings a year on average.[^bls] Those numbers explain why the role is worth taking seriously.
 
-The U.S. Bureau of Labor Statistics projects 15% growth for software developers, quality assurance analysts, and testers from 2024 to 2034, with about 129,200 openings per year on average.[^bls] That is useful labor-market context, not a promise that a resume format wins interviews.
+They do not tell you what to put on the page.
 
-Your job is narrower: make the strongest true evidence easy to find.
-
-Tiny CV fits that work because the markdown source keeps facts close to the surface, the paper preview makes the one-page tradeoff visible, and the public link gives a human reader a clean current version when a PDF is not the best handoff.
+For that, use the proof standard. If a line does not help a reader believe you can build, debug, ship, maintain, or explain software in the target environment, it is probably taking space from something stronger.
 
 ## What should a software engineer resume prove in 2026?
 
-A software engineer resume should prove that you can turn ambiguous technical work into shipped, maintainable software.
+A software engineer resume should prove that you can turn ambiguous technical work into useful, maintainable software.
 
-Think of the page like a code review summary for your career. A reviewer does not need every line you changed. They need the reason for the change, the shape of the work, the risk, and the evidence that it held up.
+Think of the resume like a pull request summary for your career. The reviewer does not need every file you opened. They need to understand the problem, the design choice, the risk, the evidence, and why the change held up.
 
-For a software engineer, that evidence usually falls into six proof buckets:
+BLS describes software work as design, development, testing, maintenance, documentation, and collaboration with other contributors.[^bls] O*NET's software developer profile points to the same operating reality: analyzing systems, storing and manipulating data, designing and modifying software systems, and setting performance standards.[^onet]
 
-| Proof bucket | What it answers | Strong evidence looks like |
-| --- | --- | --- |
-| Shipped code | Can you deliver working software? | Features, services, bug fixes, releases, integrations, tests, deployments |
-| Technical depth | Can you use the stack beyond surface syntax? | Architecture choices, data models, API design, performance work, debugging details |
-| System judgment | Can you make tradeoffs under constraints? | Reliability fixes, migrations, observability, dependency removal, security or scaling decisions |
-| Product or user impact | Did the work matter outside the repo? | User flows improved, support load reduced, latency lowered, adoption increased, operational risk reduced |
-| Collaboration | Can you work through people and ambiguity? | Code review, cross-functional delivery, mentoring, incident writeups, documentation |
-| Credible links | Can a reader verify or inspect public work? | GitHub, deployed projects, portfolio, technical writing, public CV link |
+So the resume should not lead with "JavaScript, Python, React, AWS, Docker, Kubernetes" as if tools alone prove judgment.
 
-BLS describes software work as design, development, testing, maintenance, documentation, and collaboration with other contributors.[^bls] O*NET lists detailed activities such as modifying software, collaborating on design details, communicating project information, and developing performance standards.[^onet] Those sources do not tell you what a recruiter will do with your resume.
+Tools are labels. Proof is work.
 
-They do tell you what the role actually requires.
+Quick answer: put experience, projects, skills, education, and selective links on a software engineer resume only when they prove one of these evidence areas:
 
-That is the proof standard.
+- Shipped or maintained software.
+- Technical depth in the target stack.
+- Ownership of a real slice of work.
+- Reliability, quality, testing, or operational care.
+- Collaboration with reviewers, teams, users, or stakeholders.
+- Project or open-source evidence when work experience does not cover the proof.
+- Role fit for the specific software engineering job.
 
-## The one-page software engineer proof map by seniority
+## The Software Engineer Proof Matrix
 
-The best one-page software engineer resume changes shape by seniority because the proof burden changes.
+The Software Engineer Proof Matrix helps you decide what evidence belongs on the page before you start polishing sentences.
 
-A student does not need to pretend to be a staff engineer. A staff engineer should not spend half the page proving they can close individual tickets. The page should match the level you are asking the reader to believe.
+Use it as a drafting artifact. Fill it with private notes first, then turn only the strongest defensible evidence into public resume bullets.
 
-Use this map before you start shrinking margins.
-
-| Seniority | What must earn space | Best evidence | What to compress or cut | Best section order |
+| Proof area | What the reader needs to believe | Strong evidence | Weak claim to avoid | Where it belongs on the page |
 | --- | --- | --- | --- | --- |
-| Student or new grad | Learning speed, implementation ability, debugging, teamwork, and technical foundation | Internships, substantial projects, labs with real constraints, hackathon or open-source work, GitHub or portfolio links when readable | Generic coursework piles, classroom task lists, every small project, soft skills in the skills section | Header with selective links; education; projects or internships; skills; leadership or activities if relevant |
-| Early-career engineer | Shipped production work and ability to improve a team codebase | Features, bug fixes, tests, support impact, code review, deployment work, small ownership areas | Student projects that no longer add distinct proof, repeated tool lists, old coursework | Header; experience; strongest project only if it adds proof; skills; education |
-| Mid-level engineer | Ownership of systems, services, feature areas, and tradeoffs | Reliability work, performance improvements, migrations, observability, cross-functional delivery, technical design choices | Older school work, low-level task bullets, weak side projects, duplicated skills | Header; experience grouped by impact; selected projects or technical writing if strong; skills; education |
-| Senior or staff engineer | Leverage beyond personal code | Architecture, platform decisions, migrations, incident reduction, standards, mentoring, technical strategy, business or product outcomes | Ticket-by-ticket task lists, basic implementation bullets, old roles with repeated proof | Header; senior scope summary if useful; experience by leverage and outcomes; talks/docs/open source if relevant; compressed skills; education |
+| Production impact | You have shipped work that mattered outside your editor | Released feature, service, migration, integration, bug fix, internal tool, or support workflow with a clear user, team, or operational effect | "Worked on app features" | Experience bullets; top project only if it shipped or was used |
+| Technical depth | You understand the stack beyond surface syntax | API design, data model, architecture tradeoff, performance work, security constraint, accessibility detail, debugging path, or testing strategy | "Used React, Node, and PostgreSQL" | Experience and projects, with skills repeated only as labels |
+| Ownership | You can carry a meaningful slice of work through ambiguity | Owned a service, feature area, release step, migration track, incident follow-up, design doc, or cross-team dependency | "Helped with many engineering tasks" | Recent experience; senior summary only when it clarifies scope |
+| Reliability and quality | You care whether software keeps working | Tests, observability, rollback plan, incident reduction, error handling, validation, release checklist, or maintenance work | "Wrote clean code" | Experience bullets near production work |
+| Collaboration | You can make technical work legible to other people | Code review, design docs, support handoff, mentoring, pairing, product/design partnership, incident writeup, customer-safe explanation | "Excellent communicator" | Bullets that name the artifact or audience |
+| Projects and open source | You can prove relevant ability when paid experience does not cover it | Deployed project, readable repo, live demo, contribution, technical writeup, test suite, documented tradeoff, maintainable scope | "Built a clone app" | Projects section for students, switchers, or unusually relevant public work |
+| Role fit | The page matches the job in front of you | Targeted stack, domain, seniority, systems, constraints, and proof order aligned to the role | "Full-stack engineer passionate about technology" | Header, optional one-line summary, top bullets, skills taxonomy |
 
-Yale's Office of Career Strategy treats a technical resume as flexible: sections can be added, removed, and reordered to fit goals and experience, with links such as GitHub or a portfolio in the header when they show work.[^yale] Carnegie Mellon's School of Computer Science resume guide makes the same relevance point: the most important or relevant content should come first, and students with less than 10 years of experience should generally keep the resume to one page.[^cmu]
+MIT Career Advising and Professional Development frames a resume as a dense, fact-based document that expresses why you have the skills and experience to excel in a job and team.[^mit-capd] Michigan Engineering's career center emphasizes clear, concise, customized resumes and impact statements.[^umich]
 
-Tiny CV's paper preview is useful here because it makes the seniority tradeoff physical. If the mid-level version only fits after you keep three class projects, the page has not chosen yet.
+Here is what that means for you: do not start by asking, "What sounds impressive?"
 
-One caveat matters: the sources in this post support role duties, resume structure, career-readiness competencies, and developer-tool context. They do not prove resume conversion rates, recruiter scan times, ATS rejection percentages, or hiring outcomes.
+Start with, "What would a technical reader need to believe?"
 
-So do not use this guide as a superstition machine.
+Tiny CV's markdown source is useful at this stage because you can keep private proof notes close to public bullets while drafting. Before exporting or sharing, remove the private notes and leave only claims you can defend.
 
-Use it as an evidence filter.
+## Which sections should come first on a one-page software engineer resume?
 
-## What should each section earn on a software engineer resume?
+The strongest relevant proof should come first on a one-page software engineer resume, and that order changes by candidate stage.
 
-Each section on a software engineer resume should earn space by making the target role easier to understand.
+In practice, experienced engineers usually lead with experience, new grads usually lead with education and projects, senior engineers lead with scope and technical judgment, and career switchers lead with targeted technical projects plus translated prior experience.
 
-The default order for an experienced software engineer is simple:
+A one-page resume is the target, not a prison. UTEP's technical resume checklist says a technical resume should not exceed one page unless 10+ years of experience warrants two, and it tells candidates to list the strongest section first by strength and relevance.[^utep] Treat that as a practical pressure test, not a universal law.
 
-1. Header with selective links.
-2. Optional one-line headline or summary.
-3. Experience.
-4. Projects, only when they add distinct proof.
-5. Skills taxonomy.
-6. Education and certifications.
+Use this decision tree before shrinking type.
 
-For a new grad, education and projects may move above limited work history. For a senior engineer, experience almost always carries the page, and education usually compresses unless it is recent, unusually relevant, or required.
+| If your strongest proof is... | Then lead with... | Then use this section order | What to cut first |
+| --- | --- | --- | --- |
+| Recent professional engineering experience | Production work | Experience -> Skills -> Projects/Open Source -> Education | Old class projects, repeated skills, low-signal coursework |
+| New grad or internship evidence | Technical foundation plus projects | Education -> Projects -> Skills -> Experience/Leadership | Generic coursework lists, tiny projects, unrelated activities |
+| Senior or staff-level scope | Leverage and judgment | Experience -> Selected technical leadership proof -> Skills -> Education | Ticket-by-ticket task lists, stale tools, projects that do not change the case |
+| Career-switcher proof | Targeted technical work plus transferable scope | Targeted summary -> Technical projects -> Transferable experience proof -> Skills -> Education/certificates | Untranslated old duties, unproven skill claims, filler summary language |
 
-The header is not just contact information. It is a verification strip.
+MIT Communication Lab gives the reader-side reason: HR readers often match resumes against posting requirements, while hiring managers and technical professionals examine experience and qualifications.[^mit-commlab] Berkeley's I School says employers are trying to identify how you could add value to their team against an open position and its needs.[^berkeley]
 
-Include GitHub, a portfolio, deployed project, technical writing, LinkedIn, or a public Tiny CV link only when the link helps a human inspect your work. A dead GitHub profile with abandoned class repos is weaker than no GitHub link.
+So the top of the resume should answer the role question fast.
 
-Keep the structure readable for systems too. Yale's technical resume guidance warns against complex formatting such as tables and graphic images for applicant tracking systems and recommends bullets that explain experience through accomplishment statements.[^yale] If you need a deeper parser-focused workflow, pair this with [what an ATS-friendly resume actually means](/blog/ats-friendly-resume).
+Tiny CV's paper preview is the place to test the order. If the new-grad version only fits after you delete the best project, the structure is wrong. If the senior version only fits after you compress architecture work into one vague line, the page has not chosen yet.
 
-Here is what each section should do:
+## How should software engineers write experience bullets?
 
-| Section | It earns space when... | It gets weaker when... |
+Software engineer experience bullets should connect action, system or project context, technical constraint, and truthful outcome.
+
+Use this formula:
+
+```text
+Action + system/project + technical context + constraint + outcome
+```
+
+The outcome does not have to be a perfect metric. A real number can sharpen proof, but a guessed number creates interview risk. When you cannot verify a metric, use scope, audience, frequency, before state, after state, release state, or operating constraint.
+
+Michigan Engineering's resume guidance tells candidates to use impact statements and keep generative AI output accurate.[^umich] NACE's career-readiness competencies also make the hidden proof visible: communication, critical thinking, teamwork, technology, leadership, and professionalism need evidence, not labels.[^nace]
+
+Here are three software-engineer rewrites that stay inside the facts.
+
+| Pattern | Weak or risky version | Defensible version |
 | --- | --- | --- |
-| Header | Links verify relevant work or give a clean current CV | It becomes a link dump |
-| Summary | It clarifies target role, domain, or seniority in one tight line | It repeats generic adjectives |
-| Experience | It proves shipped work, technical decisions, and outcomes | It lists duties without evidence |
-| Projects | It proves something experience does not yet prove | It repeats skills already proven at work |
-| Skills | It helps systems and humans locate real tools quickly | It becomes keyword stuffing |
-| Education | It explains current student/new-grad status, credentials, or relevant training | It preserves old coursework that no longer matters |
+| Vague duty -> evidence bullet | "Worked on checkout bugs." | "Debugged checkout state failures in React and Node.js, added regression tests for known edge cases, and documented the release checklist for support." |
+| AI-inflated bullet -> truthful bullet | "Increased platform reliability 80% and eliminated all incidents." | "Added service-level dashboards and alert notes for a recurring payment failure mode so the team could detect and triage the issue faster." |
+| Project description -> project proof bullet | "Built a job tracker app with Next.js." | "Built a Next.js job tracker with authenticated saved searches, PostgreSQL schema migrations, empty/error states, and a deployed demo for peer feedback." |
 
-The one-page test is not "Can I fit every section?"
+The better bullets are calmer.
 
-It is "Does every section make the hiring case sharper?"
+They name the work, the system, the constraint, and the evidence. They do not pretend a side project had enterprise scale. They do not let an AI agent turn "helped debug" into "owned reliability strategy."
 
-## When do projects, GitHub, and portfolio links deserve space?
+For the broader method, pair this section with [how to write resume bullets without inventing metrics](/blog/resume-bullets-without-inventing-metrics). The rule is the same for software engineers: facts before phrasing.
 
-Projects deserve space on a software engineer resume when they prove an ability not already proven by work experience.
+## What projects belong on a software engineer resume?
 
-For a student, that project may be the strongest evidence on the page. For an early-career engineer, it may show a stack or domain your job has not let you touch. For a mid-level or senior engineer, it usually needs to be unusually credible: open source, a deployed tool, technical writing, a demo, or a public artifact that shows judgment.
+Projects belong on a software engineer resume when they prove role-relevant engineering judgment that your experience section does not already prove.
 
-GitHub is common enough that a reader may expect to see it, but common is not the same as convincing. GitHub reported that more than 180 million developers build on the platform, with more than 36 million joining in one year and more than one new developer joining every second on average.[^github]
+That is why projects matter so much for new grads, bootcamp grads, career switchers, and engineers trying to move into a new stack or domain. The cited University of Pennsylvania Career Services project guidance says projects can highlight experience outside a daily role, strengthen a recent graduate resume, or bridge a career pivot; it also warns against dumping every project when one targeted project proves the needed skill better.[^upenn]
 
-That makes GitHub a normal developer work surface.
+A project earns space when it shows some combination of:
 
-It does not make every contribution graph resume-worthy.
+- A scoped problem.
+- A user, teammate, or reviewer.
+- Stack choices you can explain.
+- Tests, deployment, logging, accessibility, security, or error handling.
+- A tradeoff or constraint.
+- A live demo, readable repo, public writeup, or open-source contribution.
+- A maintenance state, not just a weekend screenshot.
 
-A strong project entry includes:
+Keep the project if it proves something missing from paid work. Compress it if it repeats a skill already proven. Cut it if it only says "built with React" and nothing else.
 
-- The problem.
-- The technical choices.
-- The constraint.
-- The result or current state.
-- A reviewable link, if safe to share.
+UTEP's technical checklist specifically calls for technical projects, coding languages, quantitative data where possible, and impact.[^utep] Berkeley's resume guide makes the higher-level point: employers are evaluating how you could add value to the team.[^berkeley]
 
-Weak:
+For experienced engineers, production work usually beats side projects. The exception is a project that is unusually relevant, public, inspectable, or stronger than what you can safely disclose from work.
 
-- Built weather app using React and API.
+A GitHub link helps only when there is something worth reading. A public Tiny CV link can sit beside a portfolio or repo when a human reader needs the clean current version of the resume, but the links should support proof rather than decorate the header.
 
-Stronger:
+## How should the skills section work on a software engineer resume?
 
-- Built a React weather dashboard with cached API responses, location fallback, and loading/error states to practice production-style client data handling; published demo and source link.
+A software engineer resume skills section should be short, grouped, and defensible.
 
-Notice what changed. The stronger version does not invent users or business value. It gives a human reader technical shape.
+The job of the skills section is translation. It helps systems and humans find the tools that matter, then the bullets prove that you used them.
 
-If the work is private or proprietary, do not leak it. Describe the public-safe version: service type, scale class, constraint, test or release evidence, and permitted outcome. A Tiny CV public link can sit beside selected project links while private evidence stays in your markdown source.
+O*NET's software developer profile includes programming, systems analysis, data handling, design, communication, and performance-related work.[^onet] Stack Overflow's 2025 Developer Survey received more than 49,000 responses from 177 countries and covered 314 technologies, which is a useful reminder that the developer-tool surface is huge.[^stackoverflow]
 
-## How do you write bullets that prove engineering work?
+That breadth is exactly why a skills section needs structure.
 
-Software engineer resume bullets should connect action, technical context, constraint, and evidence.
-
-Carnegie Mellon's SCS resume guide gives the clean version of the formula: action verb plus context plus result, with metrics, outcomes, or impact where possible.[^cmu] Tiny CV's version is similar:
-
-> Action + technical context + constraint + evidence/result.
-
-The result does not always need to be a perfect number. Real engineering proof can be a smaller blast radius, a clearer release path, a reduced incident class, a faster test suite, a removed dependency, an approved design, or a better handoff.
-
-NACE's Job Outlook 2026 Spring Update says employers expect to hire 5.6% more Class of 2026 graduates and, when reviewing entry-level resumes, seek evidence of polished teamwork, problem-solving, and communication skills.[^nace-job] NACE's career-readiness framework also defines competencies such as communication, critical thinking, teamwork, leadership, professionalism, and technology.[^nace-ready]
-
-Do not write those words into a skills section.
-
-Prove them in bullets.
-
-| Level | Before: task inventory | After: evidence bullet |
+| Skill group | What to list | Resume rule |
 | --- | --- | --- |
-| Student or new grad | Worked on team class project using Python | Implemented the data ingestion module for a 4-person Python project, added validation for missing inputs, and wrote setup docs so teammates could reproduce local runs |
-| Early-career engineer | Fixed bugs in checkout flow | Debugged checkout state failures in React and Node.js, added regression tests for three edge cases, and reduced repeat support escalations for that flow |
-| Mid-level engineer | Improved API performance | Reworked a high-traffic API path by removing duplicate database reads, adding request-level tracing, and documenting the rollback plan before release |
-| Senior or staff engineer | Led migration to new platform | Led service migration planning across backend, infrastructure, and support teams, defined compatibility checkpoints, and retired the legacy path after staged production validation |
+| Languages | TypeScript, Python, Java, Go, C++, SQL | List what you can use in a real task or explain in an interview |
+| Frameworks | React, Next.js, Node.js, Django, Spring | Back priority frameworks with bullets or projects |
+| Data and infrastructure | PostgreSQL, Redis, queues, APIs, Linux, cloud services | Tie to modeling, deployment, performance, reliability, or migration work |
+| Testing and observability | Jest, Playwright, pytest, tracing, metrics, logs | Strong when paired with quality or incident evidence |
+| Developer tools | Git, CI/CD, Docker, Terraform, AI coding tools | Include when they shaped delivery, review, automation, or workflow |
+| Domain tools | Payments, maps, security, analytics, CRM APIs | Include when domain familiarity matters for the target role |
 
-The "after" bullets are not magic. They are still conservative.
+Avoid proficiency theater unless the labels are simple and defensible. "Expert in JavaScript" invites a different conversation than "TypeScript, React, Next.js, Node.js."
 
-They avoid fake ownership, fake numbers, and fake certainty. If you helped, say helped. If you owned the design, say owned. If a metric is not verified, use non-numeric proof until you can verify it.
+Also avoid keyword dumping. Use job-description language as translation, not stuffing. If the posting says "observability," and your work involved logs, tracing, dashboards, or alerting, use the shared term and prove it in context.
 
-This is where agent-safe editing matters. An AI agent can tighten a bullet or propose a better order, but you must verify every claim before publishing, exporting, or sending. Use [the safe agent editing workflow](/blog/ai-agent-edit-resume-safely) when you want help without losing control of the facts.
+For parser-focused details, use [what an ATS-friendly resume actually means](/blog/ats-friendly-resume). For software engineers, the safest keyword strategy is still the boring one: real skills in the skills section, real usage in bullets.
 
-## Which software engineering skills should you list?
+## What should software engineer resume examples show by level?
 
-Software engineering skills should be grouped by type and backed by experience or projects wherever possible.
+Software engineer resume examples should show proof allocation by level, not fake full resumes from imaginary candidates.
 
-A skills section is a map, not a trophy case.
+Use these skeletons as section plans. Do not copy the claims. Fill them with your own evidence.
 
-O*NET's software developer profile includes programming, systems analysis, technical updating, documentation, collaboration, and standards-related work activities.[^onet] Stack Overflow's 2025 Developer Survey, with more than 49,000 responses from 177 countries, shows how broad the modern developer-tool surface has become.[^stackoverflow]
+### New grad software engineer
 
-That breadth is exactly why your skills section needs taxonomy.
+For a new grad software engineer, lead with education and projects when they are stronger than limited work history.
 
-| Skill group | Examples | Resume rule |
-| --- | --- | --- |
-| Languages | TypeScript, Python, Java, Go, C++, SQL | List what you can use in a real task or interview |
-| Frameworks and libraries | React, Next.js, Node.js, Django, Spring, PyTorch | Back the important ones with bullets or projects |
-| Systems and platforms | Linux, distributed systems, APIs, event queues, authentication | Use when the role asks for system judgment |
-| Data and storage | PostgreSQL, Redis, MongoDB, Snowflake, Elasticsearch | Tie to modeling, querying, migration, or performance work |
-| Cloud and DevOps | AWS, GCP, Docker, Kubernetes, Terraform, CI/CD | Show deployment, reliability, or infrastructure context |
-| Testing and observability | Jest, Playwright, pytest, tracing, metrics, logs, dashboards | Strong when paired with quality or incident evidence |
-| AI and developer tools | Copilot, Claude Code, OpenAI API, LangChain, eval tools | Mention only if you used them responsibly and can explain the workflow |
-| Domain tools | Payments, maps, security, healthcare, analytics, CRM APIs | Include when domain familiarity matters to the target role |
+**Best proof to lead with:** substantial projects, internships, research, teaching assistant work, technical leadership, readable GitHub, deployed demos.
 
-Do not list soft skills here. "Communication" is not stronger because it sits next to "PostgreSQL."
+**Section skeleton:** Header -> Education -> Projects -> Skills -> Experience/Leadership.
 
-Prove communication through a design doc, a customer escalation, a handoff, a migration plan, a mentoring note, or a cross-functional launch.
+**Common weak filler to cut:** every course ever taken, small tutorial projects, generic teamwork claims, and skills that never appear in a project.
 
-Also be careful with trend chasing. GitHub's 2025 Octoverse says TypeScript overtook Python and JavaScript on GitHub in August 2025, and more than 1.1 million public repositories import an LLM SDK.[^github] Stack Overflow found that more developers actively distrust AI tool accuracy than trust it: 46% versus 33%.[^stackoverflow]
+### Mid-level product or full-stack engineer
 
-Here is what that means for your resume: current tools matter, but verification matters more.
+For a mid-level engineer, lead with production ownership and make projects optional.
 
-Do not add TypeScript, AI agents, or LLM SDKs because they are current. Add them when your bullets prove you used them.
+**Best proof to lead with:** shipped features, service ownership, debugging, tests, migrations, performance work, product collaboration, operational fixes.
 
-## What should a software developer resume example look like in 2026?
+**Section skeleton:** Header -> Experience -> Skills -> Selected Projects/Open Source -> Education.
 
-A software developer resume example in 2026 should show section order and proof allocation, not fake claims from an imaginary candidate.
+**Common weak filler to cut:** student projects that no longer add proof, repeated tool lists, old coursework, and vague "worked on" bullets.
 
-So use skeletons, not copy-paste resumes.
+### Senior or staff engineer
 
-### New grad software engineer skeleton
+For a senior or staff engineer, lead with leverage, technical judgment, and scope beyond personal implementation.
 
-For a new grad software engineer resume, lead with education and projects when they are stronger than work history.
+**Best proof to lead with:** architecture, platform decisions, reliability strategy, migrations, incident learning, mentoring, standards, cross-team technical direction.
 
-**Header:** name, email, location, GitHub or portfolio if readable, public CV link if current.
+**Section skeleton:** Header -> Experience -> Selected technical leadership proof -> Skills -> Education.
 
-**Education:** degree, school, graduation date, relevant honors or focused coursework only if it supports the target.
+**Common weak filler to cut:** ticket-by-ticket task lists, basic implementation bullets, old roles with repeated proof, and giant skills inventories.
 
-**Projects:** two or three substantial projects with implementation details, constraints, tests, links, and team context.
+### Career switcher into software engineering
 
-**Experience:** internships, research, teaching assistant work, campus technical roles, or part-time work with transferable proof.
+For a career switcher, lead with the technical proof that makes the switch believable, then translate prior experience into relevant scope.
 
-**Skills:** grouped technical skills, not a single keyword cloud.
+**Best proof to lead with:** deployed projects, code reviews, open-source work, certificates only when backed by projects, and transferable work involving systems, data, operations, customers, or technical collaboration.
 
-### Mid-level backend or full-stack skeleton
+**Section skeleton:** Header -> Targeted summary -> Technical projects -> Transferable experience proof -> Skills -> Education/certificates.
 
-For a mid-level software engineer resume, lead with production ownership and make projects optional.
+**Common weak filler to cut:** old duties that are not translated, unsupported "software engineer" identity claims, and projects with no deployment, tests, or explanation.
 
-**Header:** contact, GitHub or technical writing if relevant, public CV link.
+BLS and O*NET are useful here because they describe the work, not your exact path into it.[^bls][^onet] The resume's job is to make your path legible against that work.
 
-**Summary:** one line only if it clarifies backend, full-stack, platform, domain, or target role.
+## What should software engineers avoid claiming?
 
-**Experience:** recent roles with bullets about services, features, reliability, performance, migrations, tests, incidents, and cross-functional delivery.
+Software engineers should avoid claims they cannot defend in an interview, a reference check, or a technical conversation.
 
-**Projects or writing:** include only if it adds proof missing from work.
+Cut these before you export:
 
-**Skills:** grouped by languages, frameworks, systems, data, cloud, testing, and tools.
+- Universal ATS ranking claims.
+- Guaranteed interview or hiring outcomes.
+- Fixed recruiter scan-time claims treated as law.
+- Tools listed as experience when you only watched a tutorial.
+- Metrics with no source.
+- Team outcomes written as solo ownership.
+- AI-polished bullets that add customers, revenue, scale, seniority, or certainty you did not provide.
+- Resume examples copied as if they describe your own work.
 
-**Education:** compressed.
+The fact that a claim sounds normal on a resume does not make it true. If you cannot explain where the number came from, who used the system, what you owned, or what changed afterward, the bullet is not ready.
 
-### Senior or staff platform skeleton
+This is where Tiny CV's source-of-truth workflow matters. Keep rough evidence, private notes, and unverified metrics in your drafting source. Put only defensible claims in the public version, PDF, or hosted link.
 
-For a senior or staff software engineer resume, lead with leverage and judgment beyond personal implementation.
+When an AI agent helps, ask for ordering, compression, unsupported-claim flags, and clearer phrasing. Do not ask it to invent proof. Use [the safest way to let an AI agent edit your resume](/blog/ai-agent-edit-resume-safely) before you let model-generated language near the final page.
 
-**Header:** contact, technical writing, open source, talks, portfolio, or public CV link when they support credibility.
+## A Tiny CV workflow for a software engineer resume version
 
-**Summary:** a tight scope statement can help: platform, reliability, developer experience, architecture, security, or product engineering.
+A practical Tiny CV workflow starts with proof, chooses the target role, and turns one truthful source into a clean role-specific version.
 
-**Experience:** architecture, migrations, standards, incident reduction, mentoring, platform adoption, technical strategy, and business or product outcomes.
+Follow this sequence:
 
-**Selected artifacts:** public talks, design writing, open-source maintainership, or major systems work if shareable.
+1. Inventory proof in your markdown source: shipped work, projects, metrics, links, incidents, docs, reviews, migrations, users, and constraints.
+2. Choose the target software engineering role and seniority level.
+3. Fill the Software Engineer Proof Matrix privately.
+4. Pick the section order from the one-page decision tree.
+5. Write bullets only from facts you can defend.
+6. Group skills by taxonomy, then make sure priority skills also appear in bullets or projects.
+7. Use Tiny CV's paper preview to test whether the page fits before shrinking type.
+8. Duplicate into a role-specific version when the target changes; change emphasis, not facts.
+9. Export a PDF for systems.
+10. Share a public Tiny CV link when a human reader benefits from the clean browser version.
+11. If an agent helps, ask it to flag unsupported claims and improve structure, then approve every final line yourself.
 
-**Skills:** narrower than a mid-level list; emphasize the stack and systems you can defend.
+That workflow pairs with [your resume needs a source of truth](/blog/resume-source-of-truth) and [should you tailor your resume for every job?](/blog/should-you-tailor-resume-for-every-job). The point is not to maintain one swollen master resume.
 
-**Education:** brief unless relevant to the role.
+The point is to keep one truthful source and produce focused versions from it.
 
-These are structures, not claims to copy. A fake metric is worse than an empty metric slot.
+For a software engineer, the winning page is not the one with the longest skills list. It is the one where the strongest proof is easy to find, easy to believe, and still true when someone asks you about it.
 
-If you are unsure what deserves a role-specific version, use [the resume tailoring decision framework](/blog/should-you-tailor-resume-for-every-job) before rewriting the whole page.
-
-## How do you build the Tiny CV version without losing the facts?
-
-You build the Tiny CV version by starting from a private source of truth, choosing the target role, and selecting only the evidence that proves that version.
-
-The workflow is deliberately plain:
-
-1. Gather source-of-truth notes: roles, dates, projects, metrics, links, reviews, incidents, launches, and constraints.
-2. Pick the target software engineering role and seniority level.
-3. Choose the matching row from the proof map.
-4. Select bullets, projects, skills, and links that prove that row.
-5. Group skills by taxonomy instead of dumping keywords.
-6. Preview the resume on one page before shrinking type.
-7. Verify every link and every claim.
-8. Export a PDF when a system asks for a file.
-9. Publish or share a public CV link when a human needs the clean current version.
-
-That workflow pairs with [your resume needs a source of truth](/blog/resume-source-of-truth) because the private record and the public resume should not be the same document. The private record can hold rough notes, confidential context, and unverified metrics. The public version should hold only what you can defend.
-
-Tiny CV role-specific versions are useful because tailoring should change emphasis, not facts. One version can foreground frontend product work. Another can foreground infrastructure reliability. The dates, employers, titles, and outcomes stay stable.
-
-Facts before phrasing.
-
-Public link for humans. PDF for systems.
-
-That is the software engineer resume standard: not every technology you have touched, but the strongest proof you can defend on one page.
-
-[^bls]: U.S. Bureau of Labor Statistics, "Software Developers, Quality Assurance Analysts, and Testers," Occupational Outlook Handbook, last modified August 28, 2025, https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm
-[^onet]: National Center for O*NET Development, O*NET Online, "15-1252.00 - Software Developers," https://www.onetonline.org/link/details/15-1252.00
-[^yale]: Yale Office of Career Strategy, "STEMConnect: Technical Resume Sample," https://ocs.yale.edu/resources/stemconnect-technical-resume-sample/
-[^cmu]: Carnegie Mellon University School of Computer Science Career & Professional Development Center, "Step-by-Step Resume Guide," https://www.cmu.edu/career/documents/resources-by-college/scs/scs-resume-guide-2022.pdf
-[^github]: GitHub Staff, "Octoverse: A new developer joins GitHub every second as AI leads TypeScript to #1," October 28, 2025, updated February 28, 2026, https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/
-[^nace-job]: National Association of Colleges and Employers, "Job Outlook 2026: Spring Update," April 2026, https://www.naceweb.org/research/reports/2026/job-outlook/spring-update/
-[^nace-ready]: National Association of Colleges and Employers, "What is Career Readiness?", https://www.naceweb.org/career-readiness/competencies/career-readiness-defined/
+[^bls]: U.S. Bureau of Labor Statistics, "Software Developers, Quality Assurance Analysts, and Testers," Occupational Outlook Handbook, https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm
+[^onet]: National Center for O*NET Development, O*NET OnLine, "15-1252.00 - Software Developers," https://www.onetonline.org/link/summary/15-1252.00
+[^mit-capd]: MIT Career Advising & Professional Development, "Resumes," https://capd.mit.edu/channels/resumes/
+[^mit-commlab]: MIT Communication Lab, "CV/Resume," https://mitcommlab.mit.edu/nse/commkit/cvresume/
+[^umich]: University of Michigan Engineering Career Resource Center, "Resumes, CVs and Cover Letters," https://career.engin.umich.edu/resumes-cvs-cover-letters/
+[^utep]: University of Texas at El Paso Career Center, "Technical Resume Checklist," https://www.utep.edu/student-affairs/careers/_Files/docs/Students/Sample%20Documents/Technical_Resume_Checklist.pdf
+[^upenn]: University of Pennsylvania Career Services, "How-and When-to Include Projects on Your Resume (Plus Examples!)," February 26, 2021, https://careerservices.upenn.edu/blog/2021/02/26/how-and-when-to-include-projects-on-your-resume-plus-examples/
+[^berkeley]: UC Berkeley School of Information, "Resume Basics," https://www.ischool.berkeley.edu/careers/guides/resume
+[^nace]: National Association of Colleges and Employers, "What is Career Readiness?", https://www.naceweb.org/career-readiness/competencies/career-readiness-defined/
 [^stackoverflow]: Stack Overflow, "2025 Developer Survey," https://survey.stackoverflow.co/2025/
