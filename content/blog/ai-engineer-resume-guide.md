@@ -5,7 +5,7 @@ date: "2026-05-27"
 author: "Andrew Jiang"
 category: "Role-Specific Resume Playbooks"
 slug: "ai-engineer-resume-guide"
-heroImage: "/blog/ai-engineer-resume-guide-hero.webp"
+heroImage: "/blog/ai-engineer-resume-guide-hero-v2.webp"
 ---
 
 An AI engineer resume in 2026 should prove that you can turn models, data, retrieval, evaluation, and infrastructure into a working AI product.

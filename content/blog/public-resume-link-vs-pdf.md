@@ -5,7 +5,7 @@ date: "2026-05-25"
 author: "Andrew Jiang"
 category: "Job Search"
 slug: "public-resume-link-vs-pdf"
-heroImage: "/blog/public-resume-link-vs-pdf-hero.webp"
+heroImage: "/blog/public-resume-link-vs-pdf-hero-v2.webp"
 ---
 
 You should send a PDF when an employer asks for a file, and share a public resume link when a person needs to review, forward, or revisit your resume.
