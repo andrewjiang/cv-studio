@@ -3,6 +3,7 @@ import path from "node:path";
 
 export const BLOG_CATEGORIES = [
   "Resume Writing",
+  "AI-Assisted Resumes",
   "Role-Specific Resume Playbooks",
   "Job Search",
   "Career Materials",
