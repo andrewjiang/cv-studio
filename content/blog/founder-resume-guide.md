@@ -5,7 +5,7 @@ date: "2026-05-30"
 author: "Andrew Jiang"
 category: "Role-Specific Resume Playbooks"
 slug: "founder-resume-guide"
-heroImage: "/blog/founder-resume-guide-hero.webp"
+heroImage: "/blog/founder-resume-guide-hero-v2.webp"
 ---
 
 Yes, you should put founder experience on your resume when it represents real work, real responsibility, or a meaningful career period.

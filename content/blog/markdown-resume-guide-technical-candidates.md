@@ -5,7 +5,7 @@ date: "2026-05-30"
 author: "Andrew Jiang"
 category: "Career Materials"
 slug: "markdown-resume-guide-technical-candidates"
-heroImage: "/blog/markdown-resume-guide-technical-candidates-hero.webp"
+heroImage: "/blog/markdown-resume-guide-technical-candidates-hero-v2.webp"
 ---
 
 You can turn a rough technical resume into a clean Markdown source that is easier to inspect, edit, tailor, publish, and export.

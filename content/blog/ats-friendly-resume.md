@@ -5,7 +5,7 @@ date: "2026-05-25"
 author: "Andrew Jiang"
 category: "Resume Writing"
 slug: "ats-friendly-resume"
-heroImage: "/blog/ats-friendly-resume-hero.webp"
+heroImage: "/blog/ats-friendly-resume-hero-v2.webp"
 ---
 
 An ATS-friendly resume is a resume that systems can read as text and humans can understand as evidence.

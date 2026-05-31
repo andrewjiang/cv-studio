@@ -5,7 +5,7 @@ date: "2026-05-31"
 author: "Andrew Jiang"
 category: "Role-Specific Resume Playbooks"
 slug: "software-engineer-resume-guide"
-heroImage: "/blog/software-engineer-resume-guide-hero.webp"
+heroImage: "/blog/software-engineer-resume-guide-hero-v2.webp"
 ---
 
 A software engineer resume in 2026 should prove the level of engineering judgment you can bring to the next role, not every tool you have ever touched.

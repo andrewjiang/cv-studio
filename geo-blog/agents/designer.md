@@ -60,7 +60,7 @@ Examples:
   "composition": {
     "focal_point": "one dominant focal point",
     "readability": "the metaphor is understandable in two seconds",
-    "negative_space": "generous space for headline overlay",
+    "negative_space": "generous warm-paper or lightly textured mid-tone space for headline overlay; never a black or near-black empty void",
     "cropping": "works as 16:9 hero and social preview"
   },
   "constraints": {
@@ -73,13 +73,14 @@ Examples:
 
 6. **Flatten to a natural language prompt** — Convert the JSON into a precise, descriptive text prompt for the API. Example:
 
-   "Concept-first editorial illustration for Tiny CV in monochrome ink linework on warm cream paper with forest-green accents. One dominant metaphor: [metaphor]. Visual stakes: [stakes]. The image should be understandable in two seconds, with one clear focal point and generous negative space for headline overlay. No photography, no generic SaaS style, no text, letters, readable handwriting, labels, logos, UI, watermarks, captions, or typography. Documents use abstract lines only."
+   "Concept-first editorial illustration for Tiny CV in monochrome ink linework on warm cream paper with forest-green accents. One dominant metaphor: [metaphor]. Visual stakes: [stakes]. The image should be understandable in two seconds, with one clear focal point and generous warm-paper or lightly textured mid-tone negative space for headline overlay. Do not create black backgrounds, dark empty corners, spotlight falloff, vignette, or large near-black regions. No photography, no generic SaaS style, no text, letters, readable handwriting, labels, logos, UI, watermarks, captions, or typography. Documents use abstract lines only."
 
 7. **Run the concept quality gate before calling the API**:
    - If the prompt could apply to any resume blog, rewrite it.
    - If the image would mostly be a laptop, desk, or document stack, rewrite it.
    - If there is no clear metaphor, rewrite it.
    - If the metaphor is not understandable in two seconds, rewrite it.
+   - If the prompt mentions dark negative space, underexposure, black background, vignette, spotlight, dramatic low-key lighting, or clean dark corners, rewrite it.
 
 8. **Verify OpenAI credentials** — Use `OPENAI_API_KEY` from the process environment. Do not read `.env.local`, shell-source repo files, print secrets, or include secrets in prompts, logs, or final output. Use `OPENAI_IMAGE_MODEL` if set, otherwise default to `gpt-image-2`.
 
@@ -111,7 +112,13 @@ pnpm generate:blog-hero \
    - PNG: `/tmp/{slug}-hero.png`
    - WebP: `/tmp/{slug}-hero.webp` (convert from PNG using `sips` on macOS or `cwebp` if available)
 
-11. **Retry on failure** — If the API call fails (rate limit, auth error, network, converter missing), retry once. If it fails again, return `DESIGNER_STATUS: fail` with the error. Do not return `hero_png: none` for publication.
+11. **Run the visual quality gate** — Inspect the generated PNG before returning success:
+   - Reject and regenerate if the image contains a large black or near-black background region, dark empty corner, heavy vignette, or spotlight falloff.
+   - Reject and regenerate if the full image has more than roughly 12% near-black pixels or if any headline-safe quadrant has more than roughly 20% near-black pixels.
+   - Reject and regenerate if the composition reads as a dark void with a small object placed in it, even when the pixel threshold is not exceeded.
+   - The safe replacement prompt should explicitly say: `warm cream paper background, evenly lit ink illustration, no black background, no dark voids, no vignette`.
+
+12. **Retry on failure** — If the API call fails (rate limit, auth error, network, converter missing) or the visual quality gate fails, retry once with the corrected prompt. If it fails again, return `DESIGNER_STATUS: fail` with the error. Do not return `hero_png: none` for publication.
 
 ## Output Format
 
@@ -137,6 +144,7 @@ ERROR: [specific error message from the API]
 ## Rules
 
 - **No text baked into the image.** The hero constraint from GEO.md is absolute: no text, letters, titles, captions, UI labels, logos, watermarks, or readable handwriting rendered in the image itself. If the scene includes documents, they must use abstract lines only.
+- **No black voids.** Never ask for or accept black backgrounds, large near-black regions, dark empty top-left areas, vignettes, spotlight falloff, or underexposed compositions. Negative space should be warm paper, light texture, or balanced mid-tone editorial space.
 - **Metaphor before style.** The image must visualize the post's core idea, not merely decorate the topic.
 - **Default style is ink + green editorial.** Use monochrome ink linework, forest-green accents, warm cream paper, and sparse muted amber/clay accents unless the brief explicitly says otherwise.
 - **Use cache-busting filenames when replacing an existing hero.** If regenerating an image after a post already references `{slug}-hero.webp`, save the replacement as `{slug}-hero-v2.webp` (or the next available suffix) and update the post frontmatter. Do not reuse a public image URL for a materially different image.

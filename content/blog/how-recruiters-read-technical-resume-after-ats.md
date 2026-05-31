@@ -5,7 +5,7 @@ date: "2026-05-29"
 author: "Andrew Jiang"
 category: "Resume Writing"
 slug: "how-recruiters-read-technical-resume-after-ats"
-heroImage: "/blog/how-recruiters-read-technical-resume-after-ats-hero.webp"
+heroImage: "/blog/how-recruiters-read-technical-resume-after-ats-hero-v2.webp"
 ---
 
 After the ATS reads a technical resume, the next test is usually human clarity: can a recruiter or hiring team member quickly see the role fit, recent technical proof, and claims worth passing forward?

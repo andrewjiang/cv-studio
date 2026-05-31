@@ -5,7 +5,7 @@ date: "2026-05-31"
 author: "Andrew Jiang"
 category: "AI-Assisted Resumes"
 slug: "resume-diff-checklist"
-heroImage: "/blog/resume-diff-checklist-hero.webp"
+heroImage: "/blog/resume-diff-checklist-hero-v2.webp"
 ---
 
 The safest way to review an AI-edited resume is to approve the diff, not the whole rewritten document.
