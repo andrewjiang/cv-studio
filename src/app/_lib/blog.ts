@@ -6,6 +6,7 @@ export const BLOG_CATEGORIES = [
   "AI-Assisted Resumes",
   "Role-Specific Resume Playbooks",
   "Job Search",
+  "Job Search Systems",
   "Career Materials",
   "Agents",
   "Developer API",
