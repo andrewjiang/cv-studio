@@ -14,7 +14,8 @@ export function ResumePrintView({
   return (
     <main className="bg-white text-slate-900">
       {autoPrint ? <ResumeAutoPrintBridge /> : null}
-      <ResumeDesktopSheet document={document} fitScale={fitScale} interactive={false} />
+      {/* Links stay real anchors here so the exported PDF keeps them clickable. */}
+      <ResumeDesktopSheet document={document} fitScale={fitScale} interactive />
 
       <style media="print">{`@page { size: ${document.style.pageSize}; margin: 0; }`}</style>
     </main>
