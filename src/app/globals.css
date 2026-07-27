@@ -88,6 +88,68 @@ textarea {
   overflow: hidden;
 }
 
+/*
+ * A frame that renders a full-size page scaled to the width it is given, so the
+ * published resume grows with the viewport instead of sitting at 8.5in.
+ */
+.cv-scaled-frame {
+  --cv-stage-scale: 1;
+}
+
+.cv-scaled-frame > .cv-sheet {
+  transform: scale(var(--cv-stage-scale));
+  transform-origin: top left;
+}
+
+/*
+ * Pre-hydration approximation of the width PublicResumeDesktopStage measures,
+ * so the sheet lands close to its final size on first paint (and still scales
+ * without JavaScript). Every step stays a little under the exact
+ * viewport-derived scale, leaving room for a scrollbar, so the sheet can never
+ * overflow its stage before the measured value takes over.
+ */
+@media (min-width: 1024px) {
+  .cv-scaled-frame {
+    --cv-stage-scale: 1.15;
+  }
+}
+
+@media (min-width: 1152px) {
+  .cv-scaled-frame {
+    --cv-stage-scale: 1.31;
+  }
+}
+
+@media (min-width: 1280px) {
+  .cv-scaled-frame {
+    --cv-stage-scale: 1.46;
+  }
+}
+
+@media (min-width: 1408px) {
+  .cv-scaled-frame {
+    --cv-stage-scale: 1.62;
+  }
+}
+
+@media (min-width: 1536px) {
+  .cv-scaled-frame {
+    --cv-stage-scale: 1.78;
+  }
+}
+
+@media (min-width: 1664px) {
+  .cv-scaled-frame {
+    --cv-stage-scale: 1.93;
+  }
+}
+
+@media (min-width: 1792px) {
+  .cv-scaled-frame {
+    --cv-stage-scale: 2;
+  }
+}
+
 .cv-document {
   height: 100%;
   position: relative;
@@ -201,6 +263,7 @@ textarea {
     align-items: flex-start !important;
     justify-content: flex-start !important;
     width: auto !important;
+    max-width: none !important;
     min-height: 0 !important;
   }
 
