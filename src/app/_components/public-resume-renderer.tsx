@@ -1,4 +1,5 @@
 import { PublicResumeFooterActions } from "@/app/_components/public-resume-footer-actions";
+import { PublicResumeDesktopStage } from "@/app/_components/public-resume-stage";
 import { ResumeDesktopSheet, ResumeMobileSheet } from "@/app/_components/resume-live-document";
 import { ResumePrintView } from "@/app/_components/resume-print-view";
 import { getPageMetrics } from "@/app/_lib/cv-fit";
@@ -31,11 +32,14 @@ export async function PublicResumeRenderer({
           <ResumeMobileSheet document={document} />
         </div>
 
-        <div className="public-resume-desktop hidden flex-1 items-start justify-center lg:flex">
+        <PublicResumeDesktopStage
+          pageHeight={pageMetrics.pageHeight}
+          pageWidth={pageMetrics.pageWidth}
+        >
           <ResumeDesktopSheet document={document} fitScale={resume.fitScale} />
-        </div>
+        </PublicResumeDesktopStage>
 
-        <PublicResumeFooterActions pageWidth={pageMetrics.pageWidth} showBranding={!hideBranding} />
+        <PublicResumeFooterActions showBranding={!hideBranding} />
       </div>
 
       <style media="print">{`@page { size: ${document.style.pageSize}; margin: 0; }`}</style>

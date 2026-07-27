@@ -1,15 +1,14 @@
 "use client";
 
 import { DownloadIcon } from "@/app/_components/cv-studio-ui";
+import { publicResumeColumnClass } from "@/app/_components/public-resume-stage";
 import { downloadPdfFromUrl } from "@/app/_lib/pdf-download-client";
 import { buildResumePdfDownloadUrl } from "@/app/_lib/resume-print-url";
 import Link from "next/link";
 
 export function PublicResumeFooterActions({
-  pageWidth,
   showBranding,
 }: {
-  pageWidth: number;
   showBranding: boolean;
 }) {
   const handleDownloadPdf = async () => {
@@ -28,8 +27,7 @@ export function PublicResumeFooterActions({
   if (!showBranding) {
     return (
       <footer
-        className="app-chrome mx-auto mt-4 flex w-full items-center justify-end pb-2 lg:mt-5 lg:pb-0 print:hidden"
-        style={{ maxWidth: `${pageWidth}px` }}
+        className={`app-chrome ${publicResumeColumnClass} mt-4 flex items-center justify-end pb-2 lg:mt-5 lg:pb-0 print:hidden`}
       >
         <button
           className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 text-[0.82rem] font-medium text-slate-600 underline-offset-4 transition hover:text-slate-950 hover:underline sm:min-h-0 sm:min-w-0"
@@ -45,8 +43,7 @@ export function PublicResumeFooterActions({
 
   return (
     <footer
-      className="app-chrome mx-auto mt-4 flex w-full flex-col gap-2 pb-2 text-left sm:flex-row sm:items-center sm:justify-between lg:mt-5 lg:pb-0 print:hidden"
-      style={{ maxWidth: `${pageWidth}px` }}
+      className={`app-chrome ${publicResumeColumnClass} mt-4 flex flex-col gap-2 pb-2 text-left sm:flex-row sm:items-center sm:justify-between lg:mt-5 lg:pb-0 print:hidden`}
     >
       <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
         Published with Tiny CV
