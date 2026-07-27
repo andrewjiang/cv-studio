@@ -15,6 +15,7 @@ export type ApiRateLimitAction =
   | "api:resume_publish"
   | "api:resume_update"
   | "api:validate"
+  | "social:card"
   | "workspace:attach"
   | "workspace:bootstrap"
   | "workspace:create"
@@ -44,6 +45,7 @@ const DEFAULT_POLICIES: Record<ApiRateLimitAction, RateLimitPolicy> = {
   "api:resume_publish": { max: 30, windowSeconds: 60 },
   "api:resume_update": { max: 120, windowSeconds: 60 },
   "api:validate": { max: 120, windowSeconds: 60 },
+  "social:card": { max: 120, windowSeconds: 60 },
   "workspace:attach": { max: 30, windowSeconds: 60 },
   "workspace:bootstrap": { max: 20, windowSeconds: 60 * 60 },
   "workspace:create": { max: 30, windowSeconds: 60 },

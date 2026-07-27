@@ -55,7 +55,7 @@ This repo is intended to be publishable as an open-core app.
 | --- | --- | --- | --- |
 | File-backed local mode | Editor, preview, templates, local publishing flows | Nothing beyond Node and pnpm | Fast local development and simple self-hosting |
 | Database-backed mode | Durable workspaces, accounts, account-owned resumes, full developer API | Postgres | Serious self-hosting and production deployments |
-| Browser-backed jobs | Chromium-measured publish fit and async PDF jobs | `TINYCV_BROWSER_WS_ENDPOINT` or `TINYCV_CHROME_EXECUTABLE_PATH` | Production PDF/export parity |
+| Browser-backed jobs | Chromium-measured publish fit, async PDF jobs, and per-resume social cards | `TINYCV_BROWSER_WS_ENDPOINT` or `TINYCV_CHROME_EXECUTABLE_PATH` | Production PDF/export parity |
 | Billing and machine payments | Stripe checkout, premium entitlements, x402/MPP paid endpoints | Extra provider credentials | Optional commercial add-ons |
 
 ## Quick Start
@@ -192,7 +192,7 @@ High-level deployment requirements:
 
 - Postgres for durable production storage
 - explicit secrets for editor, platform, auth, and worker flows
-- Chromium access for browser-measured publish fit and PDF jobs
+- Chromium access for browser-measured publish fit, PDF jobs, and social cards
 - a scheduled job or worker invocation for `/api/v1/jobs/process`
 
 ## Verification

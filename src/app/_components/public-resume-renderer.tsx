@@ -6,7 +6,11 @@ import { getPageMetrics } from "@/app/_lib/cv-fit";
 import { parseCvMarkdown } from "@/app/_lib/cv-markdown";
 import { canRemoveBrandingForResume } from "@/app/_lib/entitlements";
 import type { HostedResumePublicRecord } from "@/app/_lib/hosted-resume-types";
-import { getTinyCvSocialCardImage } from "@/app/_lib/site-metadata";
+import {
+  buildResumeSocialCardPath,
+  SOCIAL_CARD_CONTENT_TYPE,
+  SOCIAL_CARD_IMAGE_SIZE,
+} from "@/app/_lib/resume-social-card";
 
 export async function PublicResumeRenderer({
   autoPrint = false,
@@ -60,7 +64,13 @@ export async function buildPublicResumeMetadata(
     : `${document.name}'s resume, published with Tiny CV.`;
   const title = `${document.name} | Resume`;
   const canonicalPath = options?.canonicalPath ?? `/${resume.slug}`;
-  const socialCardImage = getTinyCvSocialCardImage();
+  const socialCardImage = {
+    alt: `The top of ${document.name}'s resume`,
+    height: SOCIAL_CARD_IMAGE_SIZE.height,
+    type: SOCIAL_CARD_CONTENT_TYPE,
+    url: buildResumeSocialCardPath(resume),
+    width: SOCIAL_CARD_IMAGE_SIZE.width,
+  } as const;
 
   return {
     alternates: {
