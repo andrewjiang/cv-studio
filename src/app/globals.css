@@ -150,6 +150,31 @@ textarea {
   }
 }
 
+/*
+ * Screenshot surface for a resume's social card. The sheet is anchored to the
+ * top and runs off the bottom edge, so the card shows the head of the resume at
+ * a readable size instead of a shrunken full page.
+ */
+.social-card-stage {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% -24%, rgba(15, 118, 110, 0.09), transparent 62%),
+    linear-gradient(180deg, #fbf8f2 0%, #f1ece3 100%);
+}
+
+.social-card-paper {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  width: calc(816px * var(--cv-stage-scale));
+  transform: translateX(-50%);
+}
+
+.social-card-paper .cv-sheet {
+  border-radius: 0.55rem 0.55rem 0 0;
+}
+
 .cv-document {
   height: 100%;
   position: relative;

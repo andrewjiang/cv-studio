@@ -7,7 +7,7 @@ This guide is the public production checklist for self-hosting Tiny CV with dura
 Tiny CV works best when you treat the deployment as two layers:
 
 - core app: Next.js server that handles the editor, API, auth, and public resumes
-- background/browser layer: a worker or scheduled caller plus Chromium access for publish-fit measurement and PDF jobs
+- background/browser layer: a worker or scheduled caller plus Chromium access for publish-fit measurement, PDF jobs, and social cards
 
 You can run both on one machine for small deployments or split them across services later.
 
@@ -64,7 +64,7 @@ pnpm check:prod
 
 ### 3. Browser-Backed Jobs
 
-API publish-fit measurement and async PDF jobs need Chromium access.
+API publish-fit measurement, async PDF jobs, and the per-resume social cards on published pages need Chromium access. Without it, published pages fall back to the generic Tiny CV card.
 
 Set one of:
 
