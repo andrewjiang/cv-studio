@@ -486,7 +486,7 @@ function createLocalFileStore(): HostedResumeStore {
       const now = new Date().toISOString();
       applyResumeMarkdownUpdate(resume, markdown, fitScale, now);
       resume.isPublished = true;
-      resume.publishedAt = resume.publishedAt ?? now;
+      resume.publishedAt = now;
       resume.publishedFitScale = fitScale;
       resume.publishedMarkdown = normalizeCvMarkdown(markdown);
       touchLocalMembership(membership, now);
@@ -825,7 +825,7 @@ function createPostgresStore(): HostedResumeStore {
             published_markdown = ${normalizedMarkdown},
             published_fit_scale = ${fitScale},
             is_published = true,
-            published_at = coalesce(published_at, ${now}),
+            published_at = ${now},
             updated_at = ${now}
           where id = ${resumeId}
         `;
