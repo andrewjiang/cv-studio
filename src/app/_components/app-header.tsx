@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { authClient } from "@/app/_lib/auth-client";
+import type { BlogAttributionInput } from "@/app/_lib/blog-product-intent-analytics";
+import { BlogProductIntentLink } from "./blog-product-intent-links";
 import { brandPrimaryButtonClass } from "./button-classes";
 import { UserMenu } from "./user-menu";
 
@@ -28,9 +30,14 @@ export function AppHeaderBrand({ className = "" }: { className?: string }) {
 }
 
 export function AppHeader({
+  blogAnalytics = null,
   continueEditingHref,
   isAccountPage = false,
 }: {
+  blogAnalytics?: Pick<
+    BlogAttributionInput,
+    "blogCategory" | "blogSlug" | "blogTitle" | "surface"
+  > | null;
   continueEditingHref?: string | null;
   isAccountPage?: boolean;
 }) {
@@ -45,9 +52,21 @@ export function AppHeader({
 
         <div className="flex items-center gap-6 sm:gap-10">
           <nav className="hidden items-center gap-6 text-[0.92rem] font-semibold text-slate-600 md:flex">
-            <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/templates">
-              Templates
-            </Link>
+            {blogAnalytics ? (
+              <BlogProductIntentLink
+                {...blogAnalytics}
+                className="inline-flex min-h-11 items-center transition hover:text-slate-950"
+                href="/templates"
+                intent="template"
+                linkText="Templates"
+              >
+                Templates
+              </BlogProductIntentLink>
+            ) : (
+              <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/templates">
+                Templates
+              </Link>
+            )}
             <Link className="inline-flex min-h-11 items-center transition hover:text-slate-950" href="/blog">
               Blog
             </Link>
@@ -69,12 +88,24 @@ export function AppHeader({
             <UserMenu />
 
             {showSignedOutCta ? (
-              <Link
-                className={`${brandPrimaryButtonClass} hidden h-11 px-5 text-[0.92rem] sm:inline-flex`}
-                href="/new"
-              >
-                Start writing
-              </Link>
+              blogAnalytics ? (
+                <BlogProductIntentLink
+                  {...blogAnalytics}
+                  className={`${brandPrimaryButtonClass} hidden h-11 px-5 text-[0.92rem] sm:inline-flex`}
+                  href={`/new?source=blog${blogAnalytics.blogSlug ? `&blog=${encodeURIComponent(blogAnalytics.blogSlug)}` : ""}&blog_cta=start_writing`}
+                  intent="start_writing"
+                  linkText="Start writing"
+                >
+                  Start writing
+                </BlogProductIntentLink>
+              ) : (
+                <Link
+                  className={`${brandPrimaryButtonClass} hidden h-11 px-5 text-[0.92rem] sm:inline-flex`}
+                  href="/new"
+                >
+                  Start writing
+                </Link>
+              )
             ) : null}
           </div>
         </div>

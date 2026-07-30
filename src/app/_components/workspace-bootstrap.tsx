@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ResumeTemplateChooser } from "@/app/_components/resume-template-chooser";
 import {
+  captureBlogAttributionFromSearch,
+  trackBlogCreateResume,
+  type BlogAttributionInput,
+} from "@/app/_lib/blog-product-intent-analytics";
+import {
   DRAFTS_STORAGE_KEY,
   LEGACY_MARKDOWN_STORAGE_KEY,
 } from "@/app/_lib/cv-drafts";
@@ -13,9 +18,11 @@ const LEGACY_IMPORT_MARKER = "tinycv:legacy-imported";
 
 export function WorkspaceBootstrap({
   allowLegacyImport,
+  initialBlogAttribution = null,
   initialTemplateKey = null,
 }: {
   allowLegacyImport: boolean;
+  initialBlogAttribution?: BlogAttributionInput | null;
   initialTemplateKey?: TemplateKey | null;
 }) {
   const [busyTemplateKey, setBusyTemplateKey] = useState<TemplateKey | null>(null);
@@ -40,6 +47,10 @@ export function WorkspaceBootstrap({
         throw new Error(payload.error ?? "Unable to create a new resume.");
       }
 
+      trackBlogCreateResume({
+        resumeId: payload.resume.id,
+        templateKey,
+      });
       window.location.replace(`/studio/${payload.resume.id}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to create a new resume.");
@@ -102,6 +113,14 @@ export function WorkspaceBootstrap({
       cancelled = true;
     };
   }, [allowLegacyImport]);
+
+  useEffect(() => {
+    if (!initialBlogAttribution) {
+      return;
+    }
+
+    captureBlogAttributionFromSearch(initialBlogAttribution);
+  }, [initialBlogAttribution]);
 
   useEffect(() => {
     if (!initialTemplateKey || attemptedInitialTemplateRef.current) {
