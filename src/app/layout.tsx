@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import {
   IBM_Plex_Mono,
   IBM_Plex_Sans,
@@ -14,13 +13,13 @@ import {
   TINYCV_APP_DESCRIPTION,
   TINYCV_SITE_NAME,
 } from "@/app/_lib/site-metadata";
-import { GoogleAnalytics } from "@/app/_components/google-analytics";
 import "./globals.css";
 
 const appDescription = TINYCV_APP_DESCRIPTION;
 const appUrl = getTinyCvAppUrl();
 const socialCardImage = getTinyCvSocialCardImage();
 const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+const gaDebugMode = process.env.NEXT_PUBLIC_GA_DEBUG_MODE === "1";
 
 const uiSans = Source_Sans_3({
   variable: "--font-ui-sans",
@@ -121,31 +120,58 @@ export default function RootLayout({
       lang="en"
       className={`${uiSans.variable} ${displaySerif.variable} ${uiSansAlt.variable} ${displaySerifAlt.variable} ${uiSansTechnical.variable} ${uiMono.variable} h-full antialiased`}
     >
-      <head>
+      <body className="min-h-full flex flex-col">
         {gaMeasurementId ? (
           <>
-            <Script
+            <script
+              async
               src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
-              strategy="afterInteractive"
             />
-            <Script
+            <script
               id="google-analytics"
-              strategy="afterInteractive"
               dangerouslySetInnerHTML={{
                 __html: `
                   window.dataLayer = window.dataLayer || [];
                   function gtag(){dataLayer.push(arguments);}
+                  window.gtag = gtag;
                   gtag('js', new Date());
-                  gtag('config', ${JSON.stringify(gaMeasurementId)});
+                  gtag('set', { send_page_view: false });
+                  gtag('config', ${JSON.stringify(gaMeasurementId)}, { send_page_view: false });
+
+                  (function trackTinyCvPageViews() {
+                    var previousPath = null;
+                    var pollIntervalMs = 250;
+
+                    function currentPath() {
+                      return window.location.pathname + window.location.search;
+                    }
+
+                    function sendPageView() {
+                      var pagePath = currentPath();
+
+                      if (previousPath === pagePath) {
+                        return;
+                      }
+
+                      gtag('event', 'page_view', {
+                        send_to: ${JSON.stringify(gaMeasurementId)},
+                        page_location: window.location.href,
+                        page_path: pagePath,
+                        page_title: document.title,
+                        ${gaDebugMode ? "debug_mode: true," : ""}
+                      });
+                      previousPath = pagePath;
+                    }
+
+                    window.setTimeout(sendPageView, 50);
+                    window.setInterval(sendPageView, pollIntervalMs);
+                  })();
                 `,
               }}
             />
           </>
         ) : null}
-      </head>
-      <body className="min-h-full flex flex-col">
         {children}
-        {gaMeasurementId ? <GoogleAnalytics measurementId={gaMeasurementId} /> : null}
       </body>
     </html>
   );
