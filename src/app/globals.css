@@ -159,6 +159,11 @@ textarea {
   text-size-adjust: 100%;
 }
 
+/* Ensure CJK characters in headings fall back to serif in PDF/export */
+.cv-document :is(h1, h2, h3, h4, h5, h6) {
+  font-family: inherit, "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+}
+
 .cv-content-root {
   --cv-scale: 1;
   font-size: calc(16px * var(--cv-scale));
